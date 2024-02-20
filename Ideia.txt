@@ -3,3 +3,7 @@ backend: GoLang
 BD: MySQL
 container: Kubernettes
 Automação: Jenkens
+
+
+TODO:
+separar o codigo de animação do resto da tela de login
