@@ -1,27 +1,21 @@
 package main
 
 import (
-	"log"
-
 	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
     app := fiber.New()
 
-    app.Static("/assets", "./build/browser/assets")
+    app.Post("/credentials", func(c *fiber.Ctx) error {
+        var data map[string]string
 
-    app.Static("/", "./build/browser")
+        if err := c.BodyParser(&data); err != nil {
+            return err
+        }
 
+        return c.JSON(([]string{}))
+    })
 
-    local := app.Group("/")      // /api
-
-    local.Get("/api", func(c *fiber.Ctx) error {
-        return c.JSON(fiber.Map{
-            "name": "Grame",
-            "age": 20,
-          })
-    })      
-  
-    log.Fatal(app.Listen(":3000"))
+    app.Listen(":3000")
 }

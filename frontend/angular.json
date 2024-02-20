@@ -1,5 +1,4 @@
 {
-  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
@@ -13,7 +12,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "../backend/build",
+            "outputPath": "dist/frontend",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": ["zone.js"],
@@ -21,10 +20,9 @@
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": [
               "src/styles.css",
-              "./src/assets/bootstrap/css/bootstrap.css",
-              "./node_modules/animate.css/animate.css"
+              "src/assets/bootstrap-5.3.3-dist/css/bootstrap.css"
             ],
-            "scripts": ["./src/assets/bootstrap/js/bootstrap.js"],
+            "scripts": [],
             "server": "src/main.server.ts",
             "prerender": true,
             "ssr": {
@@ -81,15 +79,15 @@
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": [
               "src/styles.css",
-              "./src/assets/bootstrap/css/bootstrap.css"
+              "src/assets/bootstrap-5.3.3-dist//css/bootstrap.css"
             ],
-            "scripts": ["./src/assets/bootstrap/js/bootstrap.js"]
+            "scripts": []
           }
         }
       }
     }
   },
   "cli": {
-    "analytics": "23dcbb23-fdb0-4859-abbe-1affa74985c2"
+    "analytics": "c26b4b50-56ff-4fdc-bbef-6f2b429fdf97"
   }
 }
