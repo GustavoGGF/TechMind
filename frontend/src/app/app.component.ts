@@ -4,11 +4,18 @@ import { RouterOutlet } from '@angular/router';
 import { LoadingComponent } from '../assets/components/loading/loading.component';
 import { CommonModule } from '@angular/common';
 import 'animate.css';
+import { MessageComponent } from '../assets/components/message/message.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HttpClientModule, LoadingComponent, CommonModule],
+  imports: [
+    RouterOutlet,
+    HttpClientModule,
+    LoadingComponent,
+    CommonModule,
+    MessageComponent,
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
@@ -25,6 +32,8 @@ export class AppComponent {
 
   @ViewChild('logo') logo: ElementRef | undefined;
   @ViewChild('main') main: ElementRef | undefined;
+
+  canShowMessage: boolean = false;
 
   ngAfterViewInit(): void {
     if (this.logo) {
@@ -53,17 +62,34 @@ export class AppComponent {
     this.pass = event.target.value;
   }
 
+  status: any;
+
   loginInput(): void {
     if (this.name && this.pass) {
       this.canShow = true;
 
       const currentUrl = window.location.href;
 
-      this.http.post(currentUrl + 'api/credential', {
-        user: this.name,
-        pass: this.pass,
-      });
-      // .subscribe(() => (this.canShow = false));
+      this.http
+        .post(
+          currentUrl + 'api/credential',
+          {
+            user: this.name,
+            pass: this.pass,
+          },
+          { observe: 'response' }
+        )
+        .subscribe((response) => {
+          this.status = response.body;
+
+          if (this.status.status === 401) {
+            this.canShowMessage = true;
+          } else {
+            console.log(this.status);
+          }
+        });
     }
   }
+
+  closeMessage(): void {}
 }

@@ -1,4 +1,8 @@
 <main #main class="main position-relative">
+  <app-message
+    *ngIf="canShowMessage"
+    (buttonClick)="closeMessage()"
+  ></app-message>
   <img
     class="img1 position-absolute top-0 start-0 animate__animated animate__zoomInUp animate__slow"
     alt="logo TechMind"
