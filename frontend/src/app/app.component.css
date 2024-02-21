@@ -25,6 +25,7 @@
   );
   -webkit-background-clip: text;
   background-clip: text;
+  left: 0;
 }
 
 .bgcolor {
@@ -41,17 +42,13 @@
 }
 
 @keyframes slideIn {
-  from {
-    left: -100px;
-    opacity: 0;
-  }
   to {
     left: 80px;
     opacity: 1;
   }
 }
 
-letter1 {
+.letter1 {
   animation-delay: 0.1s; /* ajuste conforme necessário */
 }
 .letter2 {
@@ -75,6 +72,6 @@ letter1 {
 
 .font {
   font-family: "Protest Strike", sans-serif;
-  /* src: url(../../../assets/fonts/Protest_Strike/ProtestStrike-Regular.ttf) */
-  /* format("Protest Strike"); */
+  src: url(../assets/fonts/Protest_Strike/ProtestStrike-Regular.ttf)
+    format("Protest Strike");
 }

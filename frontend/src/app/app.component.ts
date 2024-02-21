@@ -1,16 +1,21 @@
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { LoadingComponent } from '../assets/components/loading/loading.component';
+import { CommonModule } from '@angular/common';
+import 'animate.css';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HttpClientModule],
+  imports: [RouterOutlet, HttpClientModule, LoadingComponent, CommonModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
 export class AppComponent {
   title = 'frontend';
+
+  urlImage = '../assets/images/logo/Logo_TechMind.png';
 
   constructor(private elementRef: ElementRef, private http: HttpClient) {}
 
@@ -18,8 +23,8 @@ export class AppComponent {
   pass: string = '';
   canShow: boolean = false;
 
-  @ViewChild('logo') logo!: ElementRef | undefined;
-  @ViewChild('main') main!: ElementRef | undefined;
+  @ViewChild('logo') logo: ElementRef | undefined;
+  @ViewChild('main') main: ElementRef | undefined;
 
   ngAfterViewInit(): void {
     if (this.logo) {
@@ -49,14 +54,16 @@ export class AppComponent {
   }
 
   loginInput(): void {
-    if (this.name.length > 6 && this.pass.length > 10) {
+    if (this.name && this.pass) {
       this.canShow = true;
 
       const currentUrl = window.location.href;
 
-      this.http.post(currentUrl + 'credential', {
-        data: 'data',
+      this.http.post(currentUrl + 'api/credential', {
+        user: this.name,
+        pass: this.pass,
       });
+      // .subscribe(() => (this.canShow = false));
     }
   }
 }

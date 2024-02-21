@@ -7,14 +7,16 @@ import (
 func main() {
     app := fiber.New()
 
-    app.Post("/credentials", func(c *fiber.Ctx) error {
+    app.Static("/", "./build/browser/")
+
+    app.Post("api/credential", func(c *fiber.Ctx) error {
         var data map[string]string
 
         if err := c.BodyParser(&data); err != nil {
             return err
         }
 
-        return c.JSON(([]string{}))
+        return c.JSON(fiber.Map{"status":"ok"})
     })
 
     app.Listen(":3000")

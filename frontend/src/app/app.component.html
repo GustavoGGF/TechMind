@@ -4,8 +4,8 @@
     alt="logo TechMind"
     width="100px"
     #logo
+    [src]="urlImage"
   />
-  <!-- [src]="urlImage" -->
   <div class="font position-absolute top-0 start-0 d-flex">
     <div class="letter letter1">e</div>
     <div class="letter letter2">c</div>
@@ -15,8 +15,7 @@
     <div class="letter letter6">n</div>
     <div class="letter letter7">d</div>
   </div>
-  <div class="d-flex flex-column justify-content-center">
-    <!-- *ngIf="!canShow"  -->
+  <div *ngIf="!canShow" class="d-flex flex-column justify-content-center">
     <div class="form-floating mb-3">
       <input
         type="text"
@@ -39,5 +38,9 @@
     </div>
     <button class="mt-3 btn btn-success" (click)="loginInput()">Entrar</button>
   </div>
+  <app-loading
+    *ngIf="canShow"
+    class="position-absolute top-50 start-50 translate-middle"
+  ></app-loading>
 </main>
 <router-outlet />
