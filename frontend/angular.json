@@ -1,4 +1,5 @@
 {
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
@@ -20,11 +21,14 @@
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": [
               "src/styles.css",
-              "src/assets/bootstrap-5.3.3-dist/css/bootstrap.css"
+              "src/assets/bootstrap-5.3.3-dist/css/bootstrap.css",
+              "src/assets/bootstrap-5.3.3-dist/css/bootstrap.min.css",
+              "node_modules/animate.css/animate.css",
+              "node_modules/animate.css/animate.min.css"
             ],
             "scripts": [],
             "server": "src/main.server.ts",
-            "prerender": true,
+            "prerender": false,
             "ssr": {
               "entry": "server.ts"
             }
@@ -77,10 +81,7 @@
             "polyfills": ["zone.js", "zone.js/testing"],
             "tsConfig": "tsconfig.spec.json",
             "assets": ["src/favicon.ico", "src/assets"],
-            "styles": [
-              "src/styles.css",
-              "src/assets/bootstrap-5.3.3-dist//css/bootstrap.css"
-            ],
+            "styles": ["src/styles.css"],
             "scripts": []
           }
         }
@@ -88,6 +89,6 @@
     }
   },
   "cli": {
-    "analytics": "c26b4b50-56ff-4fdc-bbef-6f2b429fdf97"
+    "analytics": "11c0f386-898b-4f96-ad50-dcb6b8e16631"
   }
 }

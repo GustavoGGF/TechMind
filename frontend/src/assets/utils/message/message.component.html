@@ -1,0 +1,17 @@
+<div
+  class="card position-absolute top-0 start-50 translate-middle-x m-3 bg-red"
+  style="width: 18rem"
+>
+  <div class="position-relative">
+    <div class="w-100 d-flex justify-content-center">
+      <h1 class="w-100 text-center">Error</h1>
+      <button class="btn btnClose position-absolute top-0 end-0">
+        <img [src]="closeIMG" alt="" />
+      </button>
+    </div>
+  </div>
+  <div class="card-body">
+    <h5 class="card-title text-center">{{ errorType }}</h5>
+    <p class="card-text text-center">{{ messageError }}</p>
+  </div>
+</div>

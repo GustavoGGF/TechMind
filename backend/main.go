@@ -37,7 +37,15 @@ func main() {
 
         err = l.Bind(username, pass)
         if err != nil {
-            log.Warn(err)
+            if ldapErr, ok := err.(*ldap.Error); ok {
+                if ldapErr.ResultCode == ldap.LDAPResultInvalidCredentials {
+                    return c.JSON(fiber.Map{"status":404})
+                } else {
+                    log.Warnf("Erro LDAP: %v", ldapErr)
+                }
+            } else {
+                log.Warnf("Erro não identificado: %v", err)
+            }
         }
 
         Filter := fmt.Sprintf("(&(objectClass=user)(sAMAccountName=%s))", user)
@@ -47,7 +55,7 @@ func main() {
             ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0,
             false,
             Filter,
-            []string{"sAMAccountName", "givenName", "memberOf"},
+            []string{"sAMAccountName", "givenName", "memberOf", "displayName"},
             nil,
         )
 
@@ -62,23 +70,28 @@ func main() {
 
         verify := os.Getenv("VERIFY_GROUP")        
 
+        found := false
         for _, entry := range searchResult.Entries {
             for _, attr := range entry.Attributes {
                 if attr.Name == "memberOf" {
                     groups := attr.Values
 
                     for _, value := range groups{
-                        if !strings.Contains(value, verify){
-                            return c.JSON(fiber.Map{"status":401})
-                        } else {
-                            log.Info("a")
-                        }
-                    }
+                        if strings.Contains(value, verify){
+                            found = true
+                            break                            
+                        }                  
+                    } 
+                    if !found{
+                        return c.JSON(fiber.Map{"status":401})
+                    } else{
+                        getName := entry.GetAttributeValue("displayName")
+                        return c.JSON(fiber.Map{"status":200, "name": getName})  
+                    }    
                 }
             }
-        }
-    
-        return c.JSON(fiber.Map{"status":"ok"})
+        }   
+        return c.Next()
     })
 
     if err := app.Listen(":3000"); err != nil{

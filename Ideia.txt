@@ -7,3 +7,8 @@ Automação: Jenkens
 
 TODO:
 separar o codigo de animação do resto da tela de login
+prerender angular.json
+ajustar imagens para tamanhos necessarios
+reduzir tamanho
+login page
+tsconfig ajustar

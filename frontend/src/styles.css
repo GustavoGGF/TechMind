@@ -1,13 +1,17 @@
-#root {
-  background-color: #201b2c;
-  width: 100vw;
-  height: 100vh;
+body,
+html {
+  background-color: #14213d;
 }
 
 :root {
   --red: #ef233c;
+  --blueLight: #00b4d8;
 }
 
 .bg-red {
   background-color: var(--red) !important;
+}
+
+.bg-blueL {
+  background-color: var(--blueLight) !important;
 }
