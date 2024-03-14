@@ -24,7 +24,10 @@
               "src/assets/bootstrap-5.3.3-dist/css/bootstrap.css",
               "src/assets/bootstrap-5.3.3-dist/css/bootstrap.min.css",
               "node_modules/animate.css/animate.css",
-              "node_modules/animate.css/animate.min.css"
+              "node_modules/animate.css/animate.min.css",
+              "node_modules/primeng/resources/themes/lara-dark-blue/theme.css",
+              "node_modules/primeng/resources/primeng.min.css",
+              "node_modules/primeng/resources/primeng.css"
             ],
             "scripts": [],
             "server": "src/main.server.ts",
@@ -39,7 +42,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "500kb",
-                  "maximumError": "1mb"
+                  "maximumError": "10mb"
                 },
                 {
                   "type": "anyComponentStyle",

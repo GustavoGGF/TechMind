@@ -12,9 +12,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func main() {
+func main() {                        
     app := fiber.New()
-
+    
     app.Static("/", "./build/browser")   
 
     app.Use("/api", func(c *fiber.Ctx) error{
@@ -33,7 +33,7 @@ func main() {
         username := fmt.Sprintf("nt-lupatech\\%s", user) //variavel de ambiente
         pass := data["pass"]
 
-        l, err := ldap.DialURL("ldap://sdc01.nt-lupatech.com.br")
+        l, err := ldap.DialURL("ldap://sdc01.nt-lupatech.com.br") //env
         if err != nil {
             fmt.Println(err)
         }
@@ -87,6 +87,9 @@ func main() {
                         return c.JSON(fiber.Map{"status":401})
                     } else{
                         getName := entry.GetAttributeValue("displayName")
+
+                        
+
                         return c.JSON(fiber.Map{"status":200, "name": getName})  
                     }    
                 }
@@ -105,8 +108,12 @@ func main() {
 
         name := data["Name"]
         system := data["System"]
+        distribution := data["Distribution"]
 
-        fmt.Println("Antes de conectar")
+        if system == "windows"{
+            fmt.Println(distribution)
+            return c.Next()
+        }
         
 
         db, err := sql.Open("mysql", "mach:Lup@.CSC.!@tcp(10.1.9.0:3306)/techmindDB") //varaivel de ambiente
@@ -116,8 +123,6 @@ func main() {
             return c.Next()
         }
 
-        fmt.Println("Depois de conectar")
-
         defer db.Close()
 
         err = db.Ping()
@@ -126,7 +131,7 @@ func main() {
             return c.Next()
         }
 
-        stmt, err := db.Prepare("INSERT INTO machines(name, system_name) VALUES(?, ?)")
+        stmt, err := db.Prepare("INSERT INTO machines(name, system_name) VALUES(?, ?, ?)")
         if err != nil{
             fmt.Println(err)
             return c.Next()
@@ -134,12 +139,57 @@ func main() {
 
         defer stmt.Close()
 
-        _, err = stmt.Exec(name, system)
+        _, err = stmt.Exec(name, system, distribution)
         if err != nil {
             fmt.Println(err)
             return c.Next()
         }
         return c.Next()
+    })
+
+    app.Get("home", func(c *fiber.Ctx) error {
+    dataSourceName := "mach:Lup@.CSC.!@tcp(10.1.9.0:3306)/techmindDB" //env
+
+    // Abrindo uma conexão com o banco de dados MySQL
+    db, err := sql.Open("mysql", dataSourceName)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer db.Close()
+
+    // Verificar se a conexão com o banco de dados está ativa
+    err = db.Ping()
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Consulta SQL para contar o número de IDs na tabela
+    query := "SELECT COUNT(ID) FROM machines" //env
+    query2 := "SELECT COUNT(*) AS TotalLinuxSystems FROM machines WHERE system_name LIKE '%linux%'"
+    query3 := "SELECT COUNT(*) AS TotalLinuxSystems FROM machines WHERE system_name LIKE '%windows%'"
+
+    // Executando a consulta
+    var totalMachines int
+    var totalLinux int
+    var totalWindows int
+    err = db.QueryRow(query).Scan(&totalMachines)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    err = db.QueryRow(query2).Scan(&totalLinux)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    err = db.QueryRow(query3).Scan(&totalWindows)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println(totalLinux)
+
+    return c.JSON(fiber.Map{"status":200, "machines":totalMachines, "linux":totalLinux, "windows":totalWindows})
     })
 
 

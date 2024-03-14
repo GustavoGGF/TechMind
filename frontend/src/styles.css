@@ -6,6 +6,8 @@ html {
 :root {
   --red: #ef233c;
   --blueLight: #00b4d8;
+  --black: #14213d;
+  --white: #fefae0;
 }
 
 .bg-red {

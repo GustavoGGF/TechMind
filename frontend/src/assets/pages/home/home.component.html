@@ -1,6 +1,26 @@
 <div class="main">
   <app-navbar></app-navbar>
-  <div>
-    <div>dashboard quantidade de máquinas</div>
-  </div>
+  <section class="w-100 bg-b mt-5 text-center">
+    <h2 class="mt-3 c-w">Dashboard Completo de Inventário de Máquinas</h2>
+    <h3 class="mt-2 c-w">Visão Geral do Inventário de Máquinas</h3>
+    <div class="dashboard">
+      <div class="miniDash">
+        <div>
+          <p class="mt-3">{{ machinesAll }}</p>
+          <p>Máquinas</p>
+        </div>
+        <div>
+          <p class="mt-3">{{ machinesWindows }}</p>
+          <p>Windows</p>
+        </div>
+        <div>
+          <p class="mt-3">{{ machinesLinux }}</p>
+          <p>Linux</p>
+        </div>
+      </div>
+      <app-chart-doughnut></app-chart-doughnut>
+    </div>
+    <h3>Dashboard de Inventário de Máquinas - Dados de Hoje</h3>
+    <div></div>
+  </section>
 </div>
