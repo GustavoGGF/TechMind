@@ -19,6 +19,8 @@ export class ChartDoughnutComponent {
   data: any;
   status: any;
   options: any;
+  counts: number[] = [];
+  systemNames: string[] = [];
 
   ngOnInit() {
     this.canShow = true;
@@ -31,7 +33,11 @@ export class ChartDoughnutComponent {
       if (this.status === 401) {
       } else if (this.status === 404) {
       } else if (this.status === 200) {
-        console.log(data.systems);
+        for (let item of data.systems) {
+          this.systemNames.push(item.SystemName);
+          this.counts.push(item.Count);
+          this.canShow = false;
+        }
       } else {
         console.log(this.status);
         console.log(this.status.status);
@@ -43,19 +49,17 @@ export class ChartDoughnutComponent {
     const color: String = 'var(--black)';
 
     this.data = {
-      labels: ['A', 'B', 'C'],
+      labels: this.systemNames,
       datasets: [
         {
-          data: [300, 50, 100],
+          data: this.counts,
           backgroundColor: [
             documentStyle.getPropertyValue('--blue-500'),
             documentStyle.getPropertyValue('--yellow-500'),
-            documentStyle.getPropertyValue('--green-500'),
           ],
           hoverBackgroundColor: [
             documentStyle.getPropertyValue('--blue-400'),
             documentStyle.getPropertyValue('--yellow-400'),
-            documentStyle.getPropertyValue('--green-400'),
           ],
         },
       ],

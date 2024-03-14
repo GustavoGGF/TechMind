@@ -12,6 +12,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+type SystemCount struct{
+    SystemName string
+    Count int
+}
+
 func main() {                        
     app := fiber.New()
     
@@ -110,7 +115,9 @@ func main() {
 
         name := data["Name"]
         system_name := data["System"]
-        distribution := data["Distribution"]      
+        distribution := data["Distribution"]    
+        web_interface := data["InterfaceInternet"]  
+        mac_address := data["MacAddress"]
 
         db, err := sql.Open("mysql", "mach:Lup@.CSC.!@tcp(10.1.9.0:3306)/techmindDB") //varaivel de ambiente
         if err != nil{
@@ -126,20 +133,49 @@ func main() {
             return c.Next()
         }
 
-        stmt, err := db.Prepare("INSERT INTO machines(name, system_name, distribution) VALUES(?, ?, ?)")
-        if err != nil{
-            fmt.Println("Erro ao preparar inserção de dados: ",err)
-            return c.Next()
-        }
+        verify_query := fmt.Sprintf("SELECT COUNT(ID) FROM machines WHERE mac_address = '%s'", mac_address)
 
-        defer stmt.Close()
-
-        _, err = stmt.Exec(name, system_name, distribution)
+        var repet int
+        err = db.QueryRow(verify_query).Scan(&repet)
         if err != nil {
-            fmt.Println("Erro ao inserir os dados no mysql:", err)
+            log.Fatal("Erro ao pegar número total de máquinas:", err)
+        }
+
+        if repet >= 1{
+            updateQuery := "UPDATE machines SET name = ?, system_name = ?, distribution = ?, web_interface = ? WHERE mac_address = ?"
+
+            result, err := db.Exec(updateQuery, name, system_name, distribution, web_interface, mac_address)
+            if err != nil {
+                log.Fatal("Erro ao atualizar os valores:", err)
+            }
+
+            rowsAffected, err := result.RowsAffected()
+            if err != nil {
+                log.Fatal("Erro ao obter o número de linhas afetadas:", err)
+            }
+
+            if rowsAffected > 0 {
+                return c.Next()
+            } else {
+                return c.Next()
+            }
+        } else {
+            stmt, err := db.Prepare("INSERT INTO machines(name, system_name, distribution, web_interface, mac_address) VALUES(?, ?, ?, ?, ?)")
+            if err != nil{
+                fmt.Println("Erro ao preparar inserção de dados: ",err)
+                return c.Next()
+            }
+    
+            defer stmt.Close()
+    
+            _, err = stmt.Exec(name, system_name, distribution, web_interface, mac_address)
+            if err != nil {
+                fmt.Println("Erro ao inserir os dados no mysql:", err)
+                return c.Next()
+            }
             return c.Next()
         }
-        return c.Next()
+
     })
 
     app.Get("home", func(c *fiber.Ctx) error {
@@ -162,14 +198,14 @@ func main() {
     query := "SELECT COUNT(ID) FROM machines" //env
     query2 := "SELECT COUNT(*) AS TotalLinuxSystems FROM machines WHERE system_name LIKE '%linux%'"
     query3 := "SELECT COUNT(*) AS TotalLinuxSystems FROM machines WHERE system_name LIKE '%windows%'"
-    query4 := "SELECT DISTINCT system_name FROM machines"
+    query4 := "SELECT distribution, COUNT(*) AS count FROM machines GROUP BY distribution"
 
     // Executando a consulta
     var totalMachines int
     var totalLinux int
     var totalWindows int
-    var systemNames []string
-    var systemName string
+    var systemCounts []SystemCount
+
     err = db.QueryRow(query).Scan(&totalMachines)
     if err != nil {
         log.Fatal("Erro ao pegar número total de máquinas: ",err)
@@ -188,15 +224,28 @@ func main() {
         return c.Next()
     }
 
-    err = db.QueryRow(query4).Scan(&systemName)
+    rows, err := db.Query(query4)
     if err != nil {
-        log.Fatal("Erro ao pegar os sistemas operacionais diferentes: ",err)
+        log.Fatal("Erro ao executar a consulta: ", err)
         return c.Next()
-    } else {
-        systemNames = append(systemNames, systemName)
+    }
+    defer rows.Close()
+    
+    for rows.Next() {
+        var systemCount SystemCount
+        if err := rows.Scan(&systemCount.SystemName, &systemCount.Count); err != nil {
+            log.Fatal("Erro ao escanear a linha: ", err)
+            return c.Next()
+        }
+        systemCounts = append(systemCounts, systemCount)
+    }
+    
+    if err := rows.Err(); err != nil {
+        log.Fatal("Erro ao iterar sobre os resultados: ", err)
+        return c.Next()
     }
 
-    return c.JSON(fiber.Map{"status":200, "machines":totalMachines, "linux":totalLinux, "windows":totalWindows, "systems": systemNames})
+    return c.JSON(fiber.Map{"status":200, "machines":totalMachines, "linux":totalLinux, "windows":totalWindows, "systems": systemCounts})
     })
 
 
