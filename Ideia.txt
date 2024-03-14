@@ -9,6 +9,6 @@ TODO:
 separar o codigo de animação do resto da tela de login
 prerender angular.json
 ajustar imagens para tamanhos necessarios
-reduzir tamanho
+reduzir tamanho do código
 login page
 tsconfig ajustar

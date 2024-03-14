@@ -25,7 +25,8 @@ func main() {
         var data map[string]string
 
         if err := c.BodyParser(&data); err != nil {
-            return err
+            fmt.Println("Erro ao converter o body: ", err)
+            return c.Next()
         }
     
         user := data["user"]
@@ -35,7 +36,7 @@ func main() {
 
         l, err := ldap.DialURL("ldap://sdc01.nt-lupatech.com.br") //env
         if err != nil {
-            fmt.Println(err)
+            fmt.Println("Erro ao pegar o servidor ldap: ",err)
         }
 
         defer l.Close()
@@ -66,7 +67,7 @@ func main() {
 
         searchResult, err := l.Search(searchRequest)
         if err != nil {
-            fmt.Println(err)
+            fmt.Println("Erro ao pesquisar dados no ldap",err)
         }
 
         verify := os.Getenv("VERIFY_GROUP")       
@@ -103,23 +104,17 @@ func main() {
         var data map[string]string
 
         if err := c.BodyParser(&data); err != nil {
-            return err
+            fmt.Println("Erro ao converter dados do body: ", err)
+            return c.Next()
         }
 
         name := data["Name"]
-        system := data["System"]
-        distribution := data["Distribution"]
-
-        if system == "windows"{
-            fmt.Println(distribution)
-            return c.Next()
-        }
-        
+        system_name := data["System"]
+        distribution := data["Distribution"]      
 
         db, err := sql.Open("mysql", "mach:Lup@.CSC.!@tcp(10.1.9.0:3306)/techmindDB") //varaivel de ambiente
         if err != nil{
-            fmt.Println("Erro conectar")
-            fmt.Println(err)
+            fmt.Println("Erro conectar no mysql: ", err)
             return c.Next()
         }
 
@@ -127,21 +122,21 @@ func main() {
 
         err = db.Ping()
         if err != nil {
-            fmt.Println(err)
+            fmt.Println("Erro ao pingar o servidor: ", err)
             return c.Next()
         }
 
-        stmt, err := db.Prepare("INSERT INTO machines(name, system_name) VALUES(?, ?, ?)")
+        stmt, err := db.Prepare("INSERT INTO machines(name, system_name, distribution) VALUES(?, ?, ?)")
         if err != nil{
-            fmt.Println(err)
+            fmt.Println("Erro ao preparar inserção de dados: ",err)
             return c.Next()
         }
 
         defer stmt.Close()
 
-        _, err = stmt.Exec(name, system, distribution)
+        _, err = stmt.Exec(name, system_name, distribution)
         if err != nil {
-            fmt.Println(err)
+            fmt.Println("Erro ao inserir os dados no mysql:", err)
             return c.Next()
         }
         return c.Next()
@@ -167,29 +162,41 @@ func main() {
     query := "SELECT COUNT(ID) FROM machines" //env
     query2 := "SELECT COUNT(*) AS TotalLinuxSystems FROM machines WHERE system_name LIKE '%linux%'"
     query3 := "SELECT COUNT(*) AS TotalLinuxSystems FROM machines WHERE system_name LIKE '%windows%'"
+    query4 := "SELECT DISTINCT system_name FROM machines"
 
     // Executando a consulta
     var totalMachines int
     var totalLinux int
     var totalWindows int
+    var systemNames []string
+    var systemName string
     err = db.QueryRow(query).Scan(&totalMachines)
     if err != nil {
-        log.Fatal(err)
+        log.Fatal("Erro ao pegar número total de máquinas: ",err)
+        return c.Next()
     }
 
     err = db.QueryRow(query2).Scan(&totalLinux)
     if err != nil {
-        log.Fatal(err)
+        log.Fatal("Erro ao pegar o número total de linux: ",err)
+        return c.Next()
     }
 
     err = db.QueryRow(query3).Scan(&totalWindows)
     if err != nil {
-        log.Fatal(err)
+        log.Fatal("Erro ao pegar o número total de Windows: ",err)
+        return c.Next()
     }
 
-    fmt.Println(totalLinux)
+    err = db.QueryRow(query4).Scan(&systemName)
+    if err != nil {
+        log.Fatal("Erro ao pegar os sistemas operacionais diferentes: ",err)
+        return c.Next()
+    } else {
+        systemNames = append(systemNames, systemName)
+    }
 
-    return c.JSON(fiber.Map{"status":200, "machines":totalMachines, "linux":totalLinux, "windows":totalWindows})
+    return c.JSON(fiber.Map{"status":200, "machines":totalMachines, "linux":totalLinux, "windows":totalWindows, "systems": systemNames})
     })
 
 
