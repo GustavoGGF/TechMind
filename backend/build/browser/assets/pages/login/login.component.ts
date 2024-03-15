@@ -95,6 +95,7 @@ export class LoginComponent {
             console.log(this.canShowMessage);
           } else if (this.status === 200) {
             localStorage.setItem('name', JSON.stringify(data.name));
+            localStorage.setItem('csrf', JSON.stringify(data.csrf_token));
             this.router.navigateByUrl('/home');
           } else {
             console.log(this.status);

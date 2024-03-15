@@ -6,10 +6,13 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-ldap/ldap"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/csrf"
+	"github.com/gofiber/fiber/v2/utils"
 )
 
 type SystemCount struct{
@@ -17,8 +20,37 @@ type SystemCount struct{
     Count int
 }
 
+type CityCount struct{
+    CityName string
+    Count int
+}
+
+func substituirValor(systemCounts []CityCount, valorBuscado, substituto string) []CityCount {
+    for i, systemCount := range systemCounts {
+        if strings.Contains(systemCount.CityName, valorBuscado) {
+            systemCounts[i].CityName = substituto
+        }
+    }
+    return systemCounts
+}
+
 func main() {                        
     app := fiber.New()
+
+    // Or extend your config for customization
+
+    app.Use(func(c *fiber.Ctx) error {
+        if c.Path() == "/api/credential" {
+            return c.Next()
+        }
+        return csrf.New(csrf.Config{
+            KeyLookup:      "header:X-Csrf-Token",
+            CookieName:     "csrf_",
+            CookieSameSite: "Lax",
+            Expiration:     10 * time.Second,
+            KeyGenerator:   utils.UUIDv4,
+        })(c)
+    })
     
     app.Static("/", "./build/browser")   
 
@@ -94,9 +126,9 @@ func main() {
                     } else{
                         getName := entry.GetAttributeValue("displayName")
 
-                        
+                        csrfToken := c.Locals("csrf_token")
 
-                        return c.JSON(fiber.Map{"status":200, "name": getName})  
+                        return c.JSON(fiber.Map{"status":200, "name": getName, "csrf_token":csrfToken})  
                     }    
                 }
             }
@@ -178,7 +210,22 @@ func main() {
 
     })
 
-    app.Get("home", func(c *fiber.Ctx) error {
+    app.Post("/home", csrf.New(csrf.Config{
+        KeyLookup:      "header:X-CSRF-Token",
+        ContextKey:     "csrf_token",
+        CookieName:     "csrf_",
+        CookieSameSite: "Strict",
+    }), func(c *fiber.Ctx) error {
+        // Verificar se o token CSRF foi validado
+        if csrfToken := c.Locals("csrf_token"); csrfToken != nil {
+            // Token CSRF válido
+            return c.SendString("Token CSRF válido")
+        }
+        // Token CSRF inválido ou ausente
+        return c.Status(fiber.StatusForbidden).SendString("Token CSRF inválido ou ausente")
+    })
+
+    app.Get("api/home", func(c *fiber.Ctx) error {
     dataSourceName := "mach:Lup@.CSC.!@tcp(10.1.9.0:3306)/techmindDB" //env
 
     // Abrindo uma conexão com o banco de dados MySQL
@@ -198,13 +245,11 @@ func main() {
     query := "SELECT COUNT(ID) FROM machines" //env
     query2 := "SELECT COUNT(*) AS TotalLinuxSystems FROM machines WHERE system_name LIKE '%linux%'"
     query3 := "SELECT COUNT(*) AS TotalLinuxSystems FROM machines WHERE system_name LIKE '%windows%'"
-    query4 := "SELECT distribution, COUNT(*) AS count FROM machines GROUP BY distribution"
-
     // Executando a consulta
     var totalMachines int
     var totalLinux int
     var totalWindows int
-    var systemCounts []SystemCount
+   
 
     err = db.QueryRow(query).Scan(&totalMachines)
     if err != nil {
@@ -224,28 +269,102 @@ func main() {
         return c.Next()
     }
 
-    rows, err := db.Query(query4)
-    if err != nil {
-        log.Fatal("Erro ao executar a consulta: ", err)
-        return c.Next()
-    }
-    defer rows.Close()
+    return c.JSON(fiber.Map{"status":200, "machines":totalMachines, "linux":totalLinux, "windows":totalWindows})
+    })
+
+    app.Get("api/machines", func(c *fiber.Ctx) error {
+
+        dataSourceName := "mach:Lup@.CSC.!@tcp(10.1.9.0:3306)/techmindDB" //env
+
+        // Abrindo uma conexão com o banco de dados MySQL
+        db, err := sql.Open("mysql", dataSourceName)
+        if err != nil {
+            log.Fatal(err)
+        }
+        defer db.Close()
     
-    for rows.Next() {
-        var systemCount SystemCount
-        if err := rows.Scan(&systemCount.SystemName, &systemCount.Count); err != nil {
-            log.Fatal("Erro ao escanear a linha: ", err)
+        // Verificar se a conexão com o banco de dados está ativa
+        err = db.Ping()
+        if err != nil {
+            log.Fatal(err)
+        }
+
+        query := "SELECT distribution, COUNT(*) AS count FROM machines GROUP BY distribution"
+
+
+        var systemCounts []SystemCount
+
+        rows, err := db.Query(query)
+        if err != nil {
+            log.Fatal("Erro ao executar a consulta: ", err)
             return c.Next()
         }
-        systemCounts = append(systemCounts, systemCount)
-    }
-    
-    if err := rows.Err(); err != nil {
-        log.Fatal("Erro ao iterar sobre os resultados: ", err)
-        return c.Next()
-    }
+        defer rows.Close()
+        
+        for rows.Next() {
+            var systemCount SystemCount
+            if err := rows.Scan(&systemCount.SystemName, &systemCount.Count); err != nil {
+                log.Fatal("Erro ao escanear a linha: ", err)
+                return c.Next()
+            }
+            systemCounts = append(systemCounts, systemCount)
+        }
+        
+        if err := rows.Err(); err != nil {
+            log.Fatal("Erro ao iterar sobre os resultados: ", err)
+            return c.Next()
+        }
+        
+        return c.JSON(fiber.Map{"status":200, "systems": systemCounts})
+    })
 
-    return c.JSON(fiber.Map{"status":200, "machines":totalMachines, "linux":totalLinux, "windows":totalWindows, "systems": systemCounts})
+    app.Get("api/cities", func(c *fiber.Ctx) error {
+        dataSourceName := "mach:Lup@.CSC.!@tcp(10.1.9.0:3306)/techmindDB" //env
+
+        // Abrindo uma conexão com o banco de dados MySQL
+        db, err := sql.Open("mysql", dataSourceName)
+        if err != nil {
+            log.Fatal(err)
+        }
+        defer db.Close()
+
+        // Verificar se a conexão com o banco de dados está ativa
+        err = db.Ping()
+        if err != nil {
+            log.Fatal(err)
+        }
+
+        query := "SELECT name, COUNT(*) AS count FROM machines GROUP BY name"
+
+        rows, err := db.Query(query)
+        if err != nil {
+            log.Fatal("Erro ao executar a consulta: ", err)
+            return c.Next()
+        }
+        defer rows.Close()
+
+        var systemCounts []CityCount
+        
+        for rows.Next() {
+            var systemCount CityCount
+            if err := rows.Scan(&systemCount.CityName, &systemCount.Count); err != nil {
+                log.Fatal("Erro ao escanear a linha: ", err)
+                return c.Next()
+            }
+            systemCounts = append(systemCounts, systemCount)
+        }
+        
+        if err := rows.Err(); err != nil {
+            log.Fatal("Erro ao iterar sobre os resultados: ", err)
+            return c.Next()
+        } 
+        systemCounts = substituirValor(systemCounts, "lp00", "Caxias do Sul")
+        systemCounts = substituirValor(systemCounts, "LP00", "Caxias do Sul")
+        return c.JSON(fiber.Map{"status":200, "cities": systemCounts})        
+    })
+
+    app.Get("*", func(c *fiber.Ctx) error {
+        return c.SendFile("./build/browser/index.html")
     })
 
 
