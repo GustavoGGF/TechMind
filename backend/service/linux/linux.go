@@ -8,13 +8,14 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"time"
 
 	"github.com/shirou/gopsutil/host"
 )
 
 type Data struct {
-    System, Name, Distribution,InterfaceInternet, MacAddress string
-     }
+    System, Name, Distribution,InterfaceInternet, MacAddress,InsertionDate string
+}
 
 func bytesEqual(b []byte) bool {
     for _, v := range b {
@@ -33,7 +34,9 @@ func main() {
         fmt.Println("Error")
     }
 
-    url := "http://10.1.9.0:3000/api/machines" //env
+    url := "http://10.1.9.19:3000/api/machines" //env
+
+    fmt.Println("Conectando")
 
     name, err := os.Hostname()
 
@@ -57,7 +60,13 @@ func main() {
         }
     }
 
-    jsonData := Data{System: sys, Name: name, Distribution: infos.Platform, InterfaceInternet: ifaceInt, MacAddress: imac}
+    date_now := time.Now()
+
+    formated_date := date_now.Format("2006-01-02 15:04")
+
+    jsonData := Data{System: sys, Name: name, Distribution: infos.Platform, InterfaceInternet: ifaceInt, MacAddress: imac, InsertionDate:formated_date}
+
+    fmt.Println("Montando")
 
     requestBody, err := json.Marshal(jsonData)
     if err != nil{
@@ -68,6 +77,8 @@ func main() {
     if erro != nil{
         fmt.Println(erro)
     }
+
+    fmt.Println("Enviado")
 
     defer resp.Body.Close()  
 }

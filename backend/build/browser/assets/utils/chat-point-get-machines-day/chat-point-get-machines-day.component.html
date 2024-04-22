@@ -1,0 +1,9 @@
+<div class="card flex justify-content-center bg-transparent cd">
+  <app-loading *ngIf="canShow"></app-loading>
+  <p-chart
+    *ngIf="!canShow"
+    type="line"
+    [data]="data"
+    [options]="options"
+  ></p-chart>
+</div>

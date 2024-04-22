@@ -11,8 +11,6 @@ import (
 	"github.com/go-ldap/ldap"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/csrf"
-	"github.com/gofiber/fiber/v2/utils"
 )
 
 type SystemCount struct{
@@ -39,18 +37,18 @@ func main() {
 
     // Or extend your config for customization
 
-    app.Use(func(c *fiber.Ctx) error {
-        if c.Path() == "/api/credential" {
-            return c.Next()
-        }
-        return csrf.New(csrf.Config{
-            KeyLookup:      "header:X-Csrf-Token",
-            CookieName:     "csrf_",
-            CookieSameSite: "Lax",
-            Expiration:     10 * time.Second,
-            KeyGenerator:   utils.UUIDv4,
-        })(c)
-    })
+    // app.Use(func(c *fiber.Ctx) error {
+    //     if c.Path() == "/api/credential" {
+    //         return c.Next()
+    //     }
+    //     return csrf.New(csrf.Config{
+    //         KeyLookup:      "header:X-Csrf-Token",
+    //         CookieName:     "csrf_",
+    //         CookieSameSite: "Lax",
+    //         Expiration:     10 * time.Second,
+    //         KeyGenerator:   utils.UUIDv4,
+    //     })(c)
+    // })
     
     app.Static("/", "./build/browser")   
 
@@ -150,8 +148,9 @@ func main() {
         distribution := data["Distribution"]    
         web_interface := data["InterfaceInternet"]  
         mac_address := data["MacAddress"]
+        date := data["InsertionDate"]
 
-        db, err := sql.Open("mysql", "mach:Lup@.CSC.!@tcp(10.1.9.0:3306)/techmindDB") //varaivel de ambiente
+        db, err := sql.Open("mysql", "mach:Lup@.CSC.!@tcp(10.1.9.19:3306)/techmindDB") //varaivel de ambiente
         if err != nil{
             fmt.Println("Erro conectar no mysql: ", err)
             return c.Next()
@@ -174,9 +173,18 @@ func main() {
         }
 
         if repet >= 1{
-            updateQuery := "UPDATE machines SET name = ?, system_name = ?, distribution = ?, web_interface = ? WHERE mac_address = ?"
+            layout := "2006-01-02 15:04"
 
-            result, err := db.Exec(updateQuery, name, system_name, distribution, web_interface, mac_address)
+            // Parsing da string para o tipo time.Time
+            insertion_date, err := time.Parse(layout, date)
+            if err != nil {
+                fmt.Println("Erro ao converter string para data:", err)
+                return c.Next()
+            }
+        
+            updateQuery := "UPDATE machines SET name = ?, system_name = ?, distribution = ?, web_interface = ?, insertion_date = ? WHERE mac_address = ?"
+
+            result, err := db.Exec(updateQuery, name, system_name, distribution, web_interface, insertion_date, mac_address)
             if err != nil {
                 log.Fatal("Erro ao atualizar os valores:", err)
             }
@@ -189,18 +197,28 @@ func main() {
             if rowsAffected > 0 {
                 return c.Next()
             } else {
+                log.Fatal("Nada foi Atualizado")
                 return c.Next()
             }
         } else {
-            stmt, err := db.Prepare("INSERT INTO machines(name, system_name, distribution, web_interface, mac_address) VALUES(?, ?, ?, ?, ?)")
+            stmt, err := db.Prepare("INSERT INTO machines(name, system_name, distribution, web_interface, mac_address, insetion_date) VALUES(?, ?, ?, ?, ?, ?)")
             if err != nil{
                 fmt.Println("Erro ao preparar inserção de dados: ",err)
                 return c.Next()
             }
     
             defer stmt.Close()
+
+            layout := "2006-01-02 15:04"
+
+            // Parsing da string para o tipo time.Time
+            insertion_date, err := time.Parse(layout, date)
+            if err != nil {
+                fmt.Println("Erro ao converter string para data:", err)
+                return c.Next()
+            }
     
-            _, err = stmt.Exec(name, system_name, distribution, web_interface, mac_address)
+            _, err = stmt.Exec(name, system_name, distribution, web_interface, mac_address, insertion_date)
             if err != nil {
                 fmt.Println("Erro ao inserir os dados no mysql:", err)
                 return c.Next()
@@ -210,12 +228,7 @@ func main() {
 
     })
 
-    app.Post("/home", csrf.New(csrf.Config{
-        KeyLookup:      "header:X-CSRF-Token",
-        ContextKey:     "csrf_token",
-        CookieName:     "csrf_",
-        CookieSameSite: "Strict",
-    }), func(c *fiber.Ctx) error {
+    app.Post("/home", func(c *fiber.Ctx) error {
         // Verificar se o token CSRF foi validado
         if csrfToken := c.Locals("csrf_token"); csrfToken != nil {
             // Token CSRF válido
@@ -226,7 +239,7 @@ func main() {
     })
 
     app.Get("api/home", func(c *fiber.Ctx) error {
-    dataSourceName := "mach:Lup@.CSC.!@tcp(10.1.9.0:3306)/techmindDB" //env
+    dataSourceName := "mach:Lup@.CSC.!@tcp(10.1.9.19:3306)/techmindDB" //env
 
     // Abrindo uma conexão com o banco de dados MySQL
     db, err := sql.Open("mysql", dataSourceName)
@@ -244,7 +257,7 @@ func main() {
     // Consulta SQL para contar o número de IDs na tabela
     query := "SELECT COUNT(ID) FROM machines" //env
     query2 := "SELECT COUNT(*) AS TotalLinuxSystems FROM machines WHERE system_name LIKE '%linux%'"
-    query3 := "SELECT COUNT(*) AS TotalLinuxSystems FROM machines WHERE system_name LIKE '%windows%'"
+    query3 := "SELECT COUNT(*) AS TotalWindowsSystems FROM machines WHERE system_name LIKE '%windows%'"
     // Executando a consulta
     var totalMachines int
     var totalLinux int
@@ -274,7 +287,7 @@ func main() {
 
     app.Get("api/machines", func(c *fiber.Ctx) error {
 
-        dataSourceName := "mach:Lup@.CSC.!@tcp(10.1.9.0:3306)/techmindDB" //env
+        dataSourceName := "mach:Lup@.CSC.!@tcp(10.1.9.19:3306)/techmindDB" //env
 
         // Abrindo uma conexão com o banco de dados MySQL
         db, err := sql.Open("mysql", dataSourceName)
@@ -319,7 +332,7 @@ func main() {
     })
 
     app.Get("api/cities", func(c *fiber.Ctx) error {
-        dataSourceName := "mach:Lup@.CSC.!@tcp(10.1.9.0:3306)/techmindDB" //env
+        dataSourceName := "mach:Lup@.CSC.!@tcp(10.1.9.19:3306)/techmindDB" //env
 
         // Abrindo uma conexão com o banco de dados MySQL
         db, err := sql.Open("mysql", dataSourceName)
@@ -363,10 +376,27 @@ func main() {
         return c.JSON(fiber.Map{"status":200, "cities": systemCounts})        
     })
 
+    app.Get("api/get-machines-days", func(c *fiber.Ctx) error {
+        dataSourceName := "mach:Lup@.CSC.!@tcp(10.1.9.19:3306)/techmindDB" //env
+        // Abrindo uma conexão com o banco de dados MySQL
+        db, err := sql.Open("mysql", dataSourceName)
+        if err != nil {
+            log.Fatal(err)
+        }
+        defer db.Close()
+
+        // Verificar se a conexão com o banco de dados está ativa
+        err = db.Ping()
+        if err != nil {
+            log.Fatal(err)
+        }
+
+        return c.Next()
+    })
+
     app.Get("*", func(c *fiber.Ctx) error {
         return c.SendFile("./build/browser/index.html")
     })
-
 
     app.Use(func(c *fiber.Ctx) error{
         return c.SendFile("./build/browser/index.html") //variavel de ambiente

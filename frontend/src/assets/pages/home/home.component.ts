@@ -9,6 +9,7 @@ import {
 } from '@angular/common/http';
 import { ChartDoughnutCitiesComponent } from '../../utils/chart-doughnut-cityes/chart-doughnut-cities.component';
 import { Router } from '@angular/router';
+import { ChatPointGetMachinesDayComponent } from '../../utils/chat-point-get-machines-day/chat-point-get-machines-day.component';
 
 @Component({
   selector: 'app-home',
@@ -19,6 +20,7 @@ import { Router } from '@angular/router';
     CommonModule,
     HttpClientModule,
     ChartDoughnutCitiesComponent,
+    ChatPointGetMachinesDayComponent,
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',

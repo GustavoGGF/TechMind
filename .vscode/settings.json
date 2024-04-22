@@ -8,7 +8,7 @@
   "explorer.compactFolders": false,
   "editor.semanticHighlighting.enabled": false,
   "breadcrumbs.enabled": false,
-  "workbench.activityBar.location": "side",
+  "workbench.activityBar.location": "default",
   "editor.minimap.enabled": false,
   "prettier.printWidth": 120
 }

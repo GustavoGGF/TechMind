@@ -13,3 +13,7 @@ reduzir tamanho do código
 login page
 tsconfig ajustar
 tirar run go build do dockerfile
+
+Home:{
+    cores dashboards
+}

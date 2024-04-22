@@ -5,7 +5,7 @@ FROM golang:1.22.0
 WORKDIR /TechMind
 
 # Copie os arquivos do projeto para o contêiner
-COPY . .
+COPY . /TechMind
 
 # Baixe e instale as dependências
 RUN go mod download
