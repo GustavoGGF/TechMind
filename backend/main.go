@@ -391,7 +391,38 @@ func main() {
             log.Fatal(err)
         }
 
-        return c.Next()
+        query := "SELECT DATE(insertion_date) AS date, COUNT(*) AS count FROM machines GROUP BY DATE(insertion_date)"
+
+        rows, err := db.Query(query)
+        if err != nil {
+            log.Fatal("Erro ao executar a consulta: ", err)
+            return c.Next()
+        }
+
+        defer rows.Close()
+
+            // Iterar sobre os resultados
+        var dateInsertitionStr string
+        var countDates int
+        var dateInsertition time.Time
+        for rows.Next() {
+            if err := rows.Scan(&dateInsertitionStr, &countDates); err != nil {
+                panic(err.Error())
+            }
+            // Convertendo a string para time.Time
+            var err error // Declare err aqui para que seja a mesma variável em cada iteração
+            dateInsertition, err = time.Parse("2006-01-02", dateInsertitionStr) // Atribuir o valor convertido à variável externa
+            if err != nil {
+                panic(err.Error())
+            }
+        }
+
+            // Verificar se houve algum erro durante a iteração
+        if err := rows.Err(); err != nil {
+            panic(err.Error())
+        }
+
+        return c.JSON(fiber.Map{"status":200, "insertirion_date": dateInsertition, "countDates":countDates})   
     })
 
     app.Get("*", func(c *fiber.Ctx) error {

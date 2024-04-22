@@ -5,6 +5,7 @@
   align-items: center;
   background-color: var(--black);
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .bg-b {

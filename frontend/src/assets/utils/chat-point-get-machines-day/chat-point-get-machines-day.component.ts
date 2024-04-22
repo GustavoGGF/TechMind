@@ -17,10 +17,52 @@ export class ChatPointGetMachinesDayComponent {
 
   data: any;
   options: any;
+  status: any;
+  dateInsertition: any;
+  countDates: any;
 
   ngOnInit() {
     this.canShow = true;
 
-    this.http.get('api/get-machines-days').subscribe((data: any) => {});
+    this.http.get('api/get-machines-days').subscribe((data: any) => {
+      this.status = data.status;
+
+      switch (this.status) {
+        case 200:
+          this.dateInsertition = data.dateInsertition;
+          this.countDates = data.countDates;
+          this.canShow = false;
+      }
+    });
+
+    this.data = {
+      labels: [this.dateInsertition],
+      datasets: [
+        {
+          label: 'Dataset',
+          data: this.countDates,
+          borderColor: 'red',
+          backgroundColor: 'rgba(255, 0, 0, 0.5)',
+          pointStyle: 'circle',
+          pointRadius: 10,
+          pointHoverRadius: 15,
+        },
+      ],
+    };
+
+    this.options = {
+      type: 'line',
+      data: this.data,
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: (ctx: any) =>
+              'Point Style: ' + ctx.chart.data.datasets[0].pointStyle,
+          },
+        },
+      },
+    };
   }
 }
