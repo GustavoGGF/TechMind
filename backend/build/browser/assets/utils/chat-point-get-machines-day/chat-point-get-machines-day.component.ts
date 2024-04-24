@@ -19,7 +19,6 @@ export class ChatPointGetMachinesDayComponent {
   options: any;
   status: any;
   dateInsertition: any;
-  countDates: any;
 
   ngOnInit() {
     this.canShow = true;
@@ -29,26 +28,28 @@ export class ChatPointGetMachinesDayComponent {
 
       switch (this.status) {
         case 200:
-          this.dateInsertition = data.dateInsertition;
-          this.countDates = data.countDates;
+          this.dateInsertition = data.insertirion_date;
+
           this.canShow = false;
+
+          this.data = {
+            labels: ['', 'Day 1'],
+            datasets: [
+              {
+                label: 'Máquinas Entradas no Dia',
+                data: data.countDates,
+                borderColor: 'red',
+                backgroundColor: 'rgba(255, 0, 0, 0.5)',
+                pointStyle: 'circle',
+                pointRadius: 10,
+                pointHoverRadius: 15,
+              },
+            ],
+          };
+
+          break;
       }
     });
-
-    this.data = {
-      labels: [this.dateInsertition],
-      datasets: [
-        {
-          label: 'Dataset',
-          data: this.countDates,
-          borderColor: 'red',
-          backgroundColor: 'rgba(255, 0, 0, 0.5)',
-          pointStyle: 'circle',
-          pointRadius: 10,
-          pointHoverRadius: 15,
-        },
-      ],
-    };
 
     this.options = {
       type: 'line',

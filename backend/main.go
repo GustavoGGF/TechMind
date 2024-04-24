@@ -403,18 +403,26 @@ func main() {
 
             // Iterar sobre os resultados
         var dateInsertitionStr string
-        var countDates int
-        var dateInsertition time.Time
+        countDates := []int{0} // Inicializa um slice com um valor 0 no primeiro índice
+        dateInsertition := make([]time.Time, 0)
+        var count int
+        
         for rows.Next() {
-            if err := rows.Scan(&dateInsertitionStr, &countDates); err != nil {
+            if err := rows.Scan(&dateInsertitionStr, &count); err != nil {
                 panic(err.Error())
             }
+            
             // Convertendo a string para time.Time
-            var err error // Declare err aqui para que seja a mesma variável em cada iteração
-            dateInsertition, err = time.Parse("2006-01-02", dateInsertitionStr) // Atribuir o valor convertido à variável externa
+            date, err := time.Parse("2006-01-02", dateInsertitionStr)
             if err != nil {
                 panic(err.Error())
             }
+            
+            // Adicionando a data convertida ao slice
+            dateInsertition = append(dateInsertition, date)
+
+            // Adicionando o valor de count ao slice
+            countDates = append(countDates, count)
         }
 
             // Verificar se houve algum erro durante a iteração

@@ -31,11 +31,10 @@ export class ChartDoughnutCitiesComponent {
       } else if (this.status === 404) {
       } else if (this.status === 200) {
         for (let item of data.cities) {
-          console.log(data);
-
           this.systemNames.push(item.CityName);
           this.counts.push(item.Count);
           this.canShow = false;
+          break;
         }
       } else {
         console.log(this.status);

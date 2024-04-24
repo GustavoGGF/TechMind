@@ -34,10 +34,9 @@ export class ChartDoughnutSOComponent {
           this.systemNames.push(item.SystemName);
           this.counts.push(item.Count);
           this.canShow = false;
+          break;
         }
       } else {
-        console.log(this.status);
-        console.log(this.status.status);
       }
     });
 
