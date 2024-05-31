@@ -10,5 +10,9 @@
   "breadcrumbs.enabled": false,
   "workbench.activityBar.location": "default",
   "editor.minimap.enabled": false,
-  "prettier.printWidth": 120
+  "prettier.printWidth": 120,
+  "Codegeex.Comment.LanguagePreference": "English",
+  "Codegeex.Chat.LanguagePreference": "English",
+  "Codegeex.SidebarUI.LanguagePreference": "English",
+  "Codegeex.CompletionModel": "CodeGeeX Pro[Beta]"
 }
