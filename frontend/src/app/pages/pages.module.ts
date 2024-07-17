@@ -2,9 +2,23 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LoginComponent } from './login/login.component';
 import { HomeComponent } from './home/home.component';
-import { PagesRoutingModule } from './pages-routing.module';
+import { UtilitiesModule } from '../utilities/utilities.module';
+import { ComputersComponent } from './computers/computers.component';
+import { ComputersDetailsComponent } from './computers-details/computers-details.component';
+import { DevicesComponent } from './devices/devices.component';
+import { DevicesDetailsComponent } from './devices-details/devices-details.component';
 
 @NgModule({
-  imports: [CommonModule, PagesRoutingModule, LoginComponent, HomeComponent],
+  declarations: [],
+  imports: [
+    CommonModule,
+    LoginComponent,
+    HomeComponent,
+    UtilitiesModule,
+    ComputersComponent,
+    ComputersDetailsComponent,
+    DevicesComponent,
+    DevicesDetailsComponent,
+  ],
 })
 export class PagesModule {}

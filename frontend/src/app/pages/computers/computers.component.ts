@@ -5,13 +5,13 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
 
 @Component({
-  selector: 'app-home',
+  selector: 'app-computers',
   standalone: true,
   imports: [UtilitiesModule, CommonModule, HttpClientModule],
-  templateUrl: './home.component.html',
-  styleUrl: './home.component.css',
+  templateUrl: './computers.component.html',
+  styleUrl: './computers.component.css',
 })
-export class HomeComponent {
+export class ComputersComponent {
   constructor(private http: HttpClient) {}
 
   name: any;
@@ -21,14 +21,12 @@ export class HomeComponent {
   messageError: string = '';
 
   canView: boolean = false;
-  notData: boolean = true;
+  canViewMachines: boolean = false;
   showMessage: boolean = false;
 
-  totalMachines: number = 0;
-  totalWindows: number = 0;
-  totalUnix: number = 0;
+  dataMachines: any;
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.name = localStorage.getItem('name');
 
     if (this.name.length == 0 || this.name == null) {
@@ -43,13 +41,9 @@ export class HomeComponent {
     }
   }
 
-  hideMessage() {
-    this.showMessage = false;
-  }
-
-  getData() {
+  getData(): void {
     this.http
-      .get('/home/get-Info-Main-Panel/', {})
+      .get('/home/computers/get-data', {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -59,10 +53,20 @@ export class HomeComponent {
       )
       .subscribe((data: any) => {
         if (data) {
-          this.totalWindows = data.windows;
-          this.totalMachines = data.total;
-          this.notData = false;
+          this.dataMachines = data.machines;
+
+          this.canViewMachines = true;
         }
       });
+  }
+
+  onRowClick(index: number) {
+    const selectedMachine = this.dataMachines[index];
+
+    var mac = selectedMachine[0];
+
+    mac = mac.replace(/:/g, '-');
+
+    return (window.location.href = '/home/computers/view-machine/' + mac);
   }
 }

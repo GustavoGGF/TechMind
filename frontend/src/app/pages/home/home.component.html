@@ -1,1 +1,31 @@
-<p>home works!</p>
+<div class="main">
+  <app-navbar *ngIf="canView" [name]="name" />
+  <app-loading *ngIf="!canView" />
+  <app-message
+    [errorType]="errorType"
+    [messageError]="messageError"
+    (click)="(hideMessage)"
+    *ngIf="showMessage"
+  />
+  <div *ngIf="canView">
+    <div class="maindash">
+      <div class="containers">
+        <app-loading *ngIf="notData" />
+        <span *ngIf="!notData">{{ totalMachines }}</span>
+        <span *ngIf="!notData">Máquinas</span>
+      </div>
+      <div class="containers">
+        <app-loading *ngIf="notData" /><span *ngIf="!notData">{{
+          totalWindows
+        }}</span
+        ><span *ngIf="!notData">Windows</span>
+      </div>
+      <div class="containers">
+        <app-loading *ngIf="notData" /><span *ngIf="!notData">{{
+          totalUnix
+        }}</span
+        ><span *ngIf="!notData">Unix</span>
+      </div>
+    </div>
+  </div>
+</div>

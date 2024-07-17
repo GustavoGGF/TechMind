@@ -1,0 +1,40 @@
+.main {
+  background-color: var(--black);
+}
+
+.tb {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--black);
+  margin-top: 1em;
+  background-color: var(--isabelline);
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Padrão */
+}
+
+.thcls {
+  width: calc(
+    100% / 6
+  ); /* Dividir a largura total igualmente entre 6 colunas */
+  border: 1px solid var(--white);
+  text-align: center;
+  padding: 10px; /* Ajuste conforme necessário */
+  font-weight: bold;
+  transition: 0.2;
+}
+
+.tdsadj {
+  width: calc(
+    100% / 6
+  ); /* Dividir a largura total igualmente entre 6 colunas */
+  text-align: center;
+  padding: 10px; /* Ajuste conforme necessário */
+}
+
+.trcls:hover {
+  background-color: #eef2e4e0;
+  transform: scale(1.1);
+  cursor: pointer;
+}

@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "frontend": {
+    "techmind-front": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -11,14 +11,13 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:application",
+          "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "../backend/build",
+            "outputPath": "../backend/static/",
+            "main": "src/main.ts",
             "index": "src/index.html",
-            "browser": "src/main.ts",
             "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
-            "assets": ["src/favicon.ico", "src/assets"],
             "styles": [
               "src/styles.css",
               "src/assets/bootstrap-5.3.3-dist/css/bootstrap.css",
@@ -27,11 +26,9 @@
               "node_modules/animate.css/animate.min.css"
             ],
             "scripts": [],
-            "server": "src/main.server.ts",
-            "prerender": true,
-            "ssr": {
-              "entry": "server.ts"
-            }
+            "baseHref": "/",
+            "deployUrl": "/static/",
+            "assets": ["src/assets"]
           },
           "configurations": {
             "production": {
@@ -61,10 +58,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "frontend:build:production"
+              "buildTarget": "techmind-front:build:production"
             },
             "development": {
-              "buildTarget": "frontend:build:development"
+              "buildTarget": "techmind-front:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -72,7 +69,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "buildTarget": "frontend:build"
+            "buildTarget": "techmind-front:build"
           }
         },
         "test": {
@@ -89,6 +86,6 @@
     }
   },
   "cli": {
-    "analytics": "e7c74ed4-cc0d-4d15-aea0-12d4f4d1602b"
+    "analytics": "c75cccf9-725a-4748-a182-f002bc93044a"
   }
 }

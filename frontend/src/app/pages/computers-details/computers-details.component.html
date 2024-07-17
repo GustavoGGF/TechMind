@@ -1,0 +1,337 @@
+<div #main class="main">
+  <app-navbar *ngIf="canView" [name]="name" />
+  <div class="board">
+    <h3 class="name_machine">{{ name_pc }}</h3>
+    <div class="d-flex flex-column position-absolute top-0 end-0">
+      <img
+        [src]="url_logo"
+        alt="logo do sistema operacional"
+        class="img-fluid img_logo"
+      />
+      <img
+        [src]="url_manufacturer"
+        alt="logo da marca"
+        class="img-fluid img_logo"
+      />
+    </div>
+    <div>
+      <div>
+        <img
+          class="img-fluid imgResize animate__animated animate__heartBeat"
+          [src]="urlResize"
+          alt="expandir"
+          (click)="resizeBar()"
+          id="resize"
+        />
+      </div>
+      <div *ngIf="showBar" id="nvbar" class="nvbar animate__animated">
+        <div class="barbtn" (click)="showDataAdmin()">
+          <span>Dados Administrativos</span>
+        </div>
+        <div class="barbtn" (click)="showHardware()">
+          <span>HardWare</span>
+        </div>
+        <div class="barbtn" (click)="showSoftWare()">
+          <span>SoftWare</span>
+        </div>
+        <div class="barbtn" (click)="showDevices()">
+          <span>Dispositivos</span>
+        </div>
+      </div>
+    </div>
+    <div class="info" *ngIf="canViewDataAdmin">
+      <div class="d-flex flex-column">
+        <h6 class="title">SISTEMA</h6>
+        <span><b class="b_margin">Usuário:</b>{{ currentUser }}</span>
+        <span
+          ><b class="b_margin">Sistema Operacional:</b
+          >{{ operational_System }} </span
+        ><span><b class="b_margin">Versão do SO:</b>{{ system_version }}</span>
+      </div>
+      <div class="d-flex flex-column">
+        <h6 class="title">REDE</h6>
+        <span><b class="b_margin">Domínio:</b></span>
+        <span><b class="b_margin">IP:</b>{{ ip }}</span>
+      </div>
+    </div>
+    <div class="contains d-flex flex-column" *ngIf="canViewDataAdmin">
+      <img [src]="url_model" alt="Foto do Equipamento" class="img_model" />
+      <span><b class="b_margin">Marca:</b>{{ manufacturer }}</span
+      ><span><b class="b_margin">Modelo:</b>{{ model }}</span>
+    </div>
+    <div *ngIf="canViewHardWare" class="d-flex flex-column">
+      <div class="d-flex justify-content-around">
+        <div>
+          <span><b class="b_margin">Serial Number:</b>{{ serial_number }}</span>
+        </div>
+        <div>
+          <span><b class="b_margin">Marca:</b>{{ manufacturer }}</span>
+        </div>
+        <div>
+          <span><b class="b_margin">Modelo:</b>{{ model }}</span>
+        </div>
+      </div>
+      <div class="mt-3">
+        <span class="mb-2"><b>Memória Ram</b></span>
+        <div class="dash_memory">
+          <div>
+            <span
+              ><b class="b_margin">Capacidade Máxima:</b
+              >{{ max_capacity_memory }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">Quantidade de Slot:</b
+              >{{ number_of_slot }}</span
+            >
+          </div>
+          <div>
+            <table class="table">
+              <thead>
+                <th class="txt_left">Name</th>
+                <th class="txt_left">Size</th>
+                <th class="txt_left">Type</th>
+                <th class="txt_left">Type Details</th>
+                <th class="txt_left">Speed</th>
+                <th class="txt_left">Serial Number</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="txt_left">{{ first_slot_dim }}</td>
+                  <td class="txt_left">{{ first_size }}</td>
+                  <td class="txt_left">{{ first_type }}</td>
+                  <td class="txt_left">{{ first_type_details }}</td>
+                  <td class="txt_left">{{ first_speed_memory }}</td>
+                  <td class="txt_left">{{ first_serial_number }}</td>
+                </tr>
+                <tr>
+                  <td class="txt_left">{{ second_slot_dim }}</td>
+                  <td class="txt_left">{{ second_size }}</td>
+                  <td class="txt_left">{{ second_type }}</td>
+                  <td class="txt_left">{{ second_type_details }}</td>
+                  <td class="txt_left">{{ second_speed_memory }}</td>
+                  <td class="txt_left">{{ second_serial_number }}</td>
+                </tr>
+                <tr>
+                  <td class="txt_left">{{ third_slot_dim }}</td>
+                  <td class="txt_left">{{ third_size }}</td>
+                  <td class="txt_left">{{ third_type }}</td>
+                  <td class="txt_left">{{ third_type_details }}</td>
+                  <td class="txt_left">{{ third_speed_memory }}</td>
+                  <td class="txt_left">{{ third_serial_number }}</td>
+                </tr>
+
+                <tr>
+                  <td>{{ fourth_slot_dim }}</td>
+                  <td>{{ fourth_size }}</td>
+                  <td>{{ fourth_type }}</td>
+                  <td>{{ fourth_type_details }}</td>
+                  <td>{{ fourth_speed_memory }}</td>
+                  <td>{{ fourth_serial_number }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <span><b>Disco Rígido</b></span>
+        <div class="dash_memory">
+          <div>
+            <span
+              ><b class="b_margin">HardDisk Model:</b
+              >{{ hard_disk_model }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">HardDisk Serial Number:</b
+              >{{ hard_disk_serial_number }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">HardDisk User Capacity:</b
+              >{{ hard_disk_user_capacity }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">HardDisk Sata Version:</b
+              >{{ hard_disk_sata_version }}</span
+            >
+          </div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <span><b>Processador</b></span>
+        <div class="dash_memory">
+          <div>
+            <span
+              ><b class="b_margin">CPU Architecture:</b
+              >{{ cpu_architecture }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">CPU Operation Mode:</b
+              >{{ cpu_operation_mode }}
+            </span>
+          </div>
+          <div>
+            <span><b class="b_margin">CPU'S:</b>{{ cpus }}</span>
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">CPU Vendor ID:</b>{{ cpu_vendor_id }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">CPU Model Name:</b>{{ cpu_model_name }}</span
+            >
+          </div>
+          <div>
+            <span><b class="b_margin">CPU Thread's:</b>{{ cpu_thread }}</span>
+          </div>
+          <div>
+            <span><b class="b_margin">CPU Core's:</b>{{ cpu_core }}</span>
+          </div>
+          <div>
+            <span><b class="b_margin">CPU Socket's:</b>{{ cpu_socket }}</span>
+          </div>
+          <div>
+            <span><b class="b_margin">CPU Max MHz:</b></span
+            >{{ cpu_max_mhz }}
+          </div>
+          <div>
+            <span><b class="b_margin">CPU Min MHz:</b>{{ cpu_min_mhz }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <span><b>Placa de Vídeo</b></span>
+        <div class="dash_memory">
+          <div>
+            <span><b class="b_margin">GPU Product:</b>{{ gpu_product }}</span>
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">GPU Vendor ID:</b>{{ gpu_vendor_id }}</span
+            >
+          </div>
+          <div>
+            <span><b class="b_margin">GPU Bus Info:</b>{{ gpu_bus_info }}</span>
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">GPU Logical Name:</b
+              >{{ gpu_logical_name }}</span
+            >
+          </div>
+          <div>
+            <span><b class="b_margin">GPU Clock:</b>{{ gpu_clock }}</span>
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">GPU Configuration:</b
+              >{{ gpu_configuration }}</span
+            >
+          </div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <span><b>Som</b></span>
+        <div class="dash_memory">
+          <div>
+            <span
+              ><b class="b_margin">Audio Device Product:</b
+              >{{ audio_device_product }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">Audio Device Model:</b
+              >{{ audio_device_model }}</span
+            >
+          </div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <span><b>Placa Mãe</b></span>
+        <div class="dash_memory">
+          <div>
+            <span><b>SMBIOS:</b>{{ present }}</span>
+          </div>
+          <div>
+            <span><b>SMBIOS Version:</b>{{ bios_version }}</span>
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">MotherBoard Manufacturer:</b
+              >{{ motherboard_manufacturer }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">MotherBoard Product Name:</b
+              >{{ motherboard_product_name }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">MotherBoard Version:</b
+              >{{ motherboard_version }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">MotherBoard Serial Name:</b
+              >{{ motherboard_serial_name }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">MotherBoard Asset Tag:</b
+              >{{ motherboard_asset_tag }}</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+    <div *ngIf="canViewSoftWare">
+      <span><b>SoftWares</b></span>
+      <div class="dash_memory">
+        <div *ngFor="let software of softwares">{{ software }}</div>
+      </div>
+    </div>
+    <div *ngIf="canViewDevices">
+      <span
+        ><b>Dispositivos</b>
+        <div class="dash_memory">
+          <table class="tb">
+            <thead>
+              <tr>
+                <th class="thcls text-uppercase">Equipamento</th>
+                <th class="thcls text-uppercase">Serial Number</th>
+                <th class="thcls text-uppercase">Modelo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                class="trcls"
+                *ngFor="let device of devices; let i = index"
+                (click)="onRowClick(i)"
+              >
+                <td class="tdsadj">{{ device[0] }}</td>
+                <td class="tdsadj">{{ device[2] }}</td>
+                <td class="tdsadj">{{ device[1] }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div></span
+      >
+    </div>
+  </div>
+</div>

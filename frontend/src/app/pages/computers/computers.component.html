@@ -1,0 +1,28 @@
+<div class="main">
+  <app-navbar *ngIf="canView" [name]="name" />
+  <app-loading *ngIf="!canView" />
+  <table class="tb">
+    <thead>
+      <tr>
+        <th class="thcls text-uppercase">mac_address</th>
+        <th class="thcls text-uppercase">name</th>
+        <th class="thcls text-uppercase">S.O</th>
+        <th class="thcls text-uppercase">distribution</th>
+        <th class="thcls text-uppercase">last update</th>
+      </tr>
+    </thead>
+    <tbody *ngIf="canViewMachines">
+      <tr
+        class="trcls"
+        *ngFor="let machine of dataMachines; let i = index"
+        (click)="onRowClick(i)"
+      >
+        <td class="tdsadj">{{ machine[0] }}</td>
+        <td class="tdsadj">{{ machine[1] }}</td>
+        <td class="tdsadj">{{ machine[2] }}</td>
+        <td class="tdsadj">{{ machine[3] }}</td>
+        <td class="tdsadj">{{ machine[4] }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

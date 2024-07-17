@@ -1,0 +1,107 @@
+<div class="main">
+  <app-navbar *ngIf="canView" [name]="name" />
+  <div class="dash mt-3">
+    <div class="w-100 d-flex text-center justify-content-center flex-column">
+      <span><b>Dispositivos</b></span>
+      <table class="tb mt-3">
+        <thead>
+          <tr>
+            <th class="thcls text-uppercase">Equipamento</th>
+            <th class="thcls text-uppercase">Marca</th>
+            <th class="thcls text-uppercase">Modelo</th>
+            <th class="thcls text-uppercase">SN</th>
+            <th class="thcls text-uppercase">Imob</th>
+          </tr>
+        </thead>
+        <tbody *ngIf="canViewDevices">
+          <tr
+            class="trcls"
+            *ngFor="let device of devices; let i = index"
+            (click)="onRowClick(i)"
+          >
+            <td class="tdsadj">{{ device[0] }}</td>
+            <td class="tdsadj">{{ device[4] }}</td>
+            <td class="tdsadj">{{ device[1] }}</td>
+            <td class="tdsadj">{{ device[2] }}</td>
+            <td class="tdsadj">{{ device[3] }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="img_device position-relative w-100 h-100">
+      <img
+        (click)="addDevices()"
+        class="img-fluid img_close mx-arround position-absolute top-0 start-0"
+        [src]="imageDevices"
+        alt="adicionar novo dispositivo"
+      />
+    </div>
+    <div
+      class="board_new_devices position-absolute top-50 start-50 translate-middle"
+      *ngIf="canViewNewDevices"
+    >
+      <div class="w-100 d-flex">
+        <span class="w-100 text-center"><b>Novo dispositivo</b></span>
+        <div>
+          <img
+            [src]="close_button"
+            alt="Fechar"
+            class="img_close_button img-fluid mx-arround"
+            (click)="closeNewDevices()"
+          />
+        </div>
+      </div>
+      <div class="d-flex flex-column">
+        <select class="form-select mb-3" (change)="device_select($event)">
+          <option value="None" selected disabled>
+            Selecione Tipo De Equipamento
+          </option>
+          <option value="Monitor">Monitor</option>
+        </select>
+        <div class="form-floating mb-3">
+          <input
+            type="text"
+            class="form-control"
+            id="floatingBrand"
+            placeholder="Dell"
+            (input)="getBrand($event)"
+          />
+          <label for="floatingBrand">Marca</label>
+        </div>
+        <div class="form-floating mb-3">
+          <input
+            type="text"
+            class="form-control"
+            id="floatingModel"
+            placeholder="Dell Precision"
+            (input)="getModel($event)"
+          />
+          <label for="floatingModel">Modelo</label>
+        </div>
+        <div class="form-floating mb-3">
+          <input
+            type="text"
+            class="form-control"
+            id="floatingSN"
+            placeholder="SD1234DDF23"
+            (input)="getSerialNumber($event)"
+          />
+          <label for="floatingSN">Serial Number</label>
+        </div>
+        <div class="form-floating mb-3">
+          <input
+            type="text"
+            class="form-control"
+            id="floatingImob"
+            placeholder="CSC 020073673"
+            (input)="getImob($event)"
+          />
+          <label for="floatingImob">Imobilizado</label>
+        </div>
+      </div>
+      <button class="btn btn-success" (click)="sumbitNewDevice()">
+        Enviar
+      </button>
+    </div>
+  </div>
+</div>
