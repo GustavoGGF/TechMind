@@ -1,0 +1,33 @@
+{
+  "ALL": {
+    "DCPS": "Docker compose utilizando apache"
+  },
+  "Home": {
+    "LNX": "Linux não estão sendo mostrado nos grafico de quantidade"
+  },
+  "Computer": { "FLTR": "Filtro nos dispositivos, por software" },
+  "Computer Details": {
+    "Upgrade": {
+      "Others": "Aba outros que contera documentos e consigo possibilitar deixar o computador para lugar",
+      "LCNSW": "Deixar a licença Windows na aba Outros",
+      "PLQTIMB": "Plaqueta de Imobilizado",
+      "BIOS": "Bios",
+      "LGMDL": "LOGO da Intel e AMD",
+      "ARCHR": "Uma ancora que vai ate os catalogos (palca mae, processador, etc... e que vai ate o topo tambem",
+      "PORTS": "sobre portas tambem, como :800 etc",
+      "PRST": "Portas fisicas tambem",
+      "LcLZC": "Localização"
+    }
+  },
+  "Back End": {
+    "HotFix": {
+      "MDRT": "Moderators de csrf e login_required",
+      "QRIS": "Queries mais performaticas"
+    }
+  },
+  "Front end": {
+    "HptFix": {
+      "HDRS": "Adicionar headers"
+    }
+  }
+}
