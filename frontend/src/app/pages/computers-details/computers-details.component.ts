@@ -50,30 +50,6 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
   serial_number: string = '';
   max_capacity_memory: string = '';
   number_of_slot: string = '';
-  first_slot_dim: string = '';
-  second_slot_dim: string = '';
-  third_slot_dim: string = '';
-  fourth_slot_dim: string = '';
-  first_size: string = '';
-  second_size: string = '';
-  third_size: string = '';
-  fourth_size: string = '';
-  first_type: string = '';
-  second_type: string = '';
-  third_type: string = '';
-  fourth_type: string = '';
-  first_type_details = '';
-  second_type_details = '';
-  third_type_details = '';
-  fourth_type_details = '';
-  first_speed_memory = '';
-  second_speed_memory = '';
-  third_speed_memory = '';
-  fourth_speed_memory = '';
-  first_serial_number = '';
-  second_serial_number = '';
-  third_serial_number = '';
-  fourth_serial_number = '';
   hard_disk_model = '';
   hard_disk_serial_number = '';
   hard_disk_user_capacity = '';
@@ -108,6 +84,9 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
   softwares: string[] = [];
   canViewDevices: boolean = false;
   devices: string[] = [];
+  domain: string = '';
+  memories: any;
+  memory_windows: boolean = false;
 
   urlResize = '/static/assets/images/expandir-setas.png';
 
@@ -168,76 +147,67 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
           this.operational_System = this.info_PC[3];
           switch (this.operational_System) {
             default:
+              this.url_logo = '';
               break;
             case 'ubuntu':
-              this.url_logo = '/static/assets/images/ubuntu.png';
+              this.url_logo = '/static/assets/images/brands/ubuntu.png';
+              break;
+            case 'Windows10':
+              this.url_logo = '/static/assets/images/brands/windows10.png';
+              break;
           }
           this.system_version = this.info_PC[6];
+          this.domain = this.info_PC[7];
           this.ip = this.info_PC[8];
           this.manufacturer = this.info_PC[9];
           switch (this.manufacturer) {
             default:
+              this.url_manufacturer = '';
               break;
             case 'Dell Inc.':
-              this.url_manufacturer = '/static/assets/images/dell.png';
+              this.url_manufacturer = '/static/assets/images/brands/dell.png';
+              break;
+            case 'VMware, Inc.':
+              this.url_manufacturer = '/static/assets/images/brands/VMware.png';
+              break;
           }
           this.model = this.info_PC[10];
           switch (this.model) {
             default:
+              this.url_model = '';
               break;
             case 'Precision M4600':
               this.url_model = '/static/assets/images/models/_OVR.webp';
+              break;
+            case 'VMware Virtual Platform':
+              this.url_model = '/static/assets/images/brands/feature-image.png';
           }
           this.serial_number = this.info_PC[11];
           this.max_capacity_memory = this.info_PC[12];
           this.number_of_slot = this.info_PC[13];
-          this.first_slot_dim = this.info_PC[14];
-          this.second_slot_dim = this.info_PC[15];
-          this.third_slot_dim = this.info_PC[16];
-          this.fourth_slot_dim = this.info_PC[17];
-          this.first_size = this.info_PC[18];
-          this.second_size = this.info_PC[19];
-          this.third_size = this.info_PC[20];
-          this.fourth_size = this.info_PC[21];
-          this.first_type = this.info_PC[22];
-          this.second_type = this.info_PC[23];
-          this.third_type = this.info_PC[24];
-          this.fourth_type = this.info_PC[25];
-          this.first_type_details = this.info_PC[26];
-          this.second_type_details = this.info_PC[27];
-          this.third_type_details = this.info_PC[28];
-          this.fourth_type_details = this.info_PC[29];
-          this.first_speed_memory = this.info_PC[30];
-          this.second_speed_memory = this.info_PC[31];
-          this.third_speed_memory = this.info_PC[32];
-          this.fourth_speed_memory = this.info_PC[33];
-          this.first_serial_number = this.info_PC[34];
-          this.second_serial_number = this.info_PC[35];
-          this.third_serial_number = this.info_PC[36];
-          this.fourth_serial_number = this.info_PC[37];
-          this.hard_disk_model = this.info_PC[38];
-          this.hard_disk_serial_number = this.info_PC[39];
-          this.hard_disk_user_capacity = this.info_PC[40];
-          this.hard_disk_sata_version = this.info_PC[41];
-          this.cpu_architecture = this.info_PC[42];
-          this.cpu_operation_mode = this.info_PC[43];
-          this.cpus = this.info_PC[44];
-          this.cpu_vendor_id = this.info_PC[45];
-          this.cpu_model_name = this.info_PC[46];
-          this.cpu_thread = this.info_PC[47];
-          this.cpu_socket = this.info_PC[48];
-          this.cpu_max_mhz = this.info_PC[49];
-          this.cpu_min_mhz = this.info_PC[50];
-          this.cpu_core = this.info_PC[51];
-          this.gpu_product = this.info_PC[52];
-          this.gpu_vendor_id = this.info_PC[53];
-          this.gpu_bus_info = this.info_PC[54];
-          this.gpu_logical_name = this.info_PC[55];
-          this.gpu_clock = this.info_PC[56];
-          this.gpu_configuration = this.info_PC[57];
-          this.audio_device_product = this.info_PC[58];
-          this.audio_device_model = this.info_PC[59];
-          if (this.info_PC[60].includes('present')) {
+          this.hard_disk_model = this.info_PC[14];
+          this.hard_disk_serial_number = this.info_PC[15];
+          this.hard_disk_user_capacity = this.info_PC[16];
+          this.hard_disk_sata_version = this.info_PC[17];
+          this.cpu_architecture = this.info_PC[18];
+          this.cpu_operation_mode = this.info_PC[19];
+          this.cpus = this.info_PC[20];
+          this.cpu_vendor_id = this.info_PC[21];
+          this.cpu_model_name = this.info_PC[22];
+          this.cpu_thread = this.info_PC[23];
+          this.cpu_socket = this.info_PC[24];
+          this.cpu_max_mhz = this.info_PC[25];
+          this.cpu_min_mhz = this.info_PC[26];
+          this.cpu_core = this.info_PC[27];
+          this.gpu_product = this.info_PC[28];
+          this.gpu_vendor_id = this.info_PC[29];
+          this.gpu_bus_info = this.info_PC[30];
+          this.gpu_logical_name = this.info_PC[31];
+          this.gpu_clock = this.info_PC[32];
+          this.gpu_configuration = this.info_PC[33];
+          this.audio_device_product = this.info_PC[34];
+          this.audio_device_model = this.info_PC[35];
+          if (this.info_PC[36].includes('present')) {
             this.present = 'Present';
           } else {
             this.present = 'Not found';
@@ -249,16 +219,33 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
             let part_2 = matches[2];
             this.bios_version = part_1 + '.' + part_2;
           }
-          this.motherboard_manufacturer = this.info_PC[61];
-          this.motherboard_product_name = this.info_PC[62];
-          this.motherboard_version = this.info_PC[63];
-          this.motherboard_serial_name = this.info_PC[64];
-          this.motherboard_asset_tag = this.info_PC[65];
-          let softwares_list = this.info_PC[66];
-          let names = softwares_list.split(',');
+          this.motherboard_manufacturer = this.info_PC[37];
+          this.motherboard_product_name = this.info_PC[38];
+          this.motherboard_version = this.info_PC[39];
+          this.motherboard_serial_name = this.info_PC[40];
+          this.motherboard_asset_tag = this.info_PC[41];
+          let softwares_list = this.info_PC[42];
+          if (softwares_list) {
+            let names = softwares_list.split(',');
 
-          for (let i = 0; i < names.length; i++) {
-            this.softwares.push(names[i]);
+            for (let i = 0; i < names.length; i++) {
+              this.softwares.push(names[i]);
+            }
+          }
+          this.memories = this.info_PC[43];
+          if (this.memories) {
+            let valid = this.memories.replace(/'/g, '"');
+
+            this.memories = JSON.parse(valid);
+
+            console.log(this.memories);
+
+            switch (this.operational_System) {
+              default:
+                break;
+              case 'Windows10':
+                this.memory_windows = true;
+            }
           }
         }
       });
@@ -322,5 +309,16 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
     const selectedDevice = this.devices[index];
     var sn = selectedDevice[2];
     return (window.location.href = '/home/devices/view-devices/' + sn);
+  }
+
+  convertBytesToGB(bytes: number): number {
+    return bytes / 1024 ** 3;
+  }
+
+  convertBytesToGB2(capacity: string): number {
+    // Remove qualquer texto adicional e converte para número
+    const numericValue = parseFloat(capacity.replace(/[^0-9]/g, ''));
+    // Assumindo que o valor é em GB
+    return numericValue;
   }
 }

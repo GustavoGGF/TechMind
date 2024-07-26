@@ -12,6 +12,7 @@ import (
 	"os/user"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -34,30 +35,6 @@ type Data struct {
 	SerialNumber          string   `json:"serialNumber"`
 	MaxCapacityMemory     string   `json:"maxCapacityMemory"`
 	NumberOfDevices       string   `json:"numberOfDevices"`
-	FirstSlotDim          string   `json:"firstSlotDim"`
-	SecondSlotDim         string   `json:"secondSlotDim"`
-	ThirdSlotDim          string   `json:"thirdSlotDim"`
-	FourthSlotDim         string   `json:"fourthSlotDim"`
-	FirstSize             string   `json:"firstSize"`
-	SecondSize            string   `json:"secondSize"`
-	ThirdSize             string   `json:"thirdSize"`
-	FourthSize            string   `json:"fourthSize"`
-	FirstType             string   `json:"firstType"`
-	SecondType            string   `json:"secondType"`
-	ThirdType             string   `json:"thirdType"`
-	FourthType            string   `json:"fourthType"`
-	FirstTypeDetails      string   `json:"firstTypeDetails"`
-	SecondTypeDetails     string   `json:"secondTypeDetails"`
-	ThirdTypeDetails      string   `json:"thirdTypeDetails"`
-	FourthTypeDetails     string   `json:"fourthTypeDetails"`
-	FirstSpeedMemory      string   `json:"firstSpeedMemory"`
-	SecondSpeedMemory     string   `json:"secondSpeedMemory"`
-	ThirdSpeedMemory      string   `json:"thirdSpeedMemory"`
-	FourthSpeedMemory     string   `json:"fourthSpeedMemory"`
-	FirstSerialNumber     string   `json:"firstSerialNumber"`
-	SecondSerialNumber    string   `json:"secondSerialNumber"`
-	ThirdSerialNumber     string   `json:"thirdSerialNumber"`
-	FourthSerialNumber    string   `json:"fourthSerialNumber"`
 	HardDiskModel         string   `json:"hardDiskModel"`
 	HardDiskSerialNumber  string   `json:"hardDiskSerialNumber"`
 	HardDiskUserCapacity  string   `json:"hardDiskUserCapacity"`
@@ -87,6 +64,7 @@ type Data struct {
 	MotherbaoardSerialName string `json:"motherboardSerialName"`
 	MotherboardAssetTag   string   `json:"motherboardAssetTag"`
 	SoftwareNames         []string `json:"installedPackages"`
+	Memories 			[]map[string]string `json:"memories"`
 }
 
 func bytesEqual(b []byte) bool {
@@ -216,166 +194,232 @@ func getNumberOfDevices() (string, error) {
 	return "", fmt.Errorf("number of devices não encontrada")
 }
 
-func getMemorySlotName(slotNumber int) (string, error) {
+func getMemorySlotNames(numberOfDevices int) ([]string, error) {
 	cmd := exec.Command("sudo", "dmidecode", "-t", "memory")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("erro ao executar dmidecode: %v", err)
+		return nil, fmt.Errorf("erro ao executar dmidecode: %v", err)
 	}
 
 	lines := strings.Split(out.String(), "\n")
 	slotCount := 0
+	var slotNames []string
 
 	for _, line := range lines {
 		if strings.Contains(line, "Locator:") {
-			if slotCount == slotNumber {
+			if slotCount < numberOfDevices {
 				parts := strings.Split(line, ":")
 				if len(parts) > 1 {
-					return strings.TrimSpace(parts[1]), nil
+					// Adiciona uma vírgula antes do próximo valor
+					slotName := strings.TrimSpace(parts[1])
+					if slotCount > 0 {
+						slotNames = append(slotNames, ", "+slotName)
+					} else {
+						slotNames = append(slotNames, slotName)
+					}
+					slotCount++
 				}
 			}
-			slotCount++
 		}
 	}
 
-	return "", fmt.Errorf("slot de memória número %d não encontrado", slotNumber)
+	if slotCount == 0 {
+		return nil, fmt.Errorf("nenhum slot de memória encontrado")
+	}
+
+	return slotNames, nil
 }
 
-func getMemorySize(slotNumber int) (string, error) {
+func getMemorySizes(numberOfDevices int) ([]string, error) {
 	cmd := exec.Command("sudo", "dmidecode", "-t", "memory")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("erro ao executar dmidecode: %v", err)
+		return nil, fmt.Errorf("erro ao executar dmidecode: %v", err)
 	}
 
 	lines := strings.Split(out.String(), "\n")
 	slotCount := 0
+	var sizes []string
 
 	for _, line := range lines {
 		if strings.Contains(line, "Size:") {
-			if slotCount == slotNumber {
+			if slotCount < numberOfDevices {
 				parts := strings.Split(line, ":")
 				if len(parts) > 1 {
-					return strings.TrimSpace(parts[1]), nil
+					// Adiciona uma vírgula antes do próximo valor, exceto para o primeiro valor
+					size := strings.TrimSpace(parts[1])
+					if slotCount > 0 {
+						sizes = append(sizes, ", "+size)
+					} else {
+						sizes = append(sizes, size)
+					}
+					slotCount++
 				}
 			}
-			slotCount++
 		}
 	}
 
-	return "", fmt.Errorf("slot de memória número %d não encontrado", slotNumber)
+	if slotCount == 0 {
+		return nil, fmt.Errorf("nenhum tamanho de memória encontrado")
+	}
+
+	return sizes, nil
 }
 
-func getMemoryType(slotNumber int) (string, error) {
+func getMemoryTypes(numberOfDevices int) ([]string, error) {
 	cmd := exec.Command("sudo", "dmidecode", "-t", "memory")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("erro ao executar dmidecode: %v", err)
+		return nil, fmt.Errorf("erro ao executar dmidecode: %v", err)
 	}
 
 	lines := strings.Split(out.String(), "\n")
 	slotCount := 0
+	var types []string
 
 	for _, line := range lines {
 		if strings.Contains(line, "Type:") {
-			if slotCount == slotNumber {
+			if slotCount < numberOfDevices {
 				parts := strings.Split(line, ":")
 				if len(parts) > 1 {
-					return strings.TrimSpace(parts[1]), nil
+					// Adiciona uma vírgula antes do próximo valor, exceto para o primeiro valor
+					typeMem := strings.TrimSpace(parts[1])
+					if slotCount > 0 {
+						types = append(types, ", "+typeMem)
+					} else {
+						types = append(types, typeMem)
+					}
+					slotCount++
 				}
 			}
-			slotCount++
 		}
 	}
 
-	return "", fmt.Errorf("slot de memória número %d não encontrado", slotNumber)
+	if slotCount == 0 {
+		return nil, fmt.Errorf("nenhum tipo de memória encontrado")
+	}
+
+	return types, nil
 }
 
-func getMemoryTypeDetails(slotNumber int) (string, error) {
+func getMemoryTypeDetails(numberOfDevices int) ([]string, error) {
 	cmd := exec.Command("sudo", "dmidecode", "-t", "memory")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("erro ao executar dmidecode: %v", err)
+		return nil, fmt.Errorf("erro ao executar dmidecode: %v", err)
 	}
 
 	lines := strings.Split(out.String(), "\n")
 	slotCount := 0
+	var details []string
 
 	for _, line := range lines {
 		if strings.Contains(line, "Type Detail:") {
-			if slotCount == slotNumber {
+			if slotCount < numberOfDevices {
 				parts := strings.Split(line, ":")
 				if len(parts) > 1 {
-					return strings.TrimSpace(parts[1]), nil
+					// Adiciona uma vírgula antes do próximo valor, exceto para o primeiro valor
+					detailMem := strings.TrimSpace(parts[1])
+					if slotCount > 0 {
+						details = append(details, ", "+detailMem)
+					} else {
+						details = append(details, detailMem)
+					}
+					slotCount++
 				}
 			}
-			slotCount++
 		}
 	}
 
-	return "", fmt.Errorf("slot de memória número %d não encontrado", slotNumber)
+	if slotCount == 0 {
+		return nil, fmt.Errorf("nenhum detalhe de tipo de memória encontrado")
+	}
+
+	return details, nil
 }
 
-func getMemorySpeed(slotNumber int) (string, error) {
+func getMemorySpeeds(numberOfDevices int) ([]string, error) {
 	cmd := exec.Command("sudo", "dmidecode", "-t", "memory")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("erro ao executar dmidecode: %v", err)
+		return nil, fmt.Errorf("erro ao executar dmidecode: %v", err)
 	}
 
 	lines := strings.Split(out.String(), "\n")
 	slotCount := 0
+	var speeds []string
 
 	for _, line := range lines {
 		if strings.Contains(line, "Speed:") {
-			if slotCount == slotNumber {
+			if slotCount < numberOfDevices {
 				parts := strings.Split(line, ":")
 				if len(parts) > 1 {
-					return strings.TrimSpace(parts[1]), nil
+					// Adiciona uma vírgula antes do próximo valor, exceto para o primeiro valor
+					speedsMem := strings.TrimSpace(parts[1])
+					if slotCount > 0 {
+						speeds = append(speeds, ", "+speedsMem)
+					} else {
+						speeds = append(speeds, speedsMem)
+					}
+					slotCount++
 				}
 			}
-			slotCount++
 		}
 	}
 
-	return "", fmt.Errorf("slot de memória número %d não encontrado", slotNumber)
+	if slotCount == 0 {
+		return nil, fmt.Errorf("nenhuma velocidade de memória encontrada")
+	}
+
+	return speeds, nil
 }
 
-func getMemorySerialNumber(slotNumber int) (string, error) {
+func getMemorySerialNumbers(numberOfDevices int) ([]string, error) {
 	cmd := exec.Command("sudo", "dmidecode", "-t", "memory")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("erro ao executar dmidecode: %v", err)
+		return nil, fmt.Errorf("erro ao executar dmidecode: %v", err)
 	}
 
 	lines := strings.Split(out.String(), "\n")
 	slotCount := 0
+	var serialNumbers []string
 
 	for _, line := range lines {
 		if strings.Contains(line, "Serial Number:") {
-			if slotCount == slotNumber {
+			if slotCount < numberOfDevices {
 				parts := strings.Split(line, ":")
 				if len(parts) > 1 {
-					return strings.TrimSpace(parts[1]), nil
+					// Adiciona uma vírgula antes do próximo valor, exceto para o primeiro valor
+					serialNumbersMem := strings.TrimSpace(parts[1])
+					if slotCount > 0 {
+						serialNumbers = append(serialNumbers, ", "+serialNumbersMem)
+					} else {
+						serialNumbers = append(serialNumbers, serialNumbersMem)
+					}
+					slotCount++
 				}
 			}
-			slotCount++
 		}
 	}
 
-	return "", fmt.Errorf("slot de memória número %d não encontrado", slotNumber)
+	if slotCount == 0 {
+		return nil, fmt.Errorf("nenhum número de série de memória encontrado")
+	}
+
+	return serialNumbers, nil
 }
 
 func getHDModel(device string) (string, error) {
@@ -811,125 +855,81 @@ func main() {
 		log.Fatalf("erro ao obter number of devices: %v", err)
 	}
 
-	firstSlotName, err := getMemorySlotName(0)
+	numberDevices, err := strconv.Atoi(numberOfDevices)
+	if err != nil {
+		fmt.Println("Erro ao converter a string para inteiro:", err)
+		return
+	}
+
+	slotNames, err := getMemorySlotNames(numberDevices)
+	if err != nil {
+		fmt.Println("Erro:", err)
+		return
+	}
+
+	memorySizes, err := getMemorySizes(numberDevices)
 	if err != nil {
 		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
 	}
 
-	secondSlotName, err := getMemorySlotName(2)
+	// Remove colchetes e divide a string em partes
+	cleanedInput := strings.Trim(fmt.Sprint(slotNames), "[]")
+	partsNames := strings.Split(cleanedInput, ",")
+
+	// Remove colchetes e divide a string em partes
+	cleanedInput2 := strings.Trim(fmt.Sprint(memorySizes), "[]")
+	partsSizes := strings.Split(cleanedInput2, ",")
+
+	memoriesTypes, err := getMemoryTypes(numberDevices)
 	if err != nil {
 		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
 	}
 
-	thirdSlotName, err := getMemorySlotName(4)
+	// Remove colchetes e divide a string em partes
+	cleanedInput3 := strings.Trim(fmt.Sprint(memoriesTypes), "[]")
+	partsTypes := strings.Split(cleanedInput3, ",")
+
+	memoriesTypeDetails, err := getMemoryTypeDetails(numberDevices)
 	if err != nil {
 		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
 	}
 
-	fourSlotName, err := getMemorySlotName(6)
+	// Remove colchetes e divide a string em partes
+	cleanedInput4 := strings.Trim(fmt.Sprint(memoriesTypeDetails), "[]")
+	partsTypeDetails := strings.Split(cleanedInput4, ",")
+
+	memoriesSpeedMemory, err := getMemorySpeeds(numberDevices)
 	if err != nil {
 		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
 	}
 
-	firstSize, err := getMemorySize(0)
+	// Remove colchetes e divide a string em partes
+	cleanedInput5 := strings.Trim(fmt.Sprint(memoriesSpeedMemory), "[]")
+	partsSpeed := strings.Split(cleanedInput5, ",")
+
+	memoriesSerialNumber, err := getMemorySerialNumbers(numberDevices)
 	if err != nil {
 		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
 	}
 
-	secondSize, err := getMemorySize(1)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
-	}
+	// Remove colchetes e divide a string em partes
+	cleanedInput6 := strings.Trim(fmt.Sprint(memoriesSerialNumber), "[]")
+	partsSerialNumber := strings.Split(cleanedInput6, ",")
 
-	thirdSize, err := getMemorySize(2)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
-	}
+	// Remove colchetes e divide a string em partes
+	var memoriesList []map[string]string
 
-	fourthSize, err := getMemorySize(3)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
+	for i := 0; i < len(partsNames); i++ {
+		obj := map[string]string{
+			"BankLabel": partsNames[i],
+			"Capacity":  partsSizes[i],
+			"MemoryType": partsTypes[i],
+			"TypeDetail": partsTypeDetails[i],
+			"Speed": partsSpeed[i],
+			"SerialNumber": partsSerialNumber[i],
+		}
+		memoriesList = append(memoriesList, obj)
 	}
-
-	firstType, err := getMemoryType(0)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
-	}
-
-	secondType, err := getMemoryType(3)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
-	}
-
-	thirdType, err := getMemoryType(3)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
-	}
-
-	fourthType, err := getMemoryType(3)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
-	}
-	
-	firstTypeDetails, err := getMemoryTypeDetails(0)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
-	}
-
-	secondTypeDetails, err := getMemoryTypeDetails(1)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
-	}
-
-	thirdTypeDetails, err := getMemoryTypeDetails(2)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
-	}
-
-	fourthTypeDetails, err := getMemoryTypeDetails(3)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
-	}
-
-	firstSpeedMemory, err := getMemorySpeed(0)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
-	}
-
-	secondSpeedMemory, err := getMemorySpeed(1)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
-	}
-
-	thirdSpeedMemory, err := getMemorySpeed(2)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
-	}
-
-	fourthSpeedMemory, err := getMemorySpeed(3)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
-	}
-
-	first_serial_number, err := getMemorySerialNumber(0)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
-	}
-
-	second_serial_number, err := getMemorySerialNumber(1)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
-	}
-
-	third_serial_number, err := getMemorySerialNumber(2)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
-	}
-
-	fourth_serial_number, err := getMemorySerialNumber(3)
-	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
-	} 
 
 	hard_disk_model, err := getHDModel("/dev/sda")
 	if err != nil {
@@ -1137,30 +1137,6 @@ func main() {
 		SerialNumber: serialNumber, 
         MaxCapacityMemory: maxCapacity, 
 		NumberOfDevices: numberOfDevices, 
-		FirstSlotDim: firstSlotName, 
-		SecondSlotDim: secondSlotName, 
-		ThirdSlotDim: thirdSlotName, 
-		FourthSlotDim: fourSlotName, 
-		FirstSize: firstSize,
-		SecondSize: secondSize,
-		ThirdSize: thirdSize,
-		FourthSize: fourthSize,
-		FirstType: firstType, 
-		SecondType: secondType, 
-		ThirdType: thirdType, 
-		FourthType: fourthType, 
-		FirstTypeDetails: firstTypeDetails, 
-		SecondTypeDetails: secondTypeDetails, 
-		ThirdTypeDetails: thirdTypeDetails, 
-		FourthTypeDetails: fourthTypeDetails,
-		FirstSpeedMemory: firstSpeedMemory, 
-		SecondSpeedMemory: secondSpeedMemory, 
-		ThirdSpeedMemory: thirdSpeedMemory, 
-		FourthSpeedMemory: fourthSpeedMemory, 
-		FirstSerialNumber: first_serial_number, 
-		SecondSerialNumber: second_serial_number,
-		ThirdSerialNumber: third_serial_number, 
-		FourthSerialNumber: fourth_serial_number, 
 		HardDiskModel:hard_disk_model, 
 		HardDiskSerialNumber: hard_disk_serial_number,
 		HardDiskUserCapacity: hard_disk_user_capacity, 
@@ -1190,6 +1166,7 @@ func main() {
 		MotherbaoardSerialName: motherboard_serial_name,
 		MotherboardAssetTag:motherboard_asset_tag,
 		SoftwareNames:packageSlice,
+		Memories: memoriesList,
 	}
 
     requestBody, err := json.Marshal(jsonData)

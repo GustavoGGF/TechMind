@@ -1,0 +1,11 @@
+services:
+  techmind:
+    build:
+      context: .
+      dockerfile: Dockerfile.django
+    ports:
+      - "3000:3000"
+    volumes:
+      - /node/TechMind/backend:/TechMind
+    env_file:
+      - ../.env

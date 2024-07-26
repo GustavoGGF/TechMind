@@ -50,7 +50,7 @@
       </div>
       <div class="d-flex flex-column">
         <h6 class="title">REDE</h6>
-        <span><b class="b_margin">Domínio:</b></span>
+        <span><b class="b_margin">Domínio:</b>{{ domain }}</span>
         <span><b class="b_margin">IP:</b>{{ ip }}</span>
       </div>
     </div>
@@ -92,43 +92,23 @@
                 <th class="txt_left">Name</th>
                 <th class="txt_left">Size</th>
                 <th class="txt_left">Type</th>
-                <th class="txt_left">Type Details</th>
-                <th class="txt_left">Speed</th>
                 <th class="txt_left">Serial Number</th>
+                <th class="txt_left">Speed</th>
+                <th class="txt_left">Type Details</th>
               </thead>
               <tbody>
-                <tr>
-                  <td class="txt_left">{{ first_slot_dim }}</td>
-                  <td class="txt_left">{{ first_size }}</td>
-                  <td class="txt_left">{{ first_type }}</td>
-                  <td class="txt_left">{{ first_type_details }}</td>
-                  <td class="txt_left">{{ first_speed_memory }}</td>
-                  <td class="txt_left">{{ first_serial_number }}</td>
-                </tr>
-                <tr>
-                  <td class="txt_left">{{ second_slot_dim }}</td>
-                  <td class="txt_left">{{ second_size }}</td>
-                  <td class="txt_left">{{ second_type }}</td>
-                  <td class="txt_left">{{ second_type_details }}</td>
-                  <td class="txt_left">{{ second_speed_memory }}</td>
-                  <td class="txt_left">{{ second_serial_number }}</td>
-                </tr>
-                <tr>
-                  <td class="txt_left">{{ third_slot_dim }}</td>
-                  <td class="txt_left">{{ third_size }}</td>
-                  <td class="txt_left">{{ third_type }}</td>
-                  <td class="txt_left">{{ third_type_details }}</td>
-                  <td class="txt_left">{{ third_speed_memory }}</td>
-                  <td class="txt_left">{{ third_serial_number }}</td>
-                </tr>
-
-                <tr>
-                  <td>{{ fourth_slot_dim }}</td>
-                  <td>{{ fourth_size }}</td>
-                  <td>{{ fourth_type }}</td>
-                  <td>{{ fourth_type_details }}</td>
-                  <td>{{ fourth_speed_memory }}</td>
-                  <td>{{ fourth_serial_number }}</td>
+                <tr *ngFor="let memory of memories">
+                  <td class="txt_left">{{ memory.BankLabel }}</td>
+                  <td class="txt_left" *ngIf="memory_windows">
+                    {{ convertBytesToGB(memory.Capacity) + " GB" }}
+                  </td>
+                  <td class="txt_left" *ngIf="!memory_windows">
+                    {{ convertBytesToGB2(memory.Capacity) + " GB" }}
+                  </td>
+                  <td class="txt_left">{{ memory.MemoryType }}</td>
+                  <td class="txt_left">{{ memory.SerialNumber }}</td>
+                  <td class="txt_left">{{ memory.Speed }}</td>
+                  <td class="txt_left">{{ memory.TypeDetail }}</td>
                 </tr>
               </tbody>
             </table>

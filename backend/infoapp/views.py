@@ -140,79 +140,57 @@ def contains_backslash(s):
 @csrf_exempt
 def postMachines(request):
     if request.method == "POST":
-        data = ""
-        system = ""
-        name = ""
-        distribution = ""
-        insertionDate = ""
-        macAddress = ""
-        connection = ""
-        cursor = ""
-        results = ""
-        select_query = ""
-        update_query = ""
-        currentUser = ""
-        user = ""
-        version = ""
-        domain = ""
-        ip = ""
-        model = ""
-        serial_number = ""
-        max_capacity_memory = ""
-        number_of_slots = ""
-        first_slot_dim = ""
-        second_slot_dim = ""
-        third_slot_dim = ""
-        fourth_slot_dim = ""
-        first_size = ""
-        second_size = ""
-        third_size = ""
-        fourth_size = ""
-        first_type = ""
-        second_type = ""
-        third_type = ""
-        fourth_type = ""
-        first_type_details = ""
-        second_type_details = ""
-        third_type_details = ""
-        fourth_type_details = ""
-        first_speed_memory = ""
-        second_speed_memory = ""
-        third_speed_memory = ""
-        fourth_speed_memory = ""
-        first_serial_number = ""
-        second_serial_number = ""
-        third_serial_number = ""
-        fourth_serial_number = ""
-        hard_disk_model = ""
-        hard_disk_serial_number = ""
-        hard_disk_user_capacity = ""
-        hard_disk_sata_version = ""
-        cpu_architecture = ""
-        cpu_operation_mode = ""
-        cpus = ""
-        cpu_vendor_id = ""
-        cpu_model_name = ""
-        cpu_thread = ""
-        cpu_core = ""
-        cpu_socket = ""
-        cpu_max_mhz = ""
-        cpu_min_mhz = ""
-        gpu_product = ""
-        gpu_vendor_id = ""
-        gpu_bus_info = ""
-        gpu_logical_name = ""
-        gpu_clock = ""
-        gpu_configuration = ""
-        audio_device_product = ""
-        audio_device_model = ""
-        bios_version = ""
-        motherboard_manufacturer = ""
-        motherboard_product_name = ""
-        motherboard_version = ""
-        motherboard_serial_name = ""
-        motherboard_asset_tag = ""
-        softwares = ""
+        data = None
+        system = None
+        name = None
+        distribution = None
+        insertionDate = None
+        macAddress = None
+        connection = None
+        cursor = None
+        results = None
+        select_query = None
+        update_query = None
+        currentUser = None
+        user = None
+        version = None
+        domain = None
+        ip = None
+        model = None
+        serial_number = None
+        max_capacity_memory = None
+        number_of_slots = None
+        hard_disk_model = None
+        hard_disk_serial_number = None
+        hard_disk_user_capacity = None
+        hard_disk_sata_version = None
+        cpu_architecture = None
+        cpu_operation_mode = None
+        cpus = None
+        cpu_vendor_id = None
+        cpu_model_name = None
+        cpu_thread = None
+        cpu_core = None
+        cpu_socket = None
+        cpu_max_mhz = None
+        cpu_min_mhz = None
+        gpu_product = None
+        gpu_vendor_id = None
+        gpu_bus_info = None
+        gpu_logical_name = None
+        gpu_clock = None
+        gpu_configuration = None
+        audio_device_product = None
+        audio_device_model = None
+        bios_version = None
+        motherboard_manufacturer = None
+        motherboard_product_name = None
+        motherboard_version = None
+        motherboard_serial_name = None
+        motherboard_asset_tag = None
+        softwares = None
+        softwares_list = None
+        memories = None
 
         try:
             data = json.loads(request.body.decode("utf-8"))
@@ -222,12 +200,15 @@ def postMachines(request):
             insertionDate = data.get("insertionDate")
             macAddress = data.get("macAddress")
             user = data.get("currentUser")
-            if contains_backslash(user):
-                currentUser = user.split("\\")[-1]
-            else:
-                currentUser = user
+
+            if user != None:
+                if contains_backslash(user):
+                    currentUser = user.split("\\")[-1]
+                else:
+                    currentUser = user
+
             ver = data.get("platformVersion")
-            if ver:
+            if ver != None:
                 version = ver.split(" ")[0]
 
             domain = data.get("domain")
@@ -237,30 +218,8 @@ def postMachines(request):
             serial_number = data.get("serialNumber")
             max_capacity_memory = data.get("maxCapacityMemory")
             number_of_slots = data.get("numberOfDevices")
-            first_slot_dim = data.get("firstSlotDim")
-            second_slot_dim = data.get("secondSlotDim")
-            third_slot_dim = data.get("thirdSlotDim")
-            fourth_slot_dim = data.get("fourthSlotDim")
-            first_size = data.get("firstSize")
-            second_size = data.get("secondSize")
-            third_size = data.get("thirdSize")
-            fourth_size = data.get("fourthSize")
-            first_type = data.get("firstType")
-            second_type = data.get("secondType")
-            third_type = data.get("thirdType")
-            fourth_type = data.get("fourthType")
-            first_type_details = data.get("firstTypeDetails")
-            second_type_details = data.get("secondTypeDetails")
-            third_type_details = data.get("thirdTypeDetails")
-            first_type_details = data.get("fourthTypeDetails")
-            first_speed_memory = data.get("firstSpeedMemory")
-            second_speed_memory = data.get("secondSpeedMemory")
-            third_speed_memory = data.get("thirdSpeedMemory")
-            fourth_speed_memory = data.get("fourthSpeedMemory")
-            first_serial_number = data.get("firstSerialNumber")
-            second_serial_number = data.get("fecondSerialNumber")
-            third_serial_number = data.get("fhirdSerialNumber")
-            fourth_serial_number = data.get("fourthSerialNumber")
+            memories = data.get("memories")
+            memories = str(memories)
             hard_disk_model = data.get("hardDiskModel")
             hard_disk_serial_number = data.get("hardDiskSerialNumber")
             hard_disk_user_capacity = data.get("hardDiskUserCapacity")
@@ -290,11 +249,14 @@ def postMachines(request):
             motherboard_serial_name = data.get("motherbaoardSerialName")
             motherboard_asset_tag = data.get("motherboardAssetTag")
             softwares_list = data.get("installedPackages")
-            softwares = ""
-            for soft in softwares_list:
-                softwares += soft + ","
+            softwares = None
+            if softwares_list != None:
+                softwares = ""
+                for soft in softwares_list:
+                    softwares += soft + ","
 
             if macAddress == None:
+                logger.error("Mac Address is required")
                 return JsonResponse(
                     {"error": "Mac Address is required"}, status=400, safe=False
                 )
@@ -324,14 +286,8 @@ def postMachines(request):
                 update_query = """UPDATE machines SET name = %s, system_name = %s, 
                 distribution = %s, insertion_date = %s, logged_user = %s, version = %s , 
                 domain = %s, ip = %s, manufacturer= %s, model = %s,
-                serial_number = %s, max_capacity_memory = %s, number_of_slots = %s, 
-                first_slot_dim = %s, second_slot_dim = %s, third_slot_dim = %s, fourth_slot_dim = %s,
-                first_size = %s, second_size = %s, third_size = %s, fourth_size = %s, 
-                first_type = %s, second_type = %s, third_type = %s, fourth_type = %s, first_type_details = %s
-                , second_type_details = %s, third_type_details = %s, fourth_type_details = %s,
-                first_speed_memory = %s, second_speed_memory = %s, third_speed_memory = %s, fourth_speed_memory = %s
-                , first_serial_number = %s, second_serial_number = %s, third_serial_number =%s, fourth_serial_number =%s 
-                , hard_disk_model = %s, hard_disk_serial_number = %s, hard_disk_user_capacity = %s,
+                serial_number = %s, max_capacity_memory = %s, number_of_slots = %s,  
+                hard_disk_model = %s, hard_disk_serial_number = %s, hard_disk_user_capacity = %s,
                 hard_disk_sata_version = %s, cpu_architecture = %s, cpu_operation_mode = %s, cpus = %s,
                 cpu_vendor_id = %s, cpu_model_name = %s, cpu_thread = %s, cpu_core = %s, cpu_socket = %s,
                 cpu_max_mhz = %s, cpu_min_mhz = %s, gpu_product = %s, gpu_vendor_id = %s, 
@@ -339,7 +295,7 @@ def postMachines(request):
                 , audio_device_product = %s, audio_device_model = %s, bios_version = %s, 
                 motherboard_manufacturer = %s, motherboard_product_name = %s,
                 motherboard_version = %s, motherboard_serial_name = %s,
-                motherboard_asset_tag = %s, softwares = %s WHERE mac_address = %s"""
+                motherboard_asset_tag = %s, softwares = %s, memories = %s WHERE mac_address = %s"""
 
                 cursor.execute(
                     update_query,
@@ -357,30 +313,6 @@ def postMachines(request):
                         serial_number,
                         max_capacity_memory,
                         number_of_slots,
-                        first_slot_dim,
-                        second_slot_dim,
-                        third_slot_dim,
-                        fourth_slot_dim,
-                        first_size,
-                        second_size,
-                        third_size,
-                        fourth_size,
-                        first_type,
-                        second_type,
-                        third_type,
-                        fourth_type,
-                        first_type_details,
-                        second_type_details,
-                        third_type_details,
-                        fourth_type_details,
-                        first_speed_memory,
-                        second_speed_memory,
-                        third_speed_memory,
-                        fourth_speed_memory,
-                        first_serial_number,
-                        second_serial_number,
-                        third_serial_number,
-                        fourth_serial_number,
                         hard_disk_model,
                         hard_disk_serial_number,
                         hard_disk_user_capacity,
@@ -410,6 +342,7 @@ def postMachines(request):
                         motherboard_serial_name,
                         motherboard_asset_tag,
                         softwares,
+                        memories,
                         normalized_mac,
                     ),
                 )
@@ -425,19 +358,15 @@ def postMachines(request):
             else:
                 query = """INSERT INTO machines (mac_address, name, system_name, distribution, 
                 insertion_date, logged_user, version, domain, ip, manufacturer, model, serial_number,
-                max_capacity_memory, number_of_slots, first_slot_dim, second_slot_dim, third_slot_dim,
-                fourth_slot_dim, first_size, second_size, third_size, fourth_size, first_type, second_type,
-                third_type, fourth_type, first_type_details, second_type_details, third_type_details, fourth_type_details,
-                first_speed_memory, second_speed_memory, third_speed_memory, fourth_speed_memory, hard_disk_model,
-                hard_disk_serial_number, hard_disk_user_capacity, hard_disk_sata_version, cpu_architecture,
-                cpu_operation_mode, cpus, cpu_vendor_id, cpu_model_name, cpu_thread, cpu_core, cpu_socket,
-                cpu_max_mhz, cpu_min_mhz, gpu_product, gpu_vendor_id, gpu_bus_info, gpu_logical_name, gpu_clock,
+                max_capacity_memory, number_of_slots, hard_disk_model, hard_disk_serial_number, 
+                hard_disk_user_capacity, hard_disk_sata_version, cpu_architecture, cpu_operation_mode, 
+                cpus, cpu_vendor_id, cpu_model_name, cpu_thread, cpu_core, cpu_socket, cpu_max_mhz, 
+                cpu_min_mhz, gpu_product, gpu_vendor_id, gpu_bus_info, gpu_logical_name, gpu_clock,
                 gpu_configuration, audio_device_product, audio_device_model, bios_version, motherboard_manufacturer,
                 motherboard_product_name, motherboard_version, motherboard_serial_name, motherboard_asset_tag,
-                softwares) 
+                softwares, memories) 
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                ,%s , %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                %s , %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
                 cursor.execute(
                     query,
@@ -456,26 +385,6 @@ def postMachines(request):
                         serial_number,
                         max_capacity_memory,
                         number_of_slots,
-                        first_slot_dim,
-                        second_slot_dim,
-                        third_slot_dim,
-                        fourth_slot_dim,
-                        first_size,
-                        second_size,
-                        third_size,
-                        fourth_size,
-                        first_type,
-                        second_type,
-                        third_type,
-                        fourth_type,
-                        first_type_details,
-                        second_type_details,
-                        third_type_details,
-                        fourth_type_details,
-                        first_speed_memory,
-                        second_speed_memory,
-                        third_speed_memory,
-                        fourth_speed_memory,
                         hard_disk_model,
                         hard_disk_serial_number,
                         hard_disk_user_capacity,
@@ -505,6 +414,7 @@ def postMachines(request):
                         motherboard_serial_name,
                         motherboard_asset_tag,
                         softwares,
+                        memories,
                     ),
                 )
 
