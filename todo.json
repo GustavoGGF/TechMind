@@ -16,7 +16,11 @@
       "ARCHR": "Uma ancora que vai ate os catalogos (palca mae, processador, etc... e que vai ate o topo tambem",
       "PORTS": "sobre portas tambem, como :800 etc",
       "PRST": "Portas fisicas tambem",
-      "LcLZC": "Localização"
+      "LcLZC": "Localização",
+      "HKSV": "Verificcar Hard Disk Sata Verion Windows",
+      "GPU": "Verificar Clock GPU e logical Name Windows",
+      "DVCAD": "Audio Device Windows",
+      "BS": "SMBIOS Windows"
     }
   },
   "Back End": {

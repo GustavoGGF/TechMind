@@ -131,7 +131,11 @@
             >
           </div>
           <div>
-            <span
+            <span *ngIf="memory_windows"
+              ><b class="b_margin">HardDisk User Capacity:</b
+              >{{ hard_disk_user_capacity + " GB" }}</span
+            >
+            <span *ngIf="!memory_windows"
               ><b class="b_margin">HardDisk User Capacity:</b
               >{{ hard_disk_user_capacity }}</span
             >
