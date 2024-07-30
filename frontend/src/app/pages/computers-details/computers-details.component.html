@@ -37,6 +37,9 @@
         <div class="barbtn" (click)="showDevices()">
           <span>Dispositivos</span>
         </div>
+        <div class="barbtn" (click)="showOthers()">
+          <span>Outros</span>
+        </div>
       </div>
     </div>
     <div class="info" *ngIf="canViewDataAdmin">
@@ -326,6 +329,44 @@
           </table>
         </div></span
       >
+    </div>
+    <div *ngIf="canViewOthers">
+      <span><b>Outros</b></span>
+      <div class="dash_memory">
+        <div class="w-100 position-relative">
+          <img
+            class="img-fluid img_config"
+            [src]="img_config"
+            alt="configuração"
+            (click)="modifyDevice()"
+          />
+        </div>
+        <div *ngIf="!modifyOther">
+          <span><b class="b_margin">Plaqueta Imob:</b>{{ imob }}</span>
+        </div>
+        <div *ngIf="modifyOther">
+          <div class="w-100 mb-3 d-flex">
+            <div class="w-100 d-flex text-center justify-content-center">
+              <span><b>Modificação</b></span>
+            </div>
+          </div>
+          <div class="form-floating mb-3">
+            <input
+              type="text"
+              class="form-control"
+              id="floatingBrand"
+              [placeholder]="imob"
+              (input)="getImob($event)"
+            />
+            <label for="floatingBrand">Plaqueta Imob: {{ imob }}</label>
+          </div>
+          <div class="d-flex justify-content-center">
+            <button class="btn btn-success" (click)="submitOthers()">
+              Salvar
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

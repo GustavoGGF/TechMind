@@ -1,4 +1,8 @@
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpClientModule,
+  HttpHeaders,
+} from '@angular/common/http';
 import {
   AfterViewInit,
   Component,
@@ -88,6 +92,12 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
   memories: any;
   memory_windows: boolean = false;
   softwareList: { name: string; version: string; vendor: string }[] = [];
+  canViewOthers: boolean = false;
+  imob: string = '';
+  img_config: string = '/static/assets/images/devices/configuracao.png';
+  modifyOther: boolean = false;
+  input_imob: string = '';
+  token: any;
 
   urlResize = '/static/assets/images/expandir-setas.png';
 
@@ -121,6 +131,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
+    this.getToken();
     this.name = localStorage.getItem('name');
 
     if (this.name.length == 0 || this.name == null) {
@@ -230,7 +241,6 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
             if (this.operational_System == 'Windows10') {
               let jsonString = softwares_list.replace(/'/g, '"');
               this.softwareList = JSON.parse(jsonString);
-              console.log('softwareList: ', this.softwareList);
             } else {
               let names = softwares_list.split(',');
 
@@ -252,6 +262,27 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
                 this.memory_windows = true;
             }
           }
+          this.imob = this.info_PC[44];
+        }
+      });
+  }
+
+  getToken(): void {
+    this.http
+      .get('/home/get-token', {})
+      .pipe(
+        catchError((error) => {
+          this.status = error.status;
+
+          if (this.status === 0) {
+          }
+
+          return throwError(error);
+        })
+      )
+      .subscribe((data: any) => {
+        if (data) {
+          this.token = data.token;
         }
       });
   }
@@ -269,6 +300,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
     this.canViewHardWare = true;
     this.canViewSoftWare = false;
     this.canViewDevices = false;
+    this.canViewOthers = false;
   }
 
   showDataAdmin(): void {
@@ -276,6 +308,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
     this.canViewHardWare = false;
     this.canViewSoftWare = false;
     this.canViewDevices = false;
+    this.canViewOthers = false;
   }
 
   showSoftWare(): void {
@@ -283,6 +316,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
     this.canViewHardWare = false;
     this.canViewSoftWare = true;
     this.canViewDevices = false;
+    this.canViewOthers = false;
   }
 
   showDevices(): void {
@@ -290,6 +324,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
     this.canViewHardWare = false;
     this.canViewSoftWare = false;
     this.canViewDevices = true;
+    this.canViewOthers = false;
     var mac = this.macAddress.replace(/-/g, '');
     this.http
       .get('/home/computers/added-devices/' + mac, {})
@@ -310,6 +345,14 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
       });
   }
 
+  showOthers(): void {
+    this.canViewDataAdmin = false;
+    this.canViewHardWare = false;
+    this.canViewSoftWare = false;
+    this.canViewDevices = false;
+    this.canViewOthers = true;
+  }
+
   onRowClick(index: number) {
     const selectedDevice = this.devices[index];
     var sn = selectedDevice[2];
@@ -325,5 +368,47 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
     const numericValue = parseFloat(capacity.replace(/[^0-9]/g, ''));
     // Assumindo que o valor é em GB
     return numericValue;
+  }
+
+  modifyDevice(): void {
+    this.modifyOther = true;
+  }
+
+  getImob(event: any): void {
+    this.input_imob = event.target.value;
+  }
+
+  submitOthers(): void {
+    var mac = this.macAddress.replace(/-/g, '');
+    this.http
+      .post(
+        '/home/computers/modify-others/' + mac,
+        {
+          imob: this.input_imob,
+        },
+        {
+          headers: new HttpHeaders({
+            'X-CSRFToken': this.token,
+            'Content-Type': 'application/json',
+          }),
+        }
+      )
+      .pipe(
+        catchError((error) => {
+          this.status = error.status;
+
+          if (this.status === 0) {
+          }
+
+          return throwError(error);
+        })
+      )
+      .subscribe((data: any) => {
+        if (data) {
+          this.imob = data.imob;
+        }
+      });
+
+    this.modifyOther = false;
   }
 }

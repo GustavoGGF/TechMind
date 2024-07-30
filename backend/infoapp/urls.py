@@ -48,4 +48,10 @@ urlpatterns = [
         views.computersDevices,
         name="central-computers-device",
     ),
+    path(
+        "computers/modify-others/<str:mac_address>",
+        views.computersModify,
+        name="centra-computers-modify",
+    ),
+    path("get-token", views.getToken, name="central-get-token"),
 ]

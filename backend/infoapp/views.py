@@ -772,3 +772,60 @@ def computersDevices(request, mac_address):
             logger.info(e)
     if request.method == "POST":
         return
+
+
+def computersModify(request, mac_address):
+    if request.method == "GET":
+        return
+    if request.method == "POST":
+        data = None
+        imob = None
+        connection = None
+        cursor = None
+        try:
+            data = json.loads(request.body)
+            imob = data.get("imob")
+            if imob:
+                connection = mysql.connector.connect(
+                    host=config("DB_HOST"),
+                    database=config("DB_NAME"),
+                    user=config("DB_USER"),
+                    password=config("DB_PASSWORD"),
+                )
+
+                if connection.is_connected():
+                    cursor = connection.cursor()
+
+                update_query = "UPDATE machines SET imob =%s WHERE mac_address =%s"
+
+                cursor.execute(update_query, (imob, mac_address))
+
+                # Confirmando a inserção
+                connection.commit()
+
+                update_query = "select imob from machines WHERE mac_address =%s"
+
+                cursor.execute(update_query, (mac_address,))
+
+                # Obtendo o resultado
+                result = (
+                    cursor.fetchone()
+                )  # Use fetchall() se esperar mais de um resultado
+                logger.info(result)
+
+                # Fechando a conexão
+                cursor.close()
+                connection.close()
+
+                return JsonResponse({"imob": result[0]}, status=200, safe=True)
+            else:
+                return JsonResponse({"message": "Imobilizado Obrigatorio"}, status=310)
+        except Exception as e:
+            logger.error(e)
+            return JsonResponse({}, status=420)
+
+
+def getToken(request):
+    if request.method == "GET":
+        csrf = get_token(request)
+        return JsonResponse({"token": csrf}, status=200, safe=True)
