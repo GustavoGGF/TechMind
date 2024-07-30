@@ -251,9 +251,12 @@ def postMachines(request):
             softwares_list = data.get("installedPackages")
             softwares = None
             if softwares_list != None:
-                softwares = ""
-                for soft in softwares_list:
-                    softwares += soft + ","
+                if distribution == "Windows10":
+                    softwares = str(softwares_list)
+                else:
+                    softwares = ""
+                    for soft in softwares_list:
+                        softwares += soft + ","
 
             if macAddress == None:
                 logger.error("Mac Address is required")

@@ -87,6 +87,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
   domain: string = '';
   memories: any;
   memory_windows: boolean = false;
+  softwareList: { name: string; version: string; vendor: string }[] = [];
 
   urlResize = '/static/assets/images/expandir-setas.png';
 
@@ -226,10 +227,16 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
           this.motherboard_asset_tag = this.info_PC[41];
           let softwares_list = this.info_PC[42];
           if (softwares_list) {
-            let names = softwares_list.split(',');
+            if (this.operational_System == 'Windows10') {
+              let jsonString = softwares_list.replace(/'/g, '"');
+              this.softwareList = JSON.parse(jsonString);
+              console.log('softwareList: ', this.softwareList);
+            } else {
+              let names = softwares_list.split(',');
 
-            for (let i = 0; i < names.length; i++) {
-              this.softwares.push(names[i]);
+              for (let i = 0; i < names.length; i++) {
+                this.softwares.push(names[i]);
+              }
             }
           }
           this.memories = this.info_PC[43];
@@ -237,8 +244,6 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
             let valid = this.memories.replace(/'/g, '"');
 
             this.memories = JSON.parse(valid);
-
-            console.log(this.memories);
 
             switch (this.operational_System) {
               default:

@@ -286,8 +286,18 @@
     </div>
     <div *ngIf="canViewSoftWare">
       <span><b>SoftWares</b></span>
-      <div class="dash_memory">
+      <div class="dash_memory" *ngIf="!memory_windows">
         <div *ngFor="let software of softwares">{{ software }}</div>
+      </div>
+      <div class="dash_memory" *ngIf="memory_windows">
+        <ul>
+          <li *ngFor="let software of softwareList">
+            <strong>{{ software.name }}</strong
+            ><br />
+            Version: {{ software.version }}<br />
+            Vendor: {{ software.vendor }}
+          </li>
+        </ul>
       </div>
     </div>
     <div *ngIf="canViewDevices">
