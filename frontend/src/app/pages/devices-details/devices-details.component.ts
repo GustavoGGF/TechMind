@@ -116,6 +116,13 @@ export class DevicesDetailsComponent implements OnInit {
               this.img_url =
                 '/static/assets/images/devices/cisco-sg300-52mp-k9-eu-small-business-sg300-52mp-switch-10126213.png';
               break;
+            case 'E157FPc':
+              this.img_url =
+                '/static/assets/images/devices/3282872674_1.png.png';
+              break;
+            case '3580 L33/L3H':
+              this.img_url = '/static/assets/images/devices/img_1042.png';
+              break;
           }
           this.brand = this.device[4];
           this.imob = this.device[3];
