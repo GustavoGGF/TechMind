@@ -73,7 +73,7 @@ def getInfoMainPanel(request):
                         FROM machines
                         WHERE system_name LIKE '%linux%'
                         OR system_name LIKE '%freebsd%';"""
-            
+
             cursor.execute(query3)
 
             # Pegar o resultado da consulta
@@ -90,7 +90,9 @@ def getInfoMainPanel(request):
                 connection.close()
 
         return JsonResponse(
-            {"windows": totalWindows, "total": totalMachines, "unix":totalUnix}, status=200, safe=True
+            {"windows": totalWindows, "total": totalMachines, "unix": totalUnix},
+            status=200,
+            safe=True,
         )
 
 
@@ -803,9 +805,14 @@ def computersModify(request, mac_address):
         imob = None
         connection = None
         cursor = None
+        location = None
+        update_query = None
+        result = None
+        result2 = None
         try:
             data = json.loads(request.body)
             imob = data.get("imob")
+            location = data.get("location")
             if imob:
                 connection = mysql.connector.connect(
                     host=config("DB_HOST"),
@@ -832,15 +839,88 @@ def computersModify(request, mac_address):
                 result = (
                     cursor.fetchone()
                 )  # Use fetchall() se esperar mais de um resultado
+
+                # Fechando a conexão
+                cursor.close()
+                connection.close()
+
+                if location:
+                    connection = mysql.connector.connect(
+                        host=config("DB_HOST"),
+                        database=config("DB_NAME"),
+                        user=config("DB_USER"),
+                        password=config("DB_PASSWORD"),
+                    )
+
+                    if connection.is_connected():
+                        cursor = connection.cursor()
+
+                    update_query = (
+                        "UPDATE machines SET location =%s WHERE mac_address =%s"
+                    )
+
+                    cursor.execute(update_query, (location, mac_address))
+
+                    # Confirmando a inserção
+                    connection.commit()
+
+                    update_query = "select imob from machines WHERE mac_address =%s"
+
+                    cursor.execute(update_query, (mac_address,))
+
+                    # Obtendo o resultado
+                    result2 = (
+                        cursor.fetchone()
+                    )  # Use fetchall() se esperar mais de um resultado
+
+                    # Fechando a conexão
+                    cursor.close()
+                    connection.close()
+
+                    return JsonResponse(
+                        {"imob": result[0], "location": result2[0]},
+                        status=200,
+                        safe=True,
+                    )
+                else:
+                    return JsonResponse({"imob": result[0]}, status=200, safe=True)
+            if location:
+                connection = mysql.connector.connect(
+                    host=config("DB_HOST"),
+                    database=config("DB_NAME"),
+                    user=config("DB_USER"),
+                    password=config("DB_PASSWORD"),
+                )
+
+                if connection.is_connected():
+                    cursor = connection.cursor()
+
+                update_query = "UPDATE machines SET location =%s WHERE mac_address =%s"
+
+                cursor.execute(update_query, (location, mac_address))
+
+                # Confirmando a inserção
+                connection.commit()
+
+                update_query = "select imob from machines WHERE mac_address =%s"
+
+                cursor.execute(update_query, (mac_address,))
+
+                # Obtendo o resultado
+                result = (
+                    cursor.fetchone()
+                )  # Use fetchall() se esperar mais de um resultado
                 logger.info(result)
 
                 # Fechando a conexão
                 cursor.close()
                 connection.close()
 
-                return JsonResponse({"imob": result[0]}, status=200, safe=True)
+                return JsonResponse({"location": result[0]}, status=200, safe=True)
             else:
-                return JsonResponse({"message": "Imobilizado Obrigatorio"}, status=310)
+                return JsonResponse(
+                    {"message": "Imobilizado ou Localização Obrigatorio"}, status=310
+                )
         except Exception as e:
             logger.error(e)
             return JsonResponse({}, status=420)

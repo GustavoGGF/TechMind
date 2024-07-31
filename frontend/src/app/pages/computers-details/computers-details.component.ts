@@ -98,6 +98,8 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
   modifyOther: boolean = false;
   input_imob: string = '';
   token: any;
+  location: string = '';
+  select_value: string = '';
 
   urlResize = '/static/assets/images/expandir-setas.png';
 
@@ -271,6 +273,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
             }
           }
           this.imob = this.info_PC[44];
+          this.location = this.info_PC[45];
         }
       });
   }
@@ -386,6 +389,10 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
     this.input_imob = event.target.value;
   }
 
+  device_select(event: any): void {
+    this.select_value = event.target.value;
+  }
+
   submitOthers(): void {
     var mac = this.macAddress.replace(/-/g, '');
     this.http
@@ -393,6 +400,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
         '/home/computers/modify-others/' + mac,
         {
           imob: this.input_imob,
+          location: this.select_value,
         },
         {
           headers: new HttpHeaders({
@@ -413,7 +421,11 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
       )
       .subscribe((data: any) => {
         if (data) {
-          this.imob = data.imob;
+          if (data.imob) {
+            this.imob = data.imob;
+          } else if (data.location) {
+            this.location = data.location;
+          }
         }
       });
 
