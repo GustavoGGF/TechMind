@@ -20,9 +20,12 @@ import (
 	"unicode/utf16"
 	"unsafe"
 
+	"github.com/go-ole/go-ole"
+	"github.com/go-ole/go-ole/oleutil"
 	"github.com/shirou/gopsutil/host"
 	"github.com/yusufpapurcu/wmi"
 	"golang.org/x/sys/windows"
+	"golang.org/x/sys/windows/registry"
 )
 
 var (
@@ -88,15 +91,14 @@ type Data struct {
 	MotherboardVersion      string                   `json:"motherboardVersion"`
 	MotherbaoardSerialName  string                   `json:"motherboardSerialName"`
 	MotherboardAssetTag     string                   `json:"motherboardAssetTag"`
-	SoftwareNames           []string                 `json:"installedPackages"`
+	SoftwareNames           []InstalledSoftware      `json:"installedPackages"`
 	Memories                []map[string]interface{} `json:"memories"`
 }
 
 // Win32_ComputerSystem representa a classe WMI Win32_ComputerSystem
 type Win32_ComputerSystem struct {
-	Manufacturer       string
-	Model              string
-	NumberOfProcessors uint32
+	Manufacturer string
+	Model        string
 }
 
 // Win32_BIOS representa a classe WMI Win32_BIOS
@@ -177,6 +179,12 @@ type Win32_VideoController struct {
 
 type Win32_SoundDevice struct {
 	ProductName string
+}
+
+type InstalledSoftware struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	Vendor  string `json:"vendor"`
 }
 
 func getWindowsVersion() (string, error) {
@@ -479,17 +487,23 @@ func getCPUOperationMode() (string, error) {
 }
 
 func getCPUCount() (uint32, error) {
-	var dst []Win32_ComputerSystem
+	var dst []Win32_Processor
 	query := wmi.CreateQuery(&dst, "")
 	if err := wmi.Query(query, &dst); err != nil {
 		return 0, err
 	}
 
 	if len(dst) == 0 {
-		return 0, fmt.Errorf("no computer systems found")
+		return 0, fmt.Errorf("no processors found")
 	}
 
-	return dst[0].NumberOfProcessors, nil
+	// Somando o número de núcleos de todos os processadores
+	var totalCores uint32
+	for _, processor := range dst {
+		totalCores += processor.NumberOfCores
+	}
+
+	return totalCores, nil
 }
 
 func getCPUVendorID() (string, error) {
@@ -738,6 +752,108 @@ func getSMBIOS() (string, error) {
 	return strings.Join(result, "\n"), nil
 }
 
+func getInstalledSoftwareFromWMI() ([]InstalledSoftware, error) {
+	ole.CoInitialize(0)
+	defer ole.CoUninitialize()
+
+	unknown, err := oleutil.CreateObject("WbemScripting.SWbemLocator")
+	if err != nil {
+		return nil, err
+	}
+	defer unknown.Release()
+
+	wmi, err := unknown.QueryInterface(ole.IID_IDispatch)
+	if err != nil {
+		return nil, err
+	}
+	defer wmi.Release()
+
+	serviceRaw, err := oleutil.CallMethod(wmi, "ConnectServer", nil, `root\cimv2`)
+	if err != nil {
+		return nil, err
+	}
+	service := serviceRaw.ToIDispatch()
+	defer service.Release()
+
+	resultRaw, err := oleutil.CallMethod(service, "ExecQuery", "SELECT * FROM Win32_Product")
+	if err != nil {
+		return nil, err
+	}
+	result := resultRaw.ToIDispatch()
+	defer result.Release()
+
+	var softwares []InstalledSoftware
+	countVar := oleutil.MustGetProperty(result, "Count")
+	count := int(countVar.Val)
+
+	for i := 0; i < count; i++ {
+		itemRaw := oleutil.MustCallMethod(result, "ItemIndex", i)
+		item := itemRaw.ToIDispatch()
+		defer item.Release()
+
+		name := oleutil.MustGetProperty(item, "Name").ToString()
+		version := oleutil.MustGetProperty(item, "Version").ToString()
+		vendor := oleutil.MustGetProperty(item, "Vendor").ToString()
+
+		software := InstalledSoftware{
+			Name:    name,
+			Version: version,
+			Vendor:  vendor,
+		}
+		softwares = append(softwares, software)
+	}
+
+	return softwares, nil
+}
+
+func getInstalledSoftwareFromRegistry() ([]InstalledSoftware, error) {
+	var softwares []InstalledSoftware
+
+	// Localização das chaves de registro
+	registryPaths := []string{
+		`SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall`,
+		`SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall`,
+	}
+
+	for _, path := range registryPaths {
+		k, err := registry.OpenKey(registry.LOCAL_MACHINE, path, registry.READ)
+		if err != nil {
+			return nil, err
+		}
+		defer k.Close()
+
+		subkeys, err := k.ReadSubKeyNames(-1)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, subkey := range subkeys {
+			subk, err := registry.OpenKey(k, subkey, registry.READ)
+			if err != nil {
+				continue
+			}
+			defer subk.Close()
+
+			name, _, err := subk.GetStringValue("DisplayName")
+			if err != nil || name == "" {
+				continue
+			}
+
+			version, _, _ := subk.GetStringValue("DisplayVersion")
+			vendor, _, _ := subk.GetStringValue("Publisher")
+
+			software := InstalledSoftware{
+				Name:    name,
+				Version: version,
+				Vendor:  vendor,
+			}
+			softwares = append(softwares, software)
+		}
+	}
+
+	return softwares, nil
+}
+
 func main() {
 	distribution := ""
 
@@ -879,82 +995,82 @@ func main() {
 
 	arch, err := getCPUArchitecture()
 	if err != nil {
-		log.Fatalf("Failed to get CPU architecture: %v", err)
+		logToFile(fmt.Sprintf("Failed to get CPU architecture: %v", err))
 	}
 
 	operationMode, err := getCPUOperationMode()
 	if err != nil {
-		log.Fatalf("Failed to get CPU operation mode: %v", err)
+		logToFile(fmt.Sprintf("Failed to get CPU operation mode: %v", err))
 	}
 
 	cpuCount, err := getCPUCount()
 	if err != nil {
-		log.Fatalf("Failed to get CPU count: %v", err)
+		logToFile(fmt.Sprintf("Failed to get CPU count: %v", err))
 	}
 
 	vendorID, err := getCPUVendorID()
 	if err != nil {
-		log.Fatalf("Failed to get CPU Vendor ID: %v", err)
+		logToFile(fmt.Sprintf("Failed to get CPU Vendor ID: %v", err))
 	}
 
 	modelName, err := getCPUModelName()
 	if err != nil {
-		log.Fatalf("Failed to get CPU Model Name: %v", err)
+		logToFile(fmt.Sprintf("Failed to get CPU Model Name: %v", err))
 	}
 
 	threads, err := getCPUThreads()
 	if err != nil {
-		log.Fatalf("Failed to get CPU threads: %v", err)
+		logToFile(fmt.Sprintf("Failed to get CPU threads: %v", err))
 	}
 
 	cores, err := getCPUCores()
 	if err != nil {
-		log.Fatalf("Failed to get CPU cores: %v", err)
+		logToFile(fmt.Sprintf("Failed to get CPU cores: %v", err))
 	}
 
 	sockets, err := getCPUSockets()
 	if err != nil {
-		log.Fatalf("Failed to get CPU sockets: %v", err)
+		logToFile(fmt.Sprintf("Failed to get CPU sockets: %v", err))
 	}
 
 	maxMHz, err := getCPUMaxMHz()
 	if err != nil {
-		log.Fatalf("Failed to get CPU Max MHz: %v", err)
+		logToFile(fmt.Sprintf("Failed to get CPU Max MHz: %v", err))
 	}
 
 	minMHz, err := getCPUMinMHz()
 	if err != nil {
-		log.Fatalf("Failed to get CPU Min MHz: %v", err)
+		logToFile(fmt.Sprintf("Failed to get CPU Min MHz: %v", err))
 	}
 
 	gpuProduct, err := getGPUProduct()
 	if err != nil {
-		log.Fatalf("Failed to get GPU product: %v", err)
+		logToFile(fmt.Sprintf("Failed to get GPU product: %v", err))
 	}
 
 	vendorIDGPU, err := getGPUVendorID()
 	if err != nil {
-		log.Fatalf("Failed to get GPU Vendor ID: %v", err)
+		logToFile(fmt.Sprintf("Failed to get GPU Vendor ID: %v", err))
 	}
 
 	busInfo, err := getGPUBusInfo()
 	if err != nil {
-		log.Fatalf("Failed to get GPU Bus Info: %v", err)
+		logToFile(fmt.Sprintf("Failed to get GPU Bus Info: %v", err))
 	}
 
 	gpuLogicalName, err := getGPULogicalName()
 	if err != nil {
-		log.Fatalf("Failed to get GPU Logical Name: %v", err)
+		logToFile(fmt.Sprintf("Failed to get GPU Logical Name: %v", err))
 	}
 
 	clock, err := getGPUClock()
 	if err != nil {
-		log.Fatalf("Failed to get GPU Clock: %v", err)
+		logToFile(fmt.Sprintf("Failed to get GPU Clock: %v", err))
 	}
 
 	horizRes, vertRes, ram, err := getGPUConfiguration()
 	if err != nil {
-		log.Fatalf("Failed to get GPU configuration: %v", err)
+		logToFile(fmt.Sprintf("Failed to get GPU configuration: %v", err))
 	}
 
 	// Formata a string com as informações da GPU
@@ -962,15 +1078,38 @@ func main() {
 
 	product, err := getAudioDeviceProduct()
 	if err != nil {
-		log.Fatalf("Failed to get audio device product: %v", err)
+		logToFile(fmt.Sprintf("Failed to get audio device product: %v", err))
 	}
 
 	smbiosInfo, err := getSMBIOS()
 	if err != nil {
-		log.Fatalf("Failed to get SMBIOS information: %v", err)
+		logToFile(fmt.Sprintf("Failed to get SMBIOS information: %v", err))
 	}
 
-	logToFile(fmt.Sprintln(smbiosInfo))
+	fmt.Sprintln(smbiosInfo)
+
+	wmiSoftware, err := getInstalledSoftwareFromWMI()
+	if err != nil {
+		log.Printf("Error querying WMI: %v", err)
+	}
+
+	registrySoftware, err := getInstalledSoftwareFromRegistry()
+	if err != nil {
+		log.Printf("Error querying Registry: %v", err)
+	}
+
+	// Combinar as listas de software, removendo duplicatas
+	softwareMap := make(map[string]InstalledSoftware)
+	for _, software := range append(wmiSoftware, registrySoftware...) {
+		key := strings.ToLower(software.Name)
+		softwareMap[key] = software
+	}
+
+	var combinedSoftware []InstalledSoftware
+	for _, software := range softwareMap {
+		combinedSoftware = append(combinedSoftware, software)
+	}
+	logToFile(fmt.Sprintln(combinedSoftware))
 
 	jsonData := Data{
 		System:               sys,
@@ -1008,6 +1147,7 @@ func main() {
 		GPUClock:             clock,
 		GPUConfiguration:     configurationGPU,
 		AudioDeviceProduct:   product,
+		SoftwareNames:        combinedSoftware,
 	}
 
 	requestBody, err := json.Marshal(jsonData)

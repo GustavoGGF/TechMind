@@ -19,6 +19,22 @@ import (
 	"github.com/shirou/gopsutil/host"
 )
 
+func logToFile(msg string) {
+	// Abrir arquivo de log
+	file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Erro ao abrir o arquivo de log:", err)
+		return
+	}
+	defer file.Close()
+
+	// Criar um logger para o arquivo
+	logger := log.New(file, "", log.LstdFlags)
+
+	// Escrever mensagem no arquivo de log
+	logger.Println(msg)
+}
+
 type Data struct {
 	System                string   `json:"system"`
 	Name                  string   `json:"name"`
@@ -78,11 +94,17 @@ func bytesEqual(b []byte) bool {
 
 func getDomain() (string, error) {
     cmd := exec.Command("hostname", "--domain")
-    output, err := cmd.Output()
+    output, err := cmd.CombinedOutput() // Captura a saída e erro juntos
     if err != nil {
+        // Verifica se o erro é relacionado a uma opção inválida
+        if strings.Contains(string(output), "illegal option") || strings.Contains(string(output), "invalid option") {
+            return "", nil // Retorna uma string vazia e sem erro
+        }
         return "", fmt.Errorf("erro ao obter domínio: %w", err)
     }
+    
     domain := strings.TrimSpace(string(output))
+    
     return domain, nil
 }
 
@@ -113,123 +135,181 @@ func getIPAddress() (string, error) {
 }
 
 func getSystemManufacturer() (string, error) {
-	cmd := exec.Command("sudo","dmidecode", "-s", "system-manufacturer")
-	output, err := cmd.Output()
-	if err != nil {
-		return "", fmt.Errorf("erro ao executar dmidecode: %v", err)
-	}
-	manufacturer := strings.TrimSpace(string(output))
-	if manufacturer == "" {
-		return "", fmt.Errorf("marca do sistema não encontrada")
-	}
-	return manufacturer, nil
+    cmd := exec.Command("sudo", "dmidecode", "-s", "system-manufacturer")
+    output, err := cmd.CombinedOutput() // Captura a saída e erro juntos
+    
+    if err != nil {
+        // Verifica se o erro é relacionado a um comando não encontrado
+        if strings.Contains(string(output), "command not found") || strings.Contains(err.Error(), "executable file not found in $PATH") {
+            return "", nil // Retorna uma string vazia e sem erro
+        }
+        return "", fmt.Errorf("erro ao executar dmidecode: %v", err)
+    }
+    
+    manufacturer := strings.TrimSpace(string(output))
+    
+    if manufacturer == "" {
+        return "", fmt.Errorf("marca do sistema não encontrada")
+    }
+    
+    return manufacturer, nil
 }
 
 func getSystemProduct() (string, error) {
-	cmd := exec.Command("sudo","dmidecode", "-s", "system-product-name")
-	output, err := cmd.Output()
-	if err != nil {
-		return "", fmt.Errorf("erro ao executar dmidecode: %v", err)
-	}
-	manufacturer := strings.TrimSpace(string(output))
-	if manufacturer == "" {
-		return "", fmt.Errorf("marca do sistema não encontrada")
-	}
-	return manufacturer, nil
+    cmd := exec.Command("sudo", "dmidecode", "-s", "system-product-name")
+    output, err := cmd.CombinedOutput() // Captura a saída e erro juntos
+    
+    if err != nil {
+        // Verifica se o erro é relacionado a um comando não encontrado
+        if strings.Contains(string(output), "command not found") || strings.Contains(err.Error(), "executable file not found in $PATH") {
+            return "", nil // Retorna uma string vazia e sem erro
+        }
+        return "", fmt.Errorf("erro ao executar dmidecode: %v", err)
+    }
+    
+    product := strings.TrimSpace(string(output))
+    
+    if product == "" {
+        return "", fmt.Errorf("produto do sistema não encontrado")
+    }
+    
+    return product, nil
 }
 
 func getSerialNumber() (string, error) {
-	cmd := exec.Command("sudo", "dmidecode", "-s", "system-serial-number")
-	output, err := cmd.Output()
-	if err != nil {
-		return "", fmt.Errorf("erro ao executar dmidecode: %v", err)
-	}
-	serialNumber := strings.TrimSpace(string(output))
-	if serialNumber == "" {
-		return "", fmt.Errorf("número de série não encontrado")
-	}
-	return serialNumber, nil
+    cmd := exec.Command("sudo", "dmidecode", "-s", "system-serial-number")
+    output, err := cmd.CombinedOutput() // Captura a saída e erro juntos
+    
+    if err != nil {
+        // Verifica se o erro é relacionado a um comando não encontrado
+        if strings.Contains(string(output), "command not found") || strings.Contains(err.Error(), "executable file not found in $PATH") {
+            return "", nil // Retorna uma string vazia e sem erro
+        }
+        return "", fmt.Errorf("erro ao executar dmidecode: %v", err)
+    }
+    
+    serialNumber := strings.TrimSpace(string(output))
+    
+    if serialNumber == "" {
+        return "", fmt.Errorf("número de série não encontrado")
+    }
+    
+    return serialNumber, nil
 }
 
 func getMaximumCapacity() (string, error) {
-	cmd := exec.Command("sudo", "dmidecode", "-t", "memory")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		return "", fmt.Errorf("erro ao executar dmidecode: %v", err)
-	}
+    cmd := exec.Command("sudo", "dmidecode", "-t", "memory")
+    output, err := cmd.CombinedOutput() // Captura a saída e erro juntos
 
-	lines := strings.Split(out.String(), "\n")
-	for _, line := range lines {
-		if strings.Contains(line, "Maximum Capacity:") {
-			parts := strings.Split(line, ":")
-			if len(parts) > 1 {
-				return strings.TrimSpace(parts[1]), nil
-			}
-		}
-	}
-	return "", fmt.Errorf("maximum capacity não encontrada")
+    if err != nil {
+        // Verifica se o erro é relacionado a um comando não encontrado
+        if strings.Contains(string(output), "command not found") || strings.Contains(err.Error(), "executable file not found in $PATH") {
+            return "", nil // Retorna uma string vazia e sem erro
+        }
+        return "", fmt.Errorf("erro ao executar dmidecode: %v", err)
+    }
+
+    lines := strings.Split(string(output), "\n")
+    for _, line := range lines {
+        if strings.Contains(line, "Maximum Capacity:") {
+            parts := strings.Split(line, ":")
+            if len(parts) > 1 {
+                return strings.TrimSpace(parts[1]), nil
+            }
+        }
+    }
+
+    return "", fmt.Errorf("maximum capacity não encontrada")
 }
 
 
 func getNumberOfDevices() (string, error) {
-	cmd := exec.Command("sudo", "dmidecode", "-t", "memory")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		return "", fmt.Errorf("erro ao executar dmidecode: %v", err)
-	}
+    cmd := exec.Command("sudo", "dmidecode", "-t", "memory")
+    output, err := cmd.CombinedOutput() // Captura a saída e erro juntos
 
-	lines := strings.Split(out.String(), "\n")
-	for _, line := range lines {
-		if strings.Contains(line, "Number Of Devices:") {
-			parts := strings.Split(line, ":")
-			if len(parts) > 1 {
-				return strings.TrimSpace(parts[1]), nil
-			}
-		}
-	}
-	return "", fmt.Errorf("number of devices não encontrada")
+    if err != nil {
+        // Verifica se o erro é relacionado a um comando não encontrado
+        if strings.Contains(string(output), "command not found") || strings.Contains(err.Error(), "executable file not found in $PATH") {
+            return "", nil // Retorna uma string vazia e sem erro
+        }
+        return "", fmt.Errorf("erro ao executar dmidecode: %v", err)
+    }
+
+    lines := strings.Split(string(output), "\n")
+    for _, line := range lines {
+        if strings.Contains(line, "Number Of Devices:") {
+            parts := strings.Split(line, ":")
+            if len(parts) > 1 {
+                return strings.TrimSpace(parts[1]), nil
+            }
+        }
+    }
+
+    // Retorna uma string vazia se "Number Of Devices:" não for encontrado
+    return "", nil
+}
+
+func convertNumberOfDevices(numberOfDevices string) (int, error) {
+    // Remove espaços em branco ao redor da string
+    numberOfDevices = strings.TrimSpace(numberOfDevices)
+
+    // Verifica se a string é vazia
+    if numberOfDevices == "" {
+        return 0, nil
+    }
+
+    // Converte a string para um inteiro
+    numberDevices, err := strconv.Atoi(numberOfDevices)
+    if err != nil {
+        return 0, fmt.Errorf("erro ao converter a string para inteiro: %v", err)
+    }
+
+    return numberDevices, nil
 }
 
 func getMemorySlotNames(numberOfDevices int) ([]string, error) {
-	cmd := exec.Command("sudo", "dmidecode", "-t", "memory")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		return nil, fmt.Errorf("erro ao executar dmidecode: %v", err)
-	}
+    // Executa o comando dmidecode
+    cmd := exec.Command("sudo", "dmidecode", "-t", "memory")
+    var out bytes.Buffer
+    cmd.Stdout = &out
+    cmd.Stderr = &out // Captura também a saída de erro
+    output, err := cmd.CombinedOutput() // Captura a saída e erro juntos
 
-	lines := strings.Split(out.String(), "\n")
-	slotCount := 0
-	var slotNames []string
+    if err != nil {
+        // Verifica se o erro é relacionado a um comando não encontrado
+        if strings.Contains(string(output), "command not found") || strings.Contains(err.Error(), "executable file not found in $PATH") {
+            return nil, nil // Retorna nil e sem erro
+        }
+        return nil, fmt.Errorf("erro ao executar dmidecode: %v", err)
+    }
 
-	for _, line := range lines {
-		if strings.Contains(line, "Locator:") {
-			if slotCount < numberOfDevices {
-				parts := strings.Split(line, ":")
-				if len(parts) > 1 {
-					// Adiciona uma vírgula antes do próximo valor
-					slotName := strings.TrimSpace(parts[1])
-					if slotCount > 0 {
-						slotNames = append(slotNames, ", "+slotName)
-					} else {
-						slotNames = append(slotNames, slotName)
-					}
-					slotCount++
-				}
-			}
-		}
-	}
+    lines := strings.Split(out.String(), "\n")
+    slotCount := 0
+    var slotNames []string
 
-	if slotCount == 0 {
-		return nil, fmt.Errorf("nenhum slot de memória encontrado")
-	}
+    for _, line := range lines {
+        if strings.Contains(line, "Locator:") {
+            if slotCount < numberOfDevices {
+                parts := strings.Split(line, ":")
+                if len(parts) > 1 {
+                    // Adiciona uma vírgula antes do próximo valor
+                    slotName := strings.TrimSpace(parts[1])
+                    if slotCount > 0 {
+                        slotNames = append(slotNames, ", "+slotName)
+                    } else {
+                        slotNames = append(slotNames, slotName)
+                    }
+                    slotCount++
+                }
+            }
+        }
+    }
 
-	return slotNames, nil
+    if slotCount == 0 {
+        return nil, fmt.Errorf("nenhum slot de memória encontrado")
+    }
+
+    return slotNames, nil
 }
 
 func getMemorySizes(numberOfDevices int) ([]string, error) {
@@ -429,7 +509,7 @@ func getHDModel(device string) (string, error) {
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("erro ao executar o comando: %w", err)
+		return "", fmt.Errorf("erro ao executar o comando, (verifique se smartmontools esta funcionando), codigo de erro: %w", err)
 	}
 
 	// Captura a saída e converte para string
@@ -450,7 +530,19 @@ func getHDModel(device string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("device model não encontrado")
+	// Procura pela linha que contém "Vendor" se "Device Model" não for encontrado
+	for _, line := range lines {
+		if strings.Contains(line, "Vendor") {
+			// Extrai e retorna o nome do vendedor
+			parts := strings.Split(line, ":")
+			if len(parts) > 1 {
+				vendor := strings.TrimSpace(parts[1])
+				return vendor, nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("device model ou vendor não encontrado")
 }
 
 func getHDSerialModel(device string) (string, error) {
@@ -472,16 +564,17 @@ func getHDSerialModel(device string) (string, error) {
 	// Procura pela linha que contém "Serial Number"
 	for _, line := range lines {
 		if strings.Contains(line, "Serial Number") {
-			// Extrai e retorna o modelo do dispositivo
+			// Extrai e retorna o número de série do dispositivo
 			parts := strings.Split(line, ":")
 			if len(parts) > 1 {
-				deviceModel := strings.TrimSpace(parts[1])
-				return deviceModel, nil
+				serialNumber := strings.TrimSpace(parts[1])
+				return serialNumber, nil
 			}
 		}
 	}
 
-	return "", fmt.Errorf("device model não encontrado")
+	// Retorna uma string vazia se o número de série não for encontrado
+	return "", nil
 }
 
 func getHDUserCapacity(device string) (string, error) {
@@ -512,7 +605,7 @@ func getHDUserCapacity(device string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("device model não encontrado")
+	return "", nil
 }
 
 func getHDSataVersion(device string) (string, error) {
@@ -531,23 +624,24 @@ func getHDSataVersion(device string) (string, error) {
 	// Divide a saída em linhas
 	lines := strings.Split(output, "\n")
 
-	// Procura pela linha que contém "Serial Number"
+	// Procura pela linha que contém "SATA Version is"
 	for _, line := range lines {
 		if strings.Contains(line, "SATA Version is") {
-			// Extrai e retorna o modelo do dispositivo
+			// Extrai e retorna a versão SATA do dispositivo
 			parts := strings.Split(line, ":")
 			if len(parts) > 1 {
-				deviceModel := strings.TrimSpace(parts[1])
-				return deviceModel, nil
+				sataVersion := strings.TrimSpace(parts[1])
+				return sataVersion, nil
 			}
 		}
 	}
 
-	return "", fmt.Errorf("device model não encontrado")
+	// Retorna uma string vazia se a versão SATA não for encontrada
+	return "", nil
 }
 
 func getCPUInfo(lineOption string) (string, error) {
-	// Executa o comando smartctl
+	// Executa o comando lscpu
 	cmd := exec.Command("sudo", "lscpu")
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -562,19 +656,20 @@ func getCPUInfo(lineOption string) (string, error) {
 	// Divide a saída em linhas
 	lines := strings.Split(output, "\n")
 
-	// Procura pela linha que contém "Serial Number"
+	// Procura pela linha que contém o texto especificado em lineOption
 	for _, line := range lines {
 		if strings.Contains(line, lineOption) {
-			// Extrai e retorna o modelo do dispositivo
+			// Extrai e retorna o valor associado ao texto especificado
 			parts := strings.Split(line, ":")
 			if len(parts) > 1 {
-				deviceModel := strings.TrimSpace(parts[1])
-				return deviceModel, nil
+				info := strings.TrimSpace(parts[1])
+				return info, nil
 			}
 		}
 	}
 
-	return "", fmt.Errorf("device model não encontrado")
+	// Retorna uma string vazia se a informação não for encontrada
+	return "", nil
 }
 
 func getGPUProduct(lineOption string) (string, error) {
@@ -605,17 +700,17 @@ func getGPUProduct(lineOption string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("device model não encontrado")
+	return "", fmt.Errorf("GPU Product não encontrado")
 } 
 
 func getAudioDevices(lineOption string) (string, error) {
-	// Executa o comando smartctl
+	// Executa o comando aplay para listar dispositivos de áudio
 	cmd := exec.Command("aplay", "-l")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("erro ao executar o comando: %w", err)
+		return "", fmt.Errorf("erro ao executar o comando (verifique alsa-utils): %w", err)
 	}
 
 	// Captura a saída e converte para string
@@ -624,19 +719,20 @@ func getAudioDevices(lineOption string) (string, error) {
 	// Divide a saída em linhas
 	lines := strings.Split(output, "\n")
 
-	// Procura pela linha que contém "Serial Number"
+	// Procura pela linha que contém o texto especificado em lineOption
 	for _, line := range lines {
 		if strings.Contains(line, lineOption) {
-			// Extrai e retorna o modelo do dispositivo
+			// Extrai e retorna a parte relevante da linha
 			parts := strings.Split(line, ":")
 			if len(parts) > 1 {
-				deviceModel := strings.TrimSpace(parts[1])
-				return deviceModel, nil
+				deviceInfo := strings.TrimSpace(parts[1])
+				return deviceInfo, nil
 			}
 		}
 	}
 
-	return "", fmt.Errorf("device model não encontrado")
+	// Retorna uma string vazia se o dispositivo de áudio não for encontrado
+	return "", nil
 }
 
 func getAudioDeviceModel(lineOption string) (string, error) {
@@ -671,7 +767,8 @@ func getAudioDeviceModel(lineOption string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("modelo de dispositivo não encontrado para '%s'", lineOption)
+	// Retorna uma string vazia se o modelo do dispositivo não for encontrado
+	return "", nil
 }
 
 func extractValueFromBrackets(input string) (string, error) {
@@ -682,7 +779,8 @@ func extractValueFromBrackets(input string) (string, error) {
 	matches := re.FindStringSubmatch(input)
 
 	if len(matches) < 2 {
-		return "", fmt.Errorf("não foi possível encontrar valor entre colchetes")
+		// Retorna uma string vazia e nil para o erro se não encontrar valor entre colchetes
+		return "", nil
 	}
 
 	// Retorna o valor encontrado entre colchetes
@@ -775,12 +873,19 @@ func filterInstalledPackages(output string) string {
 	return strings.Join(installedPackages, ", ")
 }
 
+func safeGet(slice []string, index int) string {
+	if index < len(slice) {
+		return slice[index]
+	}
+	return "N/A"
+}
+
 func main() {
     sys := runtime.GOOS
 
     infos, err:= host.Info()
     if err != nil{
-        fmt.Println("Error")
+        logToFile(fmt.Sprintln("Erro ao pegar info: ", err))
     }
 
     url := "http://10.1.1.73:3000/home/computers/post-machines" //env
@@ -792,7 +897,7 @@ func main() {
     }
     interfaces, err := net.Interfaces()
     if err != nil {
-        fmt.Println("Erro ao obter interfaces de rede:", err)
+		logToFile(fmt.Sprintln("Erro ao obter interfaces de rede:", err))
         return
     }
 
@@ -813,7 +918,7 @@ func main() {
 
     user, err := user.Current()
     if err != nil {
-        log.Fatalf("Erro ao obter o usuário atual: %v", err)
+        logToFile(fmt.Sprintln("Erro ao obter o usuário atual: ", err))
     }
 
     username := user.Username
@@ -822,54 +927,53 @@ func main() {
 
     domain, err := getDomain()
     if err != nil {
-        log.Printf("Erro ao obter domínio: %v", err)
+        logToFile(fmt.Sprintln("Erro ao obter domínio: ", err))
     }
 
     ip, err := getIPAddress()
 	if err != nil {
-		log.Fatalf("Erro: %v", err)
+		logToFile(fmt.Sprintln("Erro: ao obter o ip ", err))
 	}
 
     manufacturer, err := getSystemManufacturer()
 	if err != nil {
-		log.Fatalf("Erro ao obter marca do sistema: %v", err)
+		logToFile(fmt.Sprintln("Erro ao obter marca do sistema: ", err))
 	}
 
     model, err := getSystemProduct()
 	if err != nil {
-		log.Fatalf("Erro ao obter marca do sistema: %v", err)
+		logToFile(fmt.Sprintln("Erro ao obter o modelo do sistema: ", err))
 	}
 
     serialNumber, err := getSerialNumber()
 	if err != nil {
-		log.Fatalf("Erro ao obter o número de série: %v", err)
+		logToFile(fmt.Sprintln("Erro ao obter o número de série: ", err))
 	}
 
     maxCapacity, err := getMaximumCapacity()
 	if err != nil {
-		log.Fatalf("Erro ao obter Maximum Capacity: %v", err)
+		logToFile(fmt.Sprintln("Erro ao obter Maximum Capacity Memory: ", err))
 	}
 
     numberOfDevices, err := getNumberOfDevices()
 	if err != nil {
-		log.Fatalf("erro ao obter number of devices: %v", err)
+		logToFile(fmt.Sprintln("erro ao obter number of devices: ", err))
 	}
 
-	numberDevices, err := strconv.Atoi(numberOfDevices)
+	numberDevices, err := convertNumberOfDevices(numberOfDevices)
 	if err != nil {
-		fmt.Println("Erro ao converter a string para inteiro:", err)
+		logToFile(fmt.Sprintln("Erro ao converter a string para inteiro:", err))
 		return
 	}
 
 	slotNames, err := getMemorySlotNames(numberDevices)
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro ao obter a quantidade de slot's: ", err))
 	}
 
 	memorySizes, err := getMemorySizes(numberDevices)
 	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
+		logToFile(fmt.Sprintln("erro ao obter o tamanho de memória: ", err))
 	}
 
 	// Remove colchetes e divide a string em partes
@@ -882,7 +986,7 @@ func main() {
 
 	memoriesTypes, err := getMemoryTypes(numberDevices)
 	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
+		logToFile(fmt.Sprintln("erro ao obter o tipo de memória: ", err))
 	}
 
 	// Remove colchetes e divide a string em partes
@@ -891,7 +995,7 @@ func main() {
 
 	memoriesTypeDetails, err := getMemoryTypeDetails(numberDevices)
 	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
+		logToFile(fmt.Sprintln("erro ao obter tipo detalhado de memória: ", err))
 	}
 
 	// Remove colchetes e divide a string em partes
@@ -900,7 +1004,7 @@ func main() {
 
 	memoriesSpeedMemory, err := getMemorySpeeds(numberDevices)
 	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
+		logToFile(fmt.Sprintln("erro ao obter a velocidade de memória: ", err))
 	}
 
 	// Remove colchetes e divide a string em partes
@@ -909,7 +1013,7 @@ func main() {
 
 	memoriesSerialNumber, err := getMemorySerialNumbers(numberDevices)
 	if err != nil {
-		log.Fatalf("erro ao obter o nome do primeiro slot de memória: %v", err)
+		logToFile(fmt.Sprintln("erro ao obter o serial number de memória: ", err))
 	}
 
 	// Remove colchetes e divide a string em partes
@@ -920,201 +1024,179 @@ func main() {
 	var memoriesList []map[string]string
 
 	for i := 0; i < len(partsNames); i++ {
-		obj := map[string]string{
-			"BankLabel": partsNames[i],
-			"Capacity":  partsSizes[i],
-			"MemoryType": partsTypes[i],
-			"TypeDetail": partsTypeDetails[i],
-			"Speed": partsSpeed[i],
-			"SerialNumber": partsSerialNumber[i],
-		}
-		memoriesList = append(memoriesList, obj)
+		func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					logToFile(fmt.Sprintf("Recuperado de um panic: %v", r))
+				}
+			}()
+
+			obj := map[string]string{
+				"BankLabel":   safeGet(partsNames, i),
+				"Capacity":    safeGet(partsSizes, i),
+				"MemoryType":  safeGet(partsTypes, i),
+				"TypeDetail":  safeGet(partsTypeDetails, i),
+				"Speed":       safeGet(partsSpeed, i),
+				"SerialNumber": safeGet(partsSerialNumber, i),
+			}
+			memoriesList = append(memoriesList, obj)
+		}(i)
 	}
 
 	hard_disk_model, err := getHDModel("/dev/sda")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro ao obter o modelo do HD:", err))
 	}
 
 	hard_disk_serial_number, err := getHDSerialModel("/dev/sda")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	} 
 
 	hard_disk_user_capacity, err := getHDUserCapacity("/dev/sda")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	hard_disk_sata_version, err := getHDSataVersion("/dev/sda")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	cpu_architecture, err := getCPUInfo("Architecture:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	cpu_operation_mode, err := getCPUInfo("CPU op-mode(s):")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	} 
 
 	cpus, err := getCPUInfo("CPU(s):")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	cpu_vendor_id, err := getCPUInfo("Vendor ID:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	cpu_model_name, err := getCPUInfo("Model name:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	cpu_thread, err := getCPUInfo("Thread(s) per core:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	cpu_core, err := getCPUInfo("Core(s) per socket:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	cpu_socket, err := getCPUInfo("Socket(s):")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	cpu_max_mhz, err := getCPUInfo("CPU max MHz:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	cpu_min_mhz, err := getCPUInfo("CPU min MHz:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	gpu_product, err := getGPUProduct("product:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	gpu_vendor_id, err := getGPUProduct("vendor:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	gpu_bus_info, err := getGPUProduct("bus info:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	gpu_logical_name, err := getGPUProduct("logical name:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	gpu_clock, err := getGPUProduct("clock:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	gpu_configuration, err := getGPUProduct("configuration:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}  
 
 	audio_device_product_first_value, err := getAudioDevices("card 0:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	} 
 
 	audio_device_product, err := extractValueFromBrackets(audio_device_product_first_value)
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	audio_device_model_first_value, err := getAudioDeviceModel("device 0:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	audio_device_model, err := extractValueFromBrackets(audio_device_model_first_value)
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 	
 	bios_version, err := getSMBIOSVersion()
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	} 
 
 	motherboard_manufacturer, err := getSMBIOSInfo("Manufacturer:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	motherboard_product_name, err := getSMBIOSInfo("Product Name:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	motherboard_version, err := getSMBIOSInfo("Version:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	motherboard_serial_name, err := getSMBIOSInfo("Serial Number:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	motherboard_asset_tag, err := getSMBIOSInfo("Asset Tag:")
 	if err != nil {
-		fmt.Println("Erro:", err)
-		return
+		logToFile(fmt.Sprintln("Erro:", err))
 	}
 
 	// Chama a função para listar os pacotes instalados
 	installedPackages, err := listInstalledPackages()
 	if err != nil {
-		log.Fatalf("Erro ao listar os pacotes instalados: %v", err)
+		logToFile(fmt.Sprintln("Erro ao listar os pacotes instalados: ", err))
 	}
 
 	// Convertendo a string para um slice de strings

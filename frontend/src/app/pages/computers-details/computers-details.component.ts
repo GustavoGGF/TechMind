@@ -193,6 +193,11 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
               break;
             case 'VMware Virtual Platform':
               this.url_model = '/static/assets/images/brands/feature-image.png';
+              break;
+            case 'OptiPlex GX620':
+              this.url_model =
+                '/static/assets/images/models/81p7NifF3RL._AC_SL1500_.jpg';
+              break;
           }
           this.serial_number = this.info_PC[11];
           this.max_capacity_memory = this.info_PC[12];

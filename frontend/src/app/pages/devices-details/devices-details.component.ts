@@ -101,6 +101,14 @@ export class DevicesDetailsComponent implements OnInit {
               break;
             case '1908FPt':
               this.img_url = '/static/assets/images/devices/13803086706.png';
+              break;
+            case 'FLATRON E2360V-PN':
+              this.img_url = '/static/assets/images/devices/medium0.png';
+              break;
+            case 'SoundPoint Ip 320 SIP':
+              this.img_url =
+                '/static/assets/images/devices/91+5tSdU8oL._AC_SL1500_.png';
+              break;
           }
           this.brand = this.device[4];
           this.imob = this.device[3];

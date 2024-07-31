@@ -34,5 +34,8 @@
       "HDRS": "Adicionar headers",
       "NVBRLTRS": "Arrumar as letras no navbar, deixar em negrito e ao passar o mouse em cima deixar branco"
     }
+  },
+  "Exec's": {
+    "FreeBSD": "Fazer um personalizado"
   }
 }

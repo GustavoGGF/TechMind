@@ -244,6 +244,7 @@ def postMachines(request):
             audio_device_model = data.get("audioDeviceModel")
             bios_version = data.get("biosVersion")
             motherboard_manufacturer = data.get("motherboardManufacturer")
+            logger.info("motherboard_manufacturer: ", motherboard_manufacturer)
             motherboard_product_name = data.get("motherboardProductName")
             motherboard_version = data.get("motherboardVersion")
             motherboard_serial_name = data.get("motherbaoardSerialName")
