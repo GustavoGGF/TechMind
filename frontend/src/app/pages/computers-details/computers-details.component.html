@@ -341,10 +341,10 @@
             (click)="modifyDevice()"
           />
         </div>
-        <div *ngIf="!modifyOther">
+        <div class="dashOthers" *ngIf="!modifyOther">
           <span><b class="b_margin">Plaqueta Imob:</b>{{ imob }}</span>
           <span><b class="b_margin">Localização:</b>{{ location }}</span>
-          <textarea name="" id=""></textarea>
+          <textarea class="txt" disabled>{{ note }}</textarea>
         </div>
         <div *ngIf="modifyOther">
           <div class="w-100 mb-3 d-flex">
@@ -364,8 +364,9 @@
           </div>
           <select class="form-select mb-3" (change)="device_select($event)">
             <option value="None" selected disabled>Selecione A Unidade</option>
-            <option value="Monitor">CSC</option>
+            <option value="CSC">CSC</option>
           </select>
+          <textarea class="txt">{{ note }}</textarea>
           <div class="d-flex justify-content-center">
             <button class="btn btn-success" (click)="submitOthers()">
               Salvar

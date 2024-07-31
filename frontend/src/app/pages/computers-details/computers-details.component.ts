@@ -100,6 +100,8 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
   token: any;
   location: string = '';
   select_value: string = '';
+  note: string = '';
+  input_note: string = '';
 
   urlResize = '/static/assets/images/expandir-setas.png';
 
@@ -274,6 +276,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
           }
           this.imob = this.info_PC[44];
           this.location = this.info_PC[45];
+          this.note = this.info_PC[46];
         }
       });
   }
@@ -393,6 +396,10 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
     this.select_value = event.target.value;
   }
 
+  getNote(event: any): void {
+    this.input_note = event.target.value;
+  }
+
   submitOthers(): void {
     var mac = this.macAddress.replace(/-/g, '');
     this.http
@@ -401,6 +408,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
         {
           imob: this.input_imob,
           location: this.select_value,
+          note: this.input_note,
         },
         {
           headers: new HttpHeaders({

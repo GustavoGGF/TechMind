@@ -1,6 +1,7 @@
 {
   "ALL": {
-    "DCPS": "Docker compose utilizando apache"
+    "DCPS": "Docker compose utilizando apache",
+    "NVB": "Ajustar abas navbar, deixar active quando estiver na respectiva aba"
   },
   "Home": {},
   "Computer": { "FLTR": "Filtro nos dispositivos, por software" },

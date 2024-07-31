@@ -809,10 +809,13 @@ def computersModify(request, mac_address):
         update_query = None
         result = None
         result2 = None
+        note = None
+        result3 = None
         try:
             data = json.loads(request.body)
             imob = data.get("imob")
             location = data.get("location")
+            note = data.get("note")
             if imob:
                 connection = mysql.connector.connect(
                     host=config("DB_HOST"),
@@ -864,7 +867,7 @@ def computersModify(request, mac_address):
                     # Confirmando a inserção
                     connection.commit()
 
-                    update_query = "select imob from machines WHERE mac_address =%s"
+                    update_query = "select location from machines WHERE mac_address =%s"
 
                     cursor.execute(update_query, (mac_address,))
 
@@ -879,6 +882,42 @@ def computersModify(request, mac_address):
 
                     return JsonResponse(
                         {"imob": result[0], "location": result2[0]},
+                        status=200,
+                        safe=True,
+                    )
+                if note:
+                    connection = mysql.connector.connect(
+                        host=config("DB_HOST"),
+                        database=config("DB_NAME"),
+                        user=config("DB_USER"),
+                        password=config("DB_PASSWORD"),
+                    )
+
+                    if connection.is_connected():
+                        cursor = connection.cursor()
+
+                    update_query = "UPDATE machines SET note =%s WHERE mac_address =%s"
+
+                    cursor.execute(update_query, (note, mac_address))
+
+                    # Confirmando a inserção
+                    connection.commit()
+
+                    update_query = "select note from machines WHERE mac_address =%s"
+
+                    cursor.execute(update_query, (mac_address,))
+
+                    # Obtendo o resultado
+                    result3 = (
+                        cursor.fetchone()
+                    )  # Use fetchall() se esperar mais de um resultado
+
+                    # Fechando a conexão
+                    cursor.close()
+                    connection.close()
+
+                    return JsonResponse(
+                        {"imob": result[0], "location": result2[0], "note": result3[0]},
                         status=200,
                         safe=True,
                     )
@@ -902,7 +941,76 @@ def computersModify(request, mac_address):
                 # Confirmando a inserção
                 connection.commit()
 
-                update_query = "select imob from machines WHERE mac_address =%s"
+                update_query = "select location from machines WHERE mac_address =%s"
+
+                cursor.execute(update_query, (mac_address,))
+
+                # Obtendo o resultado
+                result = (
+                    cursor.fetchone()
+                )  # Use fetchall() se esperar mais de um resultado
+                logger.info(result)
+
+                # Fechando a conexão
+                cursor.close()
+                connection.close()
+                if note:
+                    connection = mysql.connector.connect(
+                        host=config("DB_HOST"),
+                        database=config("DB_NAME"),
+                        user=config("DB_USER"),
+                        password=config("DB_PASSWORD"),
+                    )
+
+                    if connection.is_connected():
+                        cursor = connection.cursor()
+
+                    update_query = "UPDATE machines SET note =%s WHERE mac_address =%s"
+
+                    cursor.execute(update_query, (note, mac_address))
+
+                    # Confirmando a inserção
+                    connection.commit()
+
+                    update_query = "select note from machines WHERE mac_address =%s"
+
+                    cursor.execute(update_query, (mac_address,))
+
+                    # Obtendo o resultado
+                    result2 = (
+                        cursor.fetchone()
+                    )  # Use fetchall() se esperar mais de um resultado
+
+                    # Fechando a conexão
+                    cursor.close()
+                    connection.close()
+
+                    return JsonResponse(
+                        {"location": result[0], "note": result2[0]},
+                        status=200,
+                        safe=True,
+                    )
+                else:
+                    return JsonResponse({"location": result[0]}, status=200, safe=True)
+            if note:
+                connection = mysql.connector.connect(
+                    host=config("DB_HOST"),
+                    database=config("DB_NAME"),
+                    user=config("DB_USER"),
+                    password=config("DB_PASSWORD"),
+                )
+
+                if connection.is_connected():
+                    cursor = connection.cursor()
+
+                update_query = "UPDATE machines SET note =%s WHERE mac_address =%s"
+
+                cursor.execute(update_query, (note, mac_address))
+
+                # Confirmando a inserção
+                connection.commit()
+
+                update_query = "select note from machines WHERE mac_address =%s"
 
                 cursor.execute(update_query, (mac_address,))
 
@@ -916,10 +1024,10 @@ def computersModify(request, mac_address):
                 cursor.close()
                 connection.close()
 
-                return JsonResponse({"location": result[0]}, status=200, safe=True)
+                return JsonResponse({"note": result[0]}, status=200, safe=True)
             else:
                 return JsonResponse(
-                    {"message": "Imobilizado ou Localização Obrigatorio"}, status=310
+                    {"message": "Imobilizado, Localização ou Observação Obrigatorio"}, status=310
                 )
         except Exception as e:
             logger.error(e)

@@ -152,3 +152,12 @@
   width: 3em;
   cursor: pointer;
 }
+
+.dashOthers {
+  display: flex;
+  justify-content: space-around;
+}
+
+.txt {
+  resize: none;
+}
