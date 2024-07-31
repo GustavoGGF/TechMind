@@ -363,7 +363,6 @@
             <label for="floatingBrand">Plaqueta Imob: {{ imob }}</label>
           </div>
           <select class="form-select mb-3" (change)="device_select($event)">
-            <option value="None" selected disabled>Selecione A Unidade</option>
             <option value="CSC">CSC</option>
           </select>
           <textarea (input)="getNote($event)" class="txt">{{ note }}</textarea>

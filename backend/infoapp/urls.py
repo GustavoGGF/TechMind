@@ -48,6 +48,7 @@ urlpatterns = [
         views.computersDevices,
         name="central-computers-device",
     ),
+    # url de modificação da aba outros
     path(
         "computers/modify-others/<str:mac_address>",
         views.computersModify,

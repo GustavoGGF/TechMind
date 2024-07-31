@@ -797,25 +797,29 @@ def computersDevices(request, mac_address):
         return
 
 
+# Função que salva os dados da aba outros
 def computersModify(request, mac_address):
     if request.method == "GET":
-        return
+        return redirect("/devices")
     if request.method == "POST":
-        data = None
-        imob = None
+        # Iniciando as variaveis
         connection = None
         cursor = None
+        data = None
+        imob = None
         location = None
-        update_query = None
+        note = None
         result = None
         result2 = None
-        note = None
         result3 = None
+        update_query = None
         try:
+            # Pegando os dados json
             data = json.loads(request.body)
             imob = data.get("imob")
             location = data.get("location")
             note = data.get("note")
+            # Caso o imobilizado tenha sido alterado
             if imob:
                 connection = mysql.connector.connect(
                     host=config("DB_HOST"),
@@ -846,7 +850,7 @@ def computersModify(request, mac_address):
                 # Fechando a conexão
                 cursor.close()
                 connection.close()
-
+                # Caso location tambem tenha sido alterado
                 if location:
                     connection = mysql.connector.connect(
                         host=config("DB_HOST"),
@@ -885,6 +889,7 @@ def computersModify(request, mac_address):
                         status=200,
                         safe=True,
                     )
+                # Caso note tenha sido alterado tambem
                 if note:
                     connection = mysql.connector.connect(
                         host=config("DB_HOST"),
@@ -923,6 +928,7 @@ def computersModify(request, mac_address):
                     )
                 else:
                     return JsonResponse({"imob": result[0]}, status=200, safe=True)
+            # Caso location tenha sido alterado
             if location:
                 connection = mysql.connector.connect(
                     host=config("DB_HOST"),
@@ -954,6 +960,7 @@ def computersModify(request, mac_address):
                 # Fechando a conexão
                 cursor.close()
                 connection.close()
+                # Caso note tambem tenha sido alterado
                 if note:
                     connection = mysql.connector.connect(
                         host=config("DB_HOST"),
@@ -992,6 +999,7 @@ def computersModify(request, mac_address):
                     )
                 else:
                     return JsonResponse({"location": result[0]}, status=200, safe=True)
+            # Caso note tenha sido alterado
             if note:
                 connection = mysql.connector.connect(
                     host=config("DB_HOST"),
@@ -1027,7 +1035,8 @@ def computersModify(request, mac_address):
                 return JsonResponse({"note": result[0]}, status=200, safe=True)
             else:
                 return JsonResponse(
-                    {"message": "Imobilizado, Localização ou Observação Obrigatorio"}, status=310
+                    {"message": "Imobilizado, Localização ou Observação Obrigatorio"},
+                    status=310,
                 )
         except Exception as e:
             logger.error(e)

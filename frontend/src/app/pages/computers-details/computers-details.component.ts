@@ -33,83 +33,88 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
   ) {}
 
   @ViewChild('main') main!: ElementRef;
-
+  // Variaveis Array
+  devices: string[] = [];
   divs: string[] = [];
+  softwares: string[] = [];
 
+  // Variaveis String
+  audio_device_model: string = '';
+  audio_device_product: string = '';
+  bios_version: string = '';
+  cpu_architecture: string = '';
+  cpu_core: string = '';
+  cpu_max_mhz: string = '';
+  cpu_min_mhz: string = '';
+  cpu_model_name: string = '';
+  cpu_operation_mode: string = '';
+  cpu_thread: string = '';
+  cpu_socket: string = '';
+  cpu_vendor_id: string = '';
+  cpus: string = '';
   currentUser: string = '';
-  macAddress: string = '';
-  name: any;
-  name_pc: string = '';
-  operational_System: string = '';
-  system_version: string = '';
+  domain: string = '';
+  gpu_bus_info: string = '';
+  gpu_clock: string = '';
+  gpu_configuration: string = '';
+  gpu_logical_name: string = '';
+  gpu_product: string = '';
+  gpu_vendor_id: string = '';
+  hard_disk_model: string = '';
+  hard_disk_sata_version: string = '';
+  hard_disk_serial_number: string = '';
+  hard_disk_user_capacity: string = '';
+  img_config: string = '/static/assets/images/devices/configuracao.png';
+  imob: string = '';
+  input_imob: string = '';
+  input_note: string = '';
   ip: string = '';
-  url_logo: string = '';
+  list_softwares: string = '';
+  location: string = '';
+  macAddress: string = '';
   manufacturer: string = '';
-  url_manufacturer: string = '';
-  model: string = '';
-  url_model: string = '';
-  canView: boolean = false;
-  canViewHardWare: boolean = false;
-  canViewDataAdmin: boolean = true;
-  serial_number: string = '';
   max_capacity_memory: string = '';
-  number_of_slot: string = '';
-  hard_disk_model = '';
-  hard_disk_serial_number = '';
-  hard_disk_user_capacity = '';
-  hard_disk_sata_version = '';
-  cpu_architecture = '';
-  cpu_operation_mode = '';
-  cpus = '';
-  cpu_vendor_id = '';
-  cpu_model_name = '';
-  cpu_thread = '';
-  cpu_core = '';
-  cpu_socket = '';
-  cpu_max_mhz = '';
-  cpu_min_mhz = '';
-  gpu_product = '';
-  gpu_vendor_id = '';
-  gpu_bus_info = '';
-  gpu_logical_name = '';
-  gpu_clock = '';
-  gpu_configuration = '';
-  audio_device_product = '';
-  audio_device_model = '';
-  bios_version = '';
-  present: string = '';
+  model: string = '';
+  motherboard_asset_tag: string = '';
   motherboard_manufacturer: string = '';
+  motherboard_serial_name: string = '';
   motherboard_product_name: string = '';
   motherboard_version: string = '';
-  motherboard_serial_name: string = '';
-  motherboard_asset_tag: string = '';
-  canViewSoftWare: boolean = false;
-  list_softwares: string = '';
-  softwares: string[] = [];
-  canViewDevices: boolean = false;
-  devices: string[] = [];
-  domain: string = '';
-  memories: any;
-  memory_windows: boolean = false;
-  softwareList: { name: string; version: string; vendor: string }[] = [];
-  canViewOthers: boolean = false;
-  imob: string = '';
-  img_config: string = '/static/assets/images/devices/configuracao.png';
-  modifyOther: boolean = false;
-  input_imob: string = '';
-  token: any;
-  location: string = '';
-  select_value: string = '';
+  name_pc: string = '';
   note: string = '';
-  input_note: string = '';
-
+  number_of_slot: string = '';
+  operational_System: string = '';
+  present: string = '';
+  select_value: string = '';
+  serial_number: string = '';
+  system_version: string = '';
+  url_logo: string = '';
+  url_manufacturer: string = '';
+  url_model: string = '';
   urlResize = '/static/assets/images/expandir-setas.png';
 
+  // Varaiveis any
   info_PC: any;
+  memories: any;
+  name: any;
   status: any;
+  token: any;
 
+  // Variaveis Boolean
+  canView: boolean = false;
+  canViewDataAdmin: boolean = true;
+  canViewDevices: boolean = false;
+  canViewHardWare: boolean = false;
+  canViewOthers: boolean = false;
+  canViewSoftWare: boolean = false;
+  memory_windows: boolean = false;
+  modifyOther: boolean = false;
   showBar: boolean = false;
 
+  // Variaveis Object
+  softwareList: { name: string; version: string; vendor: string }[] = [];
+
+  // Setando função para verificar o click na pagina
   ngAfterViewInit() {
     // Adiciona o event listener global para cliques no documento
     this.clickListener = this.renderer.listen(
@@ -119,11 +124,11 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
     );
   }
 
+  // Caso o click não seja na aba de guia ou no botão de resize, a barra de informações é escondida
   handleClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
 
     if (target) {
-      // Verifique o id do elemento clicado e execute a lógica desejada
       if (
         target.id !== 'nvbar' &&
         target.id !== 'resize' &&
@@ -134,18 +139,25 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
     }
   }
 
+  // Função inicia ao entrar na pagina
   ngOnInit(): void {
+    // Pegando o token CSRF
     this.getToken();
+    // Pegando os dados do usuario
     this.name = localStorage.getItem('name');
 
+    // Verificando se o nome foi obtido
     if (this.name.length == 0 || this.name == null) {
     } else {
       this.canView = true;
     }
+
+    // Pegando o mac_address
     this.route.params.subscribe((params) => {
       this.macAddress = params['mac'];
     });
 
+    // Obtendo dados do equipamento
     this.http
       .get('/home/computers/info-machine/' + this.macAddress, {})
       .pipe(
@@ -161,14 +173,18 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
           this.name_pc = this.info_PC[1];
           this.currentUser = this.info_PC[5];
           this.operational_System = this.info_PC[3];
-          switch (this.operational_System) {
+          // Selecionando a logo do sistema operacional
+          let operational_System_string = this.operational_System
+            .toLowerCase()
+            .replace(/\s+/g, '');
+          switch (operational_System_string) {
             default:
               this.url_logo = '';
               break;
             case 'ubuntu':
               this.url_logo = '/static/assets/images/brands/ubuntu.png';
               break;
-            case 'Windows10':
+            case 'windows10':
               this.url_logo = '/static/assets/images/brands/windows10.png';
               break;
           }
@@ -176,33 +192,39 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
           this.domain = this.info_PC[7];
           this.ip = this.info_PC[8];
           this.manufacturer = this.info_PC[9];
-          switch (this.manufacturer) {
+          // Selecionando a logo da Marca do equipamento
+          let manufacturer_string = this.manufacturer
+            .toLowerCase()
+            .replace(/\s+/g, '');
+          switch (manufacturer_string) {
             default:
               this.url_manufacturer = '';
               break;
-            case 'Dell Inc.':
+            case 'dellinc.':
               this.url_manufacturer = '/static/assets/images/brands/dell.png';
               break;
-            case 'VMware, Inc.':
+            case 'vmware,Inc.':
               this.url_manufacturer = '/static/assets/images/brands/VMware.png';
               break;
           }
           this.model = this.info_PC[10];
-          switch (this.model) {
+          // Selecionando a imagem do equipamento
+          let model_string = this.model.toLowerCase().replace(/\s+/g, '');
+          switch (model_string) {
             default:
               this.url_model = '';
               break;
-            case 'Precision M4600':
+            case 'precisionm4600':
               this.url_model = '/static/assets/images/models/_OVR.webp';
               break;
-            case 'VMware Virtual Platform':
+            case 'vmwarevirtualplatform':
               this.url_model = '/static/assets/images/brands/feature-image.png';
               break;
-            case 'OptiPlex GX620':
+            case 'optiplexgx620':
               this.url_model =
                 '/static/assets/images/models/81p7NifF3RL._AC_SL1500_.jpg';
               break;
-            case 'Precision WorkStation T3400 ':
+            case 'precisionworkstationt3400':
               this.url_model = '/static/assets/images/models/OriginalJPG-.png';
               break;
           }
@@ -231,11 +253,14 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
           this.gpu_configuration = this.info_PC[33];
           this.audio_device_product = this.info_PC[34];
           this.audio_device_model = this.info_PC[35];
+          // Verificando se o SMBIOS está presente
           if (this.info_PC[36].includes('present')) {
             this.present = 'Present';
           } else {
             this.present = 'Not found';
           }
+
+          // Ajustando versão da bios
           let regex = /(.{2})\.(.{2})/;
           let matches = this.bios_version.match(regex);
           if (matches) {
@@ -243,14 +268,20 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
             let part_2 = matches[2];
             this.bios_version = part_1 + '.' + part_2;
           }
+
           this.motherboard_manufacturer = this.info_PC[37];
           this.motherboard_product_name = this.info_PC[38];
           this.motherboard_version = this.info_PC[39];
           this.motherboard_serial_name = this.info_PC[40];
           this.motherboard_asset_tag = this.info_PC[41];
+
+          // Ajustando a lsita de softwares
           let softwares_list = this.info_PC[42];
           if (softwares_list) {
-            if (this.operational_System == 'Windows10') {
+            if (
+              this.operational_System == 'Windows10' ||
+              this.operational_System == 'Windows8.1'
+            ) {
               let jsonString = softwares_list.replace(/'/g, '"');
               this.softwareList = JSON.parse(jsonString);
             } else {
@@ -261,6 +292,8 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
               }
             }
           }
+
+          // Ajustando as memorias
           this.memories = this.info_PC[43];
           if (this.memories) {
             let valid = this.memories.replace(/'/g, '"');
@@ -274,6 +307,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
                 this.memory_windows = true;
             }
           }
+
           this.imob = this.info_PC[44];
           this.location = this.info_PC[45];
           this.note = this.info_PC[46];
@@ -281,6 +315,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
       });
   }
 
+  // FUnção que obtem o token CSRF
   getToken(): void {
     this.http
       .get('/home/get-token', {})
@@ -301,6 +336,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
       });
   }
 
+  // Função que expande e retrai as abas
   async resizeBar(): Promise<void> {
     if (this.showBar) {
       this.showBar = false;
@@ -309,6 +345,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
     }
   }
 
+  // Função que mostra a aba de HardWare
   showHardware(): void {
     this.canViewDataAdmin = false;
     this.canViewHardWare = true;
@@ -317,6 +354,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
     this.canViewOthers = false;
   }
 
+  // Função que mostra a aba de Dados Administrativos
   showDataAdmin(): void {
     this.canViewDataAdmin = true;
     this.canViewHardWare = false;
@@ -325,6 +363,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
     this.canViewOthers = false;
   }
 
+  // Função que mostra os Softwares
   showSoftWare(): void {
     this.canViewDataAdmin = false;
     this.canViewHardWare = false;
@@ -333,6 +372,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
     this.canViewOthers = false;
   }
 
+  // Função que mostra os dispositivos atrelado ao equipamento
   showDevices(): void {
     this.canViewDataAdmin = false;
     this.canViewHardWare = false;
@@ -340,6 +380,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
     this.canViewDevices = true;
     this.canViewOthers = false;
     var mac = this.macAddress.replace(/-/g, '');
+    // Obtem os dispositivos atrelados
     this.http
       .get('/home/computers/added-devices/' + mac, {})
       .pipe(
@@ -359,6 +400,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
       });
   }
 
+  // Função que mostra a ba outros
   showOthers(): void {
     this.canViewDataAdmin = false;
     this.canViewHardWare = false;
@@ -367,16 +409,19 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
     this.canViewOthers = true;
   }
 
+  // Função que manda para a url do dispositivos selecionado
   onRowClick(index: number) {
     const selectedDevice = this.devices[index];
     var sn = selectedDevice[2];
     return (window.location.href = '/home/devices/view-devices/' + sn);
   }
 
+  // Função que converte bytes em GB
   convertBytesToGB(bytes: number): number {
     return bytes / 1024 ** 3;
   }
 
+  // Função que converte bytes em GB
   convertBytesToGB2(capacity: string): number {
     // Remove qualquer texto adicional e converte para número
     const numericValue = parseFloat(capacity.replace(/[^0-9]/g, ''));
@@ -384,22 +429,27 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
     return numericValue;
   }
 
+  // FUnção que libera a modificação na aba outros
   modifyDevice(): void {
     this.modifyOther = true;
   }
 
+  // Função que obtem o valor do imob
   getImob(event: any): void {
     this.input_imob = event.target.value;
   }
 
+  // Função que obtem o valor da localização selecionado
   device_select(event: any): void {
     this.select_value = event.target.value;
   }
 
+  //Função que obtem as observações
   getNote(event: any): void {
     this.input_note = event.target.value;
   }
 
+  // Função que salva os dados modificados e ja mostra eles atualizados na tela
   submitOthers(): void {
     var mac = this.macAddress.replace(/-/g, '');
     this.http
