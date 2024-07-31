@@ -366,7 +366,7 @@
             <option value="None" selected disabled>Selecione A Unidade</option>
             <option value="CSC">CSC</option>
           </select>
-          <textarea class="txt">{{ note }}</textarea>
+          <textarea (input)="getNote($event)" class="txt">{{ note }}</textarea>
           <div class="d-flex justify-content-center">
             <button class="btn btn-success" (click)="submitOthers()">
               Salvar
