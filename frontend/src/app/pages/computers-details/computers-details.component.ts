@@ -206,6 +206,10 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
             case 'vmware,Inc.':
               this.url_manufacturer = '/static/assets/images/brands/VMware.png';
               break;
+            case 'hewlett-packard':
+              this.url_manufacturer =
+                '/static/assets/images/brands/100px-HP_logo_2012.svg.png';
+              break;
           }
           this.model = this.info_PC[10];
           // Selecionando a imagem do equipamento
@@ -226,6 +230,10 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
               break;
             case 'precisionworkstationt3400':
               this.url_model = '/static/assets/images/models/OriginalJPG-.png';
+              break;
+            case 'hpcompaqelite8300sff':
+              this.url_model =
+                '/frontend/src/assets/images/models/c02753259.jpg';
               break;
           }
           this.serial_number = this.info_PC[11];

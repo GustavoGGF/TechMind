@@ -16,7 +16,8 @@
       "HKSV": "Verificcar Hard Disk Sata Verion Windows",
       "GPU": "Verificar Clock GPU e logical Name Windows",
       "DVCAD": "Audio Device Windows",
-      "BS": "SMBIOS Windows"
+      "BS": "SMBIOS Windows",
+      "LZT": "Localização esta zoado"
     }
   },
   "Back End": {
@@ -33,6 +34,8 @@
   },
   "Exec's": {
     "FreeBSD": "Fazer um personalizado",
-    "WDTR": "Não esta pegando corretamento distribuição Windows Server 2012"
+    "WDTR": "Não esta pegando corretamento distribuição Windows Server 2012",
+    "VRFW8W2012": "Vefificar os windows 8.1 se não são 2012",
+    "W2012": "Windows server 2012 não listou softwares"
   }
 }

@@ -124,7 +124,7 @@ def getDataComputers(request):
                 cursor = connection.cursor()
 
             # Consulta SQL para contar os itens na coluna 'windows' da tabela 'machines'
-            query = "SELECT * FROM machines ORDER BY insertion_date ASC LIMIT 10"
+            query = "SELECT * FROM machines ORDER BY insertion_date ASC"
             cursor.execute(query)
 
             # Obtendo os resultados como listas
