@@ -61,6 +61,7 @@ export class HomeComponent {
         if (data) {
           this.totalWindows = data.windows;
           this.totalMachines = data.total;
+          this.totalUnix = data.unix;
           this.notData = false;
         }
       });

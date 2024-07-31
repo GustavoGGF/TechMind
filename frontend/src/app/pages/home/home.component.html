@@ -4,7 +4,7 @@
   <app-message
     [errorType]="errorType"
     [messageError]="messageError"
-    (click)="(hideMessage)"
+    (click)="hideMessage()"
     *ngIf="showMessage"
   />
   <div *ngIf="canView">

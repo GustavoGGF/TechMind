@@ -31,7 +31,15 @@ def getInfoMainPanel(request):
     if request.method == "POST":
         return JsonResponse({"Corno": "Manso"}, status=301)
     if request.method == "GET":
-
+        connection = None
+        cursor = None
+        query = None
+        query2 = None
+        query3 = None
+        result = None
+        totalWindows = None
+        totalUnix = None
+        totalMachines = None
         try:
             # Conectar ao banco de dados
             connection = mysql.connector.connect(
@@ -61,6 +69,18 @@ def getInfoMainPanel(request):
 
             totalMachines = result[0]
 
+            query3 = """SELECT COUNT(*)
+                        FROM machines
+                        WHERE system_name LIKE '%linux%'
+                        OR system_name LIKE '%freebsd%';"""
+            
+            cursor.execute(query3)
+
+            # Pegar o resultado da consulta
+            result = cursor.fetchone()
+
+            totalUnix = result[0]
+
         except Error as e:
             print("Erro ao conectar ao MySQL", e)
 
@@ -70,7 +90,7 @@ def getInfoMainPanel(request):
                 connection.close()
 
         return JsonResponse(
-            {"windows": totalWindows, "total": totalMachines}, status=200, safe=True
+            {"windows": totalWindows, "total": totalMachines, "unix":totalUnix}, status=200, safe=True
         )
 
 
