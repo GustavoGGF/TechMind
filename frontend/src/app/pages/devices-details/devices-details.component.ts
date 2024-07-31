@@ -109,6 +109,9 @@ export class DevicesDetailsComponent implements OnInit {
               this.img_url =
                 '/static/assets/images/devices/91+5tSdU8oL._AC_SL1500_.png';
               break;
+            case 'ix4-200d':
+              this.img_url = '/static/assets/images/devices/i_8.png';
+              break;
           }
           this.brand = this.device[4];
           this.imob = this.device[3];
