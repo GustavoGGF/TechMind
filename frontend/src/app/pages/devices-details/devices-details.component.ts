@@ -110,7 +110,11 @@ export class DevicesDetailsComponent implements OnInit {
                 '/static/assets/images/devices/91+5tSdU8oL._AC_SL1500_.png';
               break;
             case 'ix4-200d':
-              this.img_url = '/static/assets/images/devices/i_8.png';
+              this.img_url = '/static/assets/images/devices/1_8.png';
+              break;
+            case 'SG300-52':
+              this.img_url =
+                '/static/assets/images/devices/cisco-sg300-52mp-k9-eu-small-business-sg300-52mp-switch-10126213.png';
               break;
           }
           this.brand = this.device[4];
