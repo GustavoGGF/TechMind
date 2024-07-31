@@ -5,3 +5,13 @@
 .none {
   cursor: none;
 }
+
+.pages_direction {
+  font-weight: bold;
+  color: var(--pure-white);
+  font-size: 1.2em;
+}
+
+.pages_direction:hover {
+  color: var(--black);
+}
