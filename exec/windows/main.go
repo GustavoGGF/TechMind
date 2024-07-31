@@ -1109,7 +1109,6 @@ func main() {
 	for _, software := range softwareMap {
 		combinedSoftware = append(combinedSoftware, software)
 	}
-	logToFile(fmt.Sprintln(combinedSoftware))
 
 	jsonData := Data{
 		System:               sys,

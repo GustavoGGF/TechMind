@@ -241,10 +241,10 @@ def postMachines(request):
             gpu_clock = data.get("gpuClock")
             gpu_configuration = data.get("gpuConfiguration")
             audio_device_product = data.get("audioDeviceProduct")
+            logger.info("audio_device_product: ", audio_device_product)
             audio_device_model = data.get("audioDeviceModel")
             bios_version = data.get("biosVersion")
             motherboard_manufacturer = data.get("motherboardManufacturer")
-            logger.info("motherboard_manufacturer: ", motherboard_manufacturer)
             motherboard_product_name = data.get("motherboardProductName")
             motherboard_version = data.get("motherboardVersion")
             motherboard_serial_name = data.get("motherbaoardSerialName")
@@ -252,7 +252,7 @@ def postMachines(request):
             softwares_list = data.get("installedPackages")
             softwares = None
             if softwares_list != None:
-                if distribution == "Windows10":
+                if distribution == "Windows10" or distribution == "Windows8.1":
                     softwares = str(softwares_list)
                 else:
                     softwares = ""

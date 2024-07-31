@@ -36,6 +36,7 @@
     }
   },
   "Exec's": {
-    "FreeBSD": "Fazer um personalizado"
+    "FreeBSD": "Fazer um personalizado",
+    "WDTR": "Não esta pegando corretamento distribuição Windows Server 2012"
   }
 }

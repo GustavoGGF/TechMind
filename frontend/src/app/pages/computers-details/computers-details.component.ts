@@ -198,6 +198,9 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
               this.url_model =
                 '/static/assets/images/models/81p7NifF3RL._AC_SL1500_.jpg';
               break;
+            case 'Precision WorkStation T3400 ':
+              this.url_model = '/static/assets/images/models/OriginalJPG-.png';
+              break;
           }
           this.serial_number = this.info_PC[11];
           this.max_capacity_memory = this.info_PC[12];
