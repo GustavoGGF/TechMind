@@ -54,5 +54,6 @@ urlpatterns = [
         views.computersModify,
         name="centra-computers-modify",
     ),
+    # url que libera o token csrf
     path("get-token", views.getToken, name="central-get-token"),
 ]

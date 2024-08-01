@@ -206,14 +206,28 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
             case 'vmware,Inc.':
               this.url_manufacturer = '/static/assets/images/brands/VMware.png';
               break;
+            case 'hp':
+              this.url_manufacturer =
+                '/static/assets/images/brands/100px-HP_logo_2012.svg.png';
+              break;
             case 'hewlett-packard':
               this.url_manufacturer =
                 '/static/assets/images/brands/100px-HP_logo_2012.svg.png';
+              break;
+            case 'pcware':
+              this.url_manufacturer =
+                '/static/assets/images/brands/logo-pcware-.png';
+              break;
+            case 'lenovo':
+              this.url_manufacturer =
+                '/static/assets/images/brands/logo-lenovo-1024x295.png';
               break;
           }
           this.model = this.info_PC[10];
           // Selecionando a imagem do equipamento
           let model_string = this.model.toLowerCase().replace(/\s+/g, '');
+          console.log(model_string);
+
           switch (model_string) {
             default:
               this.url_model = '';
@@ -232,8 +246,17 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
               this.url_model = '/static/assets/images/models/OriginalJPG-.png';
               break;
             case 'hpcompaqelite8300sff':
+              this.url_model = '/static/assets/images/models/c02753259.jpg';
+              break;
+            case 'ipmh310gpro':
+              this.url_model = '/static/assets/images/models/IPMH310G_PRO.png';
+              break;
+            case 'hpprodesk400g4sff':
+              this.url_model = '/static/assets/images/models/c05924778.png';
+              break;
+            case '':
               this.url_model =
-                '/frontend/src/assets/images/models/c02753259.jpg';
+                '/static/assets/images/models/24165952843_LenovoV14Gen3ABABlackforTextureIMG_202201050201591696357227289.png';
               break;
           }
           this.serial_number = this.info_PC[11];

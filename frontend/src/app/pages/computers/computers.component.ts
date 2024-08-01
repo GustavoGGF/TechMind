@@ -13,22 +13,25 @@ import { catchError, throwError } from 'rxjs';
 })
 export class ComputersComponent {
   constructor(private http: HttpClient) {}
-
+  // Declarando variaveis any
+  dataMachines: any;
   name: any;
   status: any;
 
+  // Declarando variaveis string
   errorType: string = '';
   messageError: string = '';
 
+  // Declarando variaveis boolean
   canView: boolean = false;
   canViewMachines: boolean = false;
   showMessage: boolean = false;
 
-  dataMachines: any;
-
+  // Função iniciada ao carregar a pagina
   ngOnInit(): void {
+    // Pegando valores do usuario
     this.name = localStorage.getItem('name');
-
+    // Verificando se os dados existem
     if (this.name.length == 0 || this.name == null) {
       this.errorType = 'Falta de Dados';
       this.messageError =
@@ -41,6 +44,7 @@ export class ComputersComponent {
     }
   }
 
+  // Buscando as maquinas disponiveis
   getData(): void {
     this.http
       .get('/home/computers/get-data', {})
@@ -60,6 +64,7 @@ export class ComputersComponent {
       });
   }
 
+  // Função para redirecionar para a pagina de visualização da maquina
   onRowClick(index: number) {
     const selectedMachine = this.dataMachines[index];
 

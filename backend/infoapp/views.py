@@ -593,13 +593,6 @@ def devices_post(request):
             print(e)
             return JsonResponse({"error": "Invalid MYSQL"}, status=400, safe=False)
 
-
-def devices_token(request):
-    if request.method == "GET":
-        csrf = get_token(request)
-        return JsonResponse({"token": csrf}, status=200, safe=True)
-
-
 def devices_get(request):
     if request.method == "GET":
         connection = None
@@ -617,7 +610,7 @@ def devices_get(request):
                 cursor = connection.cursor()
 
             # Comando SQL para verificar se o endereço MAC existe na tabela
-            select_query = "SELECT * FROM devices LIMIT 10;"
+            select_query = "SELECT * FROM devices;"
             cursor.execute(select_query)
             # Obtendo os resultados como listas
             results = [list(row) for row in cursor.fetchall()]
@@ -687,7 +680,7 @@ def lastMachines(request):
                 cursor = connection.cursor()
 
             # Consulta SQL para contar os itens na coluna 'windows' da tabela 'machines'
-            query = "SELECT * FROM machines ORDER BY insertion_date ASC LIMIT 10"
+            query = "SELECT * FROM machines ORDER BY insertion_date ASC"
             cursor.execute(query)
 
             # Obtendo os resultados como listas
@@ -1042,7 +1035,7 @@ def computersModify(request, mac_address):
             logger.error(e)
             return JsonResponse({}, status=420)
 
-
+# Função que libera o token CSRF
 def getToken(request):
     if request.method == "GET":
         csrf = get_token(request)
