@@ -1,5 +1,11 @@
 <div class="main">
-  <app-navbar *ngIf="canView" [name]="name" />
+  <app-navbar
+    *ngIf="canView"
+    [name]="name"
+    [home_class]="home_class"
+    [computers_class]="computers_class"
+    [device_class]="device_class"
+  />
   <div class="dash mt-3">
     <div class="w-100 d-flex text-center justify-content-center flex-column">
       <span><b>Dispositivos</b></span>

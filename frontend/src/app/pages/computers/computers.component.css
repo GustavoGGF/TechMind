@@ -3,7 +3,7 @@
 }
 
 .tb {
-  width: 100%;
+  width: 95%;
   border-collapse: collapse;
   color: var(--black);
   margin-top: 1em;
@@ -12,6 +12,9 @@
   -moz-user-select: none; /* Firefox */
   -ms-user-select: none; /* Internet Explorer/Edge */
   user-select: none; /* Padrão */
+  margin: 1em auto;
+  border-bottom-left-radius: 1em;
+  border-bottom-right-radius: 1em;
 }
 
 .thcls {
@@ -34,7 +37,7 @@
 }
 
 .trcls:hover {
-  background-color: #eef2e4e0;
-  transform: scale(1.1);
+  background-color: var(--Piction-Blue);
+  transform: scale(1.04);
   cursor: pointer;
 }

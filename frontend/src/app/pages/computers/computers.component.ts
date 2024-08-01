@@ -19,7 +19,10 @@ export class ComputersComponent {
   status: any;
 
   // Declarando variaveis string
+  computers_class: string = 'active';
+  device_class: string = '';
   errorType: string = '';
+  home_class: string = '';
   messageError: string = '';
 
   // Declarando variaveis boolean

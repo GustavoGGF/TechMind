@@ -21,7 +21,10 @@ export class DevicesDetailsComponent implements OnInit {
 
   // Variaveis String
   brand: string = '';
+  computers_class: string = '';
+  device_class: string = 'active';
   equip: string = '';
+  home_class: string = '';
   img_close: string = '/static/assets/images/fechar.png';
   img_config: string = '/static/assets/images/devices/configuracao.png';
   img_url: string = '';

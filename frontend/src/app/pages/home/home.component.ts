@@ -13,24 +13,32 @@ import { catchError, throwError } from 'rxjs';
 })
 export class HomeComponent {
   constructor(private http: HttpClient) {}
-
+  // Declarando variavel any
   name: any;
   status: any;
 
+  // Declarando variaveis string
+  computers_class: string = '';
+  device_class: string = '';
   errorType: string = '';
+  home_class: string = 'active';
   messageError: string = '';
 
+  // Declarando variaveis boolean
   canView: boolean = false;
   notData: boolean = true;
   showMessage: boolean = false;
 
+  // Variaveis number
   totalMachines: number = 0;
   totalWindows: number = 0;
   totalUnix: number = 0;
 
+  // Função inicia ao iniciar o componente
   ngOnInit() {
+    // Pegando os dados do usuario
     this.name = localStorage.getItem('name');
-
+    // Verificando se os dados existem
     if (this.name.length == 0 || this.name == null) {
       this.errorType = 'Falta de Dados';
       this.messageError =
@@ -38,15 +46,17 @@ export class HomeComponent {
       this.showMessage = true;
     } else {
       this.canView = true;
-
+      // chamando a função para obter os dados
       this.getData();
     }
   }
 
+  // Função para fechar a mensagem de erro
   hideMessage() {
     this.showMessage = false;
   }
 
+  // Função que os dados do dashboard
   getData() {
     this.http
       .get('/home/get-Info-Main-Panel/', {})

@@ -30,11 +30,14 @@ export class DevicesComponent {
 
   // Declarando as variaveis string
   close_button: string = '/static/assets/images/fechar.png';
+  computers_class: string = '';
+  device_class: string = 'active';
   input_brand: string = '';
   input_imob: string = '';
   input_model: string = '';
   input_serial_number: string = '';
   imageDevices: string = '/static/assets/images/devices/computador.png';
+  home_class: string = '';
   select_value: string = '';
 
   // Função para pegar o nome do usuario logado

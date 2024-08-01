@@ -22,19 +22,26 @@
       <ul class="navbar-nav d-flex justify-content-between w-100">
         <li class="nav-item">
           <a
-            class="pages_direction nav-link active"
+            class="pages_direction nav-link"
+            [ngClass]="home_class"
             aria-current="page"
             href="/home"
             >Home</a
           >
         </li>
         <li class="nav-item">
-          <a class="pages_direction nav-link" href="/home/computers"
+          <a
+            class="pages_direction nav-link"
+            [ngClass]="computers_class"
+            href="/home/computers"
             >Computadores</a
           >
         </li>
         <li class="nav-item">
-          <a class="pages_direction nav-link" href="/home/devices"
+          <a
+            class="pages_direction nav-link"
+            [ngClass]="device_class"
+            href="/home/devices"
             >Dispositivos</a
           >
         </li>

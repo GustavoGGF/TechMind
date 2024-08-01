@@ -1,5 +1,11 @@
 <div class="main">
-  <app-navbar *ngIf="canView" [name]="name" />
+  <app-navbar
+    *ngIf="canView"
+    [name]="name"
+    [home_class]="home_class"
+    [computers_class]="computers_class"
+    [device_class]="device_class"
+  />
   <app-loading *ngIf="!canView" />
   <table class="tb">
     <thead>
