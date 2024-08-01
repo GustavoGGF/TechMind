@@ -20,6 +20,8 @@ export class ComputersComponent {
 
   // Declarando variaveis string
   all_quantity: string = '';
+  arrow_up: string = '/static/assets/images/seta2.png';
+  arrow_down: string = '/static/assets/images/seta.png';
   computers_class: string = 'active';
   device_class: string = '';
   errorType: string = '';
@@ -248,5 +250,33 @@ export class ComputersComponent {
     const year = parsedDate.getFullYear();
 
     return `${day}/${month}/${year}`;
+  }
+
+  sortByName(): void {
+    this.dataMachines.sort((a: any, b: any) => {
+      const nameA = a[1].toUpperCase(); // Ignore case
+      const nameB = b[1].toUpperCase(); // Ignore case
+      if (nameA < nameB) {
+        return -1;
+      }
+      if (nameA > nameB) {
+        return 1;
+      }
+      return 0;
+    });
+  }
+
+  sortDataByNameDescending() {
+    this.dataMachines.sort((a: any, b: any) => {
+      const nameA = a[1].toUpperCase(); // Ignore case
+      const nameB = b[1].toUpperCase(); // Ignore case
+      if (nameA < nameB) {
+        return 1;
+      }
+      if (nameA > nameB) {
+        return -1;
+      }
+      return 0;
+    });
   }
 }

@@ -257,7 +257,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
             case 'hpprodesk400g4sff':
               this.url_model = '/static/assets/images/models/c05924778.png';
               break;
-            case '':
+            case '81m1':
               this.url_model =
                 '/static/assets/images/models/24165952843_LenovoV14Gen3ABABlackforTextureIMG_202201050201591696357227289.png';
               break;

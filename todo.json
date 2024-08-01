@@ -1,7 +1,6 @@
 {
   "ALL": {
-    "DCPS": "Docker compose utilizando apache",
-    "NVB": "Ajustar abas navbar, deixar active quando estiver na respectiva aba"
+    "DCPS": "Docker compose utilizando apache"
   },
   "Home": {},
   "Computer": { "FLTR": "Filtro nos dispositivos, por software" },
@@ -34,8 +33,10 @@
   },
   "Exec's": {
     "FreeBSD": "Fazer um personalizado",
-    "WDTR": "Não esta pegando corretamento distribuição Windows Server 2012",
-    "VRFW8W2012": "Vefificar os windows 8.1 se não são 2012",
-    "W2012": "Windows server 2012 não listou softwares"
+    "W2012": "Windows server 2012 não listou softwares",
+    "LDS": "Lp00-dcorp3 não funciona o exec",
+    "LP@": "lp00-dfiscal05 nem conecta",
+    "LpD": "LP00-DFISCAL06 sem foto",
+    "LP!)": "LP00-DFISCAL10 não roda"
   }
 }

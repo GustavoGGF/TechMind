@@ -45,6 +45,11 @@ type RTL_OSVERSIONINFOEX struct {
 	dwBuildNumber       uint32
 	dwPlatformId        uint32
 	szCSDVersion        [128]uint16
+	wServicePackMajor   uint16
+	wServicePackMinor   uint16
+	wSuiteMask          uint16
+	wProductType        byte
+	wReserved           byte
 }
 
 type Data struct {
@@ -203,9 +208,17 @@ func getWindowsVersion() (string, error) {
 	case major == 10 && minor == 0:
 		return "Windows 10", nil
 	case major == 6 && minor == 3:
-		return "Windows 8.1", nil
+		if info.wProductType == 1 {
+			return "Windows 8.1", nil
+		} else {
+			return "Windows Server 2012 R2", nil
+		}
 	case major == 6 && minor == 2:
-		return "Windows 8", nil
+		if info.wProductType == 1 {
+			return "Windows 8", nil
+		} else {
+			return "Windows Server 2012", nil
+		}
 	case major == 6 && minor == 1:
 		return "Windows 7", nil
 	default:
@@ -359,7 +372,7 @@ func getMemorySlots() (string, error) {
 	// Consulta para obter o número de slots de memória
 	err := wmi.Query("SELECT MemoryDevices FROM Win32_PhysicalMemoryArray", &arrays)
 	if err != nil {
-		return "", fmt.Errorf("erro ao consultar WMI (PhysicalMemoryArray): %v", err)
+		return "", fmt.Errorf("erro ao consultar WMI (PhysicalMemoryArray2): %v", err)
 	}
 
 	// Assume que há apenas um PhysicalMemoryArray e pega o número de slots de memória
@@ -877,7 +890,8 @@ func main() {
 		return
 	}
 
-	sys = strings.ReplaceAll(sys, " ", "")
+	// Remover espaços do começo e do final
+	sys = strings.TrimSpace(sys)
 	hostname = strings.ReplaceAll(hostname, " ", "")
 	distribution = strings.ReplaceAll(distribution, " ", "")
 
@@ -939,7 +953,6 @@ func main() {
 	memorySlots, err := getMemorySlots()
 	if err != nil {
 		logToFile(fmt.Sprintf("Erro: %d", err))
-		return
 	}
 
 	mem, err := getMemoryDetails()

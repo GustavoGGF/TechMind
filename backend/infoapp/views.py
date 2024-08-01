@@ -239,7 +239,6 @@ def postMachines(request):
         softwares = None
         softwares_list = None
         memories = None
-
         try:
             data = json.loads(request.body.decode("utf-8"))
             system = data.get("system")
@@ -289,7 +288,6 @@ def postMachines(request):
             gpu_clock = data.get("gpuClock")
             gpu_configuration = data.get("gpuConfiguration")
             audio_device_product = data.get("audioDeviceProduct")
-            logger.info("audio_device_product: ", audio_device_product)
             audio_device_model = data.get("audioDeviceModel")
             bios_version = data.get("biosVersion")
             motherboard_manufacturer = data.get("motherboardManufacturer")
@@ -300,7 +298,8 @@ def postMachines(request):
             softwares_list = data.get("installedPackages")
             softwares = None
             if softwares_list != None:
-                if distribution == "Windows10" or distribution == "Windows8.1":
+                logger.info(distribution)
+                if distribution == "Windows 10" or distribution == "Windows 8.1" or distribution == "Windows Server 2012 R2":
                     softwares = str(softwares_list)
                 else:
                     softwares = ""
