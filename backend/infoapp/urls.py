@@ -32,7 +32,11 @@ urlpatterns = [
         views.devices_post,
         name="central-devices",
     ),
-    path("devices/get-devices", views.devices_get, name="central-devices-get"),
+    path(
+        "devices/get-devices/<str:quantity>",
+        views.devices_get,
+        name="central-devices-get",
+    ),
     path(
         "devices/view-devices/<str:sn>",
         views.devices_details,

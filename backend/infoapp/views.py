@@ -620,24 +620,37 @@ def devices_post(request):
             return JsonResponse({"error": "Invalid MYSQL"}, status=400, safe=False)
 
 
-def devices_get(request):
+# Função que pega os dispositivos em quantidade conforme solicitação
+def devices_get(request, quantity):
     if request.method == "GET":
+        # Declarando algumas variaveis
         connection = None
         cursor = None
         results = None
+        select_query = None
+        results = None
         try:
+            # Conectando no BD
             connection = mysql.connector.connect(
                 host=config("DB_HOST"),
                 database=config("DB_NAME"),
                 user=config("DB_USER"),
                 password=config("DB_PASSWORD"),
             )
-
+            # Confirmando conexão
             if connection.is_connected():
                 cursor = connection.cursor()
+            # Verificando quantidade selecionada
+            match quantity:
+                case "10":
+                    select_query = "SELECT * FROM devices LIMIT 10;"
+                case "50":
+                    select_query = "SELECT * FROM devices LIMIT 50;"
+                case "100":
+                    select_query = "SELECT * FROM devices LIMIT 100;"
+                case "all":
+                    select_query = "SELECT * FROM devices;"
 
-            # Comando SQL para verificar se o endereço MAC existe na tabela
-            select_query = "SELECT * FROM devices;"
             cursor.execute(select_query)
             # Obtendo os resultados como listas
             results = [list(row) for row in cursor.fetchall()]
@@ -645,7 +658,7 @@ def devices_get(request):
             cursor.close()
             connection.close()
 
-            return JsonResponse({"Dispositivos": results}, status=200, safe=True)
+            return JsonResponse({"devices": results}, status=200, safe=True)
         except Exception as e:
             logger.info(e)
 
@@ -1108,9 +1121,7 @@ def getQuantity(request, quantity):
             cursor.execute(query, ())
 
             # Obtendo o resultado
-            results = [
-                list(row) for row in cursor.fetchall()
-            ]  
+            results = [list(row) for row in cursor.fetchall()]
 
             # Fechando a conexão
             cursor.close()

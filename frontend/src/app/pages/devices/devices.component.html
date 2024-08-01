@@ -6,7 +6,55 @@
     [computers_class]="computers_class"
     [device_class]="device_class"
   />
+  <div class="w-100">
+    <div class="w-100 justify-content-start d-flex div_quantity">
+      <div>
+        <div class="margin_quantity mb-2">
+          <span
+            class="buton_quantity"
+            [ngClass]="ten_quantity"
+            (click)="getTen()"
+            ><b>10</b></span
+          >
+        </div>
+        <div class="margin_quantity">
+          <span
+            class="buton_quantity"
+            [ngClass]="fifty_quantity"
+            (click)="getFifty()"
+            ><b>50</b></span
+          >
+        </div>
+      </div>
+      <div>
+        <div class="margin_quantity mb-2">
+          <span
+            class="buton_quantity"
+            [ngClass]="one_hundred_quantity"
+            (click)="getOneHundred()"
+            ><b>100</b></span
+          >
+        </div>
+        <div class="margin_quantity">
+          <span
+            class="buton_quantity"
+            [ngClass]="all_quantity"
+            (click)="getAll()"
+            ><b>All</b></span
+          >
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="dash mt-3">
+    <div class="img_device position-relative w-100 h-100">
+      <img
+        (click)="addDevices()"
+        class="img-fluid img_close mx-arround position-absolute top-0 start-0"
+        [src]="imageDevices"
+        alt="adicionar novo dispositivo"
+      />
+    </div>
     <div class="w-100 d-flex text-center justify-content-center flex-column">
       <span><b>Dispositivos</b></span>
       <table class="tb mt-3">
@@ -33,14 +81,6 @@
           </tr>
         </tbody>
       </table>
-    </div>
-    <div class="img_device position-relative w-100 h-100">
-      <img
-        (click)="addDevices()"
-        class="img-fluid img_close mx-arround position-absolute top-0 start-0"
-        [src]="imageDevices"
-        alt="adicionar novo dispositivo"
-      />
     </div>
     <div
       class="board_new_devices position-absolute top-50 start-50 translate-middle"

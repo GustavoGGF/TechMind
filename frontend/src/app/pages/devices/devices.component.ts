@@ -29,9 +29,11 @@ export class DevicesComponent {
   canViewNewDevices: boolean = false;
 
   // Declarando as variaveis string
+  all_quantity: string = '';
   close_button: string = '/static/assets/images/fechar.png';
   computers_class: string = '';
   device_class: string = 'active';
+  fifty_quantity: string = '';
   input_brand: string = '';
   input_imob: string = '';
   input_model: string = '';
@@ -39,10 +41,19 @@ export class DevicesComponent {
   imageDevices: string = '/static/assets/images/devices/computador.png';
   home_class: string = '';
   select_value: string = '';
+  ten_quantity: string = '';
+  one_hundred_quantity: string = '';
+  quantity_devices: string | null = '';
 
   // Função para pegar o nome do usuario logado
   ngOnInit(): void {
     this.name = localStorage.getItem('name');
+
+    this.quantity_devices = localStorage.getItem('quantity_devices');
+    if (this.quantity_devices == null) {
+      localStorage.setItem('quantity_devices', '10');
+      this.quantity_devices = '10';
+    }
 
     if (this.name.length == 0 || this.name == null) {
     } else {
@@ -55,7 +66,7 @@ export class DevicesComponent {
   // Função para pegar o token CSRF
   getToken(): void {
     this.http
-      .get('/home/devices/get-token', {})
+      .get('/home/get-token', {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -77,7 +88,7 @@ export class DevicesComponent {
   // Função para pegar os dispositivos
   getDevices(): void {
     this.http
-      .get('/home/devices/get-devices', {})
+      .get('/home/devices/get-devices/' + this.quantity_devices, {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -90,9 +101,35 @@ export class DevicesComponent {
       )
       .subscribe((data: any) => {
         if (data) {
-          this.devices = data.Dispositivos;
+          this.devices = data.devices;
           this.canViewDevices = true;
-          console.log(this.devices);
+          switch (this.quantity_devices) {
+            default:
+              break;
+            case '10':
+              this.ten_quantity = 'active_filter';
+              this.fifty_quantity = '';
+              this.one_hundred_quantity = '';
+              this.all_quantity = '';
+              break;
+            case '50':
+              this.ten_quantity = '';
+              this.fifty_quantity = 'active_filter';
+              this.one_hundred_quantity = '';
+              this.all_quantity = '';
+              break;
+            case '100':
+              this.ten_quantity = '';
+              this.fifty_quantity = '';
+              this.one_hundred_quantity = 'active_filter';
+              this.all_quantity = '';
+              break;
+            case 'all':
+              this.ten_quantity = '';
+              this.fifty_quantity = '';
+              this.one_hundred_quantity = '';
+              this.all_quantity = 'active_filter';
+          }
         }
       });
   }
@@ -177,5 +214,131 @@ export class DevicesComponent {
     const selectedDevice = this.devices[index];
     var sn = selectedDevice[2];
     return (window.location.href = '/home/devices/view-devices/' + sn);
+  }
+
+  // Seta quantidade de maquinas a serem exibidas para 10
+  getTen(): void {
+    localStorage.setItem('quantity_devices', '10');
+
+    this.quantity_devices = '10';
+
+    this.ten_quantity = 'active_filter';
+    this.fifty_quantity = '';
+    this.one_hundred_quantity = '';
+    this.all_quantity = '';
+
+    this.canViewDevices = false;
+    this.devices = null;
+
+    this.http
+      .get('/home/devices/get-devices/10', {})
+      .pipe(
+        catchError((error) => {
+          this.status = error.status;
+
+          return throwError(error);
+        })
+      )
+      .subscribe((data: any) => {
+        if (data) {
+          this.devices = data.devices;
+
+          this.canViewDevices = true;
+        }
+      });
+  }
+
+  // Seta quantidade de maquinas a serem exibidas para 10
+  getFifty(): void {
+    localStorage.setItem('quantity_devices', '50');
+
+    this.quantity_devices = '50';
+
+    this.ten_quantity = '';
+    this.fifty_quantity = 'active_filter';
+    this.one_hundred_quantity = '';
+    this.all_quantity = '';
+
+    this.canViewDevices = false;
+    this.devices = null;
+
+    this.http
+      .get('/home/devices/get-devices/50', {})
+      .pipe(
+        catchError((error) => {
+          this.status = error.status;
+
+          return throwError(error);
+        })
+      )
+      .subscribe((data: any) => {
+        if (data) {
+          this.devices = data.devices;
+
+          this.canViewDevices = true;
+        }
+      });
+  }
+
+  getOneHundred(): void {
+    localStorage.setItem('quantity_devices', '100');
+
+    this.quantity_devices = '100';
+
+    this.ten_quantity = '';
+    this.fifty_quantity = '';
+    this.one_hundred_quantity = 'active_filter';
+    this.all_quantity = '';
+
+    this.canViewDevices = false;
+    this.devices = null;
+
+    this.http
+      .get('/home/devices/get-devices/100', {})
+      .pipe(
+        catchError((error) => {
+          this.status = error.status;
+
+          return throwError(error);
+        })
+      )
+      .subscribe((data: any) => {
+        if (data) {
+          this.devices = data.devices;
+
+          this.canViewDevices = true;
+        }
+      });
+  }
+
+  getAll(): void {
+    localStorage.setItem('quantity_devices', 'all');
+
+    this.quantity_devices = '100';
+
+    this.ten_quantity = '';
+    this.fifty_quantity = '';
+    this.one_hundred_quantity = '';
+    this.all_quantity = 'active_filter';
+
+    this.canViewDevices = false;
+    this.devices = null;
+
+    this.http
+      .get('/home/devices/get-devices/all', {})
+      .pipe(
+        catchError((error) => {
+          this.status = error.status;
+
+          return throwError(error);
+        })
+      )
+      .subscribe((data: any) => {
+        if (data) {
+          this.devices = data.devices;
+
+          this.canViewDevices = true;
+        }
+      });
   }
 }
