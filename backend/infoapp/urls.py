@@ -5,8 +5,11 @@ urlpatterns = [
     path("", views.home, name="central-home"),
     path("get-Info-Main-Panel/", views.getInfoMainPanel, name="Get-Info-Main-Panel"),
     path("computers/", views.computers, name="computers"),
+    # Função da url /computers que solicita dados dos computadores conforme quantidade solicitada
     path(
-        "computers/get-data", views.getDataComputers, name="central-get-data-computers"
+        "computers/get-data/<str:quantity>",
+        views.getDataComputers,
+        name="central-get-data-computers",
     ),
     path("computers/post-machines", views.postMachines, name="central-post-machines"),
     path(
@@ -29,7 +32,6 @@ urlpatterns = [
         views.devices_post,
         name="central-devices",
     ),
-    path("devices/get-token", views.devices_token, name="central-devices-token"),
     path("devices/get-devices", views.devices_get, name="central-devices-get"),
     path(
         "devices/view-devices/<str:sn>",
@@ -56,4 +58,10 @@ urlpatterns = [
     ),
     # url que libera o token csrf
     path("get-token", views.getToken, name="central-get-token"),
+    # URL que muda a quantidade de computadores conforme solicitação
+    path(
+        "computers/get-quantity/<str:quantity>",
+        views.getQuantity,
+        name="central-get-quantity",
+    ),
 ]

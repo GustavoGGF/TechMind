@@ -106,25 +106,51 @@ def computers(request):
         return render(request, "index.html", {})
 
 
+# Request csrf
 @requires_csrf_token
+# Necessita estar logado
 @login_required(login_url="/login")
-def getDataComputers(request):
+# Função que pega os dados dos computadores por quantidade conforme solicitado
+def getDataComputers(request, quantity):
     if request.method == "POST":
         return
     if request.method == "GET":
+        # Iniciando varaiveis
+        connection = None
+        cursor = None
+        query = None
+        results = None
+        MAC_ADDRESS_INDEX = None
         try:
+            # Conectando no BD
             connection = mysql.connector.connect(
                 host=config("DB_HOST"),
                 database=config("DB_NAME"),
                 user=config("DB_USER"),
                 password=config("DB_PASSWORD"),
             )
-
+            # Verificando a conexão
             if connection.is_connected():
                 cursor = connection.cursor()
 
-            # Consulta SQL para contar os itens na coluna 'windows' da tabela 'machines'
-            query = "SELECT * FROM machines ORDER BY insertion_date ASC"
+            # Verificando a quantidade solicitando
+            match quantity:
+                case "10":
+                    query = (
+                        "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 10"
+                    )
+                case "50":
+                    query = (
+                        "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 50"
+                    )
+                case "100":
+                    query = (
+                        "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 100"
+                    )
+                case "all":
+                    query = "SELECT * FROM machines ORDER BY insertion_date DESC"
+
+            # Executandoa a busca
             cursor.execute(query)
 
             # Obtendo os resultados como listas
@@ -593,6 +619,7 @@ def devices_post(request):
             print(e)
             return JsonResponse({"error": "Invalid MYSQL"}, status=400, safe=False)
 
+
 def devices_get(request):
     if request.method == "GET":
         connection = None
@@ -680,7 +707,7 @@ def lastMachines(request):
                 cursor = connection.cursor()
 
             # Consulta SQL para contar os itens na coluna 'windows' da tabela 'machines'
-            query = "SELECT * FROM machines ORDER BY insertion_date ASC"
+            query = "SELECT * FROM machines ORDER BY insertion_date DESC"
             cursor.execute(query)
 
             # Obtendo os resultados como listas
@@ -1035,8 +1062,64 @@ def computersModify(request, mac_address):
             logger.error(e)
             return JsonResponse({}, status=420)
 
+
 # Função que libera o token CSRF
 def getToken(request):
     if request.method == "GET":
         csrf = get_token(request)
         return JsonResponse({"token": csrf}, status=200, safe=True)
+
+
+# Requer que esteja logado
+@login_required(login_url="/login")
+# Função que retorna as máquinas conforme quantidade solicitada
+def getQuantity(request, quantity):
+    if request.method == "GET":
+        # Inicia uma variavel e prepara a query conforme quantidade solicitada
+        query = None
+        match quantity:
+            case "10":
+                query = "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 10"
+            case "50":
+                query = "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 50"
+            case "100":
+                query = "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 100"
+            case "all":
+                query = "SELECT * FROM machines ORDER BY insertion_date DESC"
+
+        # Iniciando demais varaiveis
+        connection = None
+        cursor = None
+        results = None
+        try:
+            # Conectando ao banco
+            connection = mysql.connector.connect(
+                host=config("DB_HOST"),
+                database=config("DB_NAME"),
+                user=config("DB_USER"),
+                password=config("DB_PASSWORD"),
+            )
+
+            # Verificando conexão
+            if connection.is_connected():
+                cursor = connection.cursor()
+
+            # Executando a query
+            cursor.execute(query, ())
+
+            # Obtendo o resultado
+            results = [
+                list(row) for row in cursor.fetchall()
+            ]  
+
+            # Fechando a conexão
+            cursor.close()
+            connection.close()
+
+            return JsonResponse({"machines": results}, status=200, safe=True)
+        except Exception as e:
+            logger.error(e)
+            return JsonResponse({}, status=420)
+
+    if request.method == "POST":
+        return

@@ -7,6 +7,46 @@
     [device_class]="device_class"
   />
   <app-loading *ngIf="!canView" />
+  <div class="w-100">
+    <div class="w-100 justify-content-start d-flex div_quantity">
+      <div>
+        <div class="margin_quantity mb-2">
+          <span
+            class="buton_quantity"
+            [ngClass]="ten_quantity"
+            (click)="getTen()"
+            ><b>10</b></span
+          >
+        </div>
+        <div class="margin_quantity">
+          <span
+            class="buton_quantity"
+            [ngClass]="fifty_quantity"
+            (click)="getFifty()"
+            ><b>50</b></span
+          >
+        </div>
+      </div>
+      <div>
+        <div class="margin_quantity mb-2">
+          <span
+            class="buton_quantity"
+            [ngClass]="one_hundred_quantity"
+            (click)="getOneHundred()"
+            ><b>100</b></span
+          >
+        </div>
+        <div class="margin_quantity">
+          <span
+            class="buton_quantity"
+            [ngClass]="all_quantity"
+            (click)="getAll()"
+            ><b>All</b></span
+          >
+        </div>
+      </div>
+    </div>
+  </div>
   <table class="tb">
     <thead>
       <tr>
@@ -27,7 +67,7 @@
         <td class="tdsadj">{{ machine[1] }}</td>
         <td class="tdsadj">{{ machine[2] }}</td>
         <td class="tdsadj">{{ machine[3] }}</td>
-        <td class="tdsadj">{{ machine[4] }}</td>
+        <td class="tdsadj">{{ formatDate(machine[4]) }}</td>
       </tr>
     </tbody>
   </table>
