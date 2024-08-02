@@ -299,7 +299,11 @@ def postMachines(request):
             softwares = None
             if softwares_list != None:
                 logger.info(distribution)
-                if distribution == "Windows 10" or distribution == "Windows 8.1" or distribution == "Windows Server 2012 R2":
+                if (
+                    distribution == "Windows 10"
+                    or distribution == "Windows 8.1"
+                    or distribution == "Windows Server 2012 R2"
+                ):
                     softwares = str(softwares_list)
                 else:
                     softwares = ""
@@ -1131,5 +1135,163 @@ def getQuantity(request, quantity):
             logger.error(e)
             return JsonResponse({}, status=420)
 
+    if request.method == "POST":
+        return
+
+
+def getDataSO(request):
+    if request.method == "GET":
+        connection = None
+        cursor = None
+        query = None
+        results = None
+        try:
+            # Conectando ao banco
+            connection = mysql.connector.connect(
+                host=config("DB_HOST"),
+                database=config("DB_NAME"),
+                user=config("DB_USER"),
+                password=config("DB_PASSWORD"),
+            )
+
+            # Verificando conexão
+            if connection.is_connected():
+                cursor = connection.cursor()
+
+            # Query SQL
+            query = "SELECT DISTINCT system_name FROM machines;"
+
+            # Executando a query
+            cursor.execute(query, ())
+
+            # Obtendo o resultado
+            results = [list(row) for row in cursor.fetchall()]
+
+            # Fechando a conexão
+            cursor.close()
+            connection.close()
+
+            return JsonResponse({"SO": results}, status=200, safe=True)
+
+        except Exception as e:
+            logger.info(e)
+            return JsonResponse({}, status=314)
+    if request.method == "POST":
+        return
+
+
+def getDataSoFilter(request, quantity, so):
+    if request.method == "GET":
+        query = None
+        connection = None
+        cursor = None
+        results = None
+        try:
+            if so == "all":
+                match quantity:
+                    case "10":
+                        query = """SELECT * 
+                                    FROM machines 
+                                    ORDER BY insertion_date DESC 
+                                    LIMIT 10;
+                                    """
+                    case "50":
+                        query = """SELECT *
+                                    FROM machines 
+                                    ORDER BY insertion_date DESC 
+                                    LIMIT 50;
+                                    """
+                    case "100":
+                        query = """SELECT *
+                                    FROM machines 
+                                    ORDER BY insertion_date DESC 
+                                    LIMIT 100;
+                                    """
+                    case "all":
+                        query = """SELECT *
+                                    FROM machines 
+                                    ORDER BY insertion_date DESC;
+                                    """
+
+                # Conectando ao banco
+                connection = mysql.connector.connect(
+                    host=config("DB_HOST"),
+                    database=config("DB_NAME"),
+                    user=config("DB_USER"),
+                    password=config("DB_PASSWORD"),
+                )
+
+                # Verificando conexão
+                if connection.is_connected():
+                    cursor = connection.cursor()
+
+                # Executando a query
+                cursor.execute(query, ())
+
+                # Obtendo o resultado
+                results = [list(row) for row in cursor.fetchall()]
+
+                # Fechando a conexão
+                cursor.close()
+                connection.close()
+
+                return JsonResponse({"machines": results}, status=200, safe=True)
+            else:
+                match quantity:
+                    case "10":
+                        query = """SELECT * 
+                                    FROM machines 
+                                    WHERE system_name = %s 
+                                    ORDER BY insertion_date DESC 
+                                    LIMIT 10;
+                                    """
+                    case "50":
+                        query = """SELECT * 
+                                    FROM machines 
+                                    WHERE system_name = %s 
+                                    ORDER BY insertion_date DESC 
+                                    LIMIT 50;
+                                    """
+                    case "100":
+                        query = """SELECT * 
+                                    FROM machines 
+                                    WHERE system_name = %s 
+                                    ORDER BY insertion_date DESC 
+                                    LIMIT 100;
+                                    """
+                    case "all":
+                        query = """SELECT * 
+                                FROM machines 
+                                WHERE system_name = %s 
+                                ORDER BY insertion_date DESC;
+                                """
+
+                # Conectando ao banco
+                connection = mysql.connector.connect(
+                    host=config("DB_HOST"),
+                    database=config("DB_NAME"),
+                    user=config("DB_USER"),
+                    password=config("DB_PASSWORD"),
+                )
+
+                # Verificando conexão
+                if connection.is_connected():
+                    cursor = connection.cursor()
+
+                # Executando a query
+                cursor.execute(query, (so,))
+
+                # Obtendo o resultado
+                results = [list(row) for row in cursor.fetchall()]
+
+                # Fechando a conexão
+                cursor.close()
+                connection.close()
+
+                return JsonResponse({"machines": results}, status=200, safe=True)
+
+        except Exception as e:
+            logger.error(e)
+            return JsonResponse({}, status=420)
     if request.method == "POST":
         return

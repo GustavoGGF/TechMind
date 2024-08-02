@@ -84,3 +84,11 @@
 .mleft {
   margin-left: 1em;
 }
+
+.filter_back {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+  justify-content: inherit;
+}

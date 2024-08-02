@@ -7,8 +7,8 @@
     [device_class]="device_class"
   />
   <app-loading *ngIf="!canView" />
-  <div class="w-100">
-    <div class="w-100 justify-content-start d-flex div_quantity">
+  <div class="w-100 d-flex justify-content-around">
+    <div class="justify-content-start d-flex div_quantity">
       <div>
         <div class="margin_quantity mb-2">
           <span
@@ -46,6 +46,27 @@
         </div>
       </div>
     </div>
+    <div class="filter_back">
+      <div><input type="text" placeholder="Nome" /></div>
+      <div>
+        <select class="form-select" name="selectSO">
+          <option value="None" disabled selected>SO</option>
+          <option
+            *ngFor="let so of so_list; let i = index"
+            [value]="i"
+            (click)="onRowClickSO(i)"
+          >
+            {{ so }}
+          </option>
+          <option value="69" (click)="onRowClickSO(69)">todos</option>
+        </select>
+      </div>
+      <div>
+        <select name="" id="">
+          <option value="" selected>distribution/option></option>
+        </select>
+      </div>
+    </div>
   </div>
   <table class="tb">
     <thead>
@@ -70,9 +91,63 @@
             </div>
           </div>
         </th>
-        <th class="thcls text-uppercase">S.O</th>
-        <th class="thcls text-uppercase">distribution</th>
-        <th class="thcls text-uppercase">last update</th>
+        <th class="thcls text-uppercase">
+          <div class="w-100 d-flex justify-content-center">
+            <div>S.O</div>
+            <div class="mleft">
+              <img
+                class="img_arrows"
+                [src]="arrow_up"
+                alt="seta para cima"
+                (click)="sortByNameSO()"
+              />
+              <img
+                class="img_arrows"
+                [src]="arrow_down"
+                alt="seta para baixo"
+                (click)="sortDataByNameDescendingSO()"
+              />
+            </div>
+          </div>
+        </th>
+        <th class="thcls text-uppercase">
+          <div class="w-100 d-flex justify-content-center">
+            <div>distribution</div>
+            <div class="mleft">
+              <img
+                class="img_arrows"
+                [src]="arrow_up"
+                alt="seta para cima"
+                (click)="sortByNameDis()"
+              />
+              <img
+                class="img_arrows"
+                [src]="arrow_down"
+                alt="seta para baixo"
+                (click)="sortDataByNameDescendingDis()"
+              />
+            </div>
+          </div>
+        </th>
+        <th class="thcls text-uppercase">
+          <div class="w-100 d-flex justify-content-center">
+            <div>last update</div>
+            <div class="mleft">
+              <img
+                class="img_arrows"
+                [src]="arrow_up"
+                alt="seta para cima"
+                (click)="sortByDateDesc()"
+              />
+              <img
+                class="img_arrows"
+                [src]="arrow_down"
+                alt="seta para baixo"
+                (click)="sortByDateASC()"
+              />
+            </div>
+          </div>
+        </th>
       </tr>
     </thead>
     <tbody *ngIf="canViewMachines">

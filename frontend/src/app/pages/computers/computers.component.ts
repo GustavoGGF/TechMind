@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { UtilitiesModule } from '../../utilities/utilities.module';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
@@ -11,7 +11,7 @@ import { catchError, throwError } from 'rxjs';
   templateUrl: './computers.component.html',
   styleUrl: './computers.component.css',
 })
-export class ComputersComponent {
+export class ComputersComponent implements OnInit {
   constructor(private http: HttpClient) {}
   // Declarando variaveis any
   dataMachines: any;
@@ -36,6 +36,9 @@ export class ComputersComponent {
   canView: boolean = false;
   canViewMachines: boolean = false;
   showMessage: boolean = false;
+
+  // Declarando variaveis list
+  so_list: string[] = [];
 
   // Função iniciada ao carregar a pagina
   ngOnInit(): void {
@@ -106,6 +109,24 @@ export class ComputersComponent {
           }
 
           this.canViewMachines = true;
+          this.getSO();
+        }
+      });
+  }
+
+  getSO(): void {
+    this.http
+      .get('/home/computers/get-data-SO', {})
+      .pipe(
+        catchError((error) => {
+          this.status = error.status;
+
+          return throwError(error);
+        })
+      )
+      .subscribe((data: any) => {
+        if (data) {
+          this.so_list = data.SO;
         }
       });
   }
@@ -119,6 +140,43 @@ export class ComputersComponent {
     mac = mac.replace(/:/g, '-');
 
     return (window.location.href = '/home/computers/view-machine/' + mac);
+  }
+
+  // Função obter o valor do SO que deseja filtrar
+  onRowClickSO(index: number) {
+    this.canViewMachines = false;
+
+    this.dataMachines = null;
+
+    let so;
+
+    if (index == 69) {
+      so = 'all';
+    } else {
+      const selectedSO = this.so_list[index];
+
+      so = selectedSO[0];
+    }
+
+    this.http
+      .get(
+        '/home/computers/get-data-SO-filter/' + this.quantity_filter + '/' + so,
+        {}
+      )
+      .pipe(
+        catchError((error) => {
+          this.status = error.status;
+
+          return throwError(error);
+        })
+      )
+      .subscribe((data: any) => {
+        if (data) {
+          this.dataMachines = data.machines;
+
+          this.canViewMachines = true;
+        }
+      });
   }
 
   // Seta quantidade de maquinas a serem exibidas para 10
@@ -266,7 +324,7 @@ export class ComputersComponent {
     });
   }
 
-  sortDataByNameDescending() {
+  sortDataByNameDescending(): void {
     this.dataMachines.sort((a: any, b: any) => {
       const nameA = a[1].toUpperCase(); // Ignore case
       const nameB = b[1].toUpperCase(); // Ignore case
@@ -277,6 +335,80 @@ export class ComputersComponent {
         return -1;
       }
       return 0;
+    });
+  }
+
+  sortByNameSO(): void {
+    this.dataMachines.sort((a: any, b: any) => {
+      const nameA = a[2].toUpperCase(); // Ignore case
+      const nameB = b[2].toUpperCase(); // Ignore case
+      if (nameA < nameB) {
+        return -1;
+      }
+      if (nameA > nameB) {
+        return 1;
+      }
+      return 0;
+    });
+  }
+
+  sortDataByNameDescendingSO(): void {
+    this.dataMachines.sort((a: any, b: any) => {
+      const nameA = a[2].toUpperCase(); // Ignore case
+      const nameB = b[2].toUpperCase(); // Ignore case
+      if (nameA < nameB) {
+        return 1;
+      }
+      if (nameA > nameB) {
+        return -1;
+      }
+      return 0;
+    });
+  }
+
+  sortByNameDis(): void {
+    this.dataMachines.sort((a: any, b: any) => {
+      const nameA = a[3].toUpperCase(); // Ignore case
+      const nameB = b[3].toUpperCase(); // Ignore case
+      if (nameA < nameB) {
+        return -1;
+      }
+      if (nameA > nameB) {
+        return 1;
+      }
+      return 0;
+    });
+  }
+
+  sortDataByNameDescendingDis(): void {
+    this.dataMachines.sort((a: any, b: any) => {
+      const nameA = a[3].toUpperCase(); // Ignore case
+      const nameB = b[3].toUpperCase(); // Ignore case
+      if (nameA < nameB) {
+        return 1;
+      }
+      if (nameA > nameB) {
+        return -1;
+      }
+      return 0;
+    });
+  }
+
+  sortByDateDesc(): void {
+    this.dataMachines.sort((a: any, b: any) => {
+      const dateA = new Date(a[4]);
+      const dateB = new Date(b[4]);
+
+      return dateB.getTime() - dateA.getTime(); // Mais recente para o mais antigo
+    });
+  }
+
+  sortByDateASC(): void {
+    this.dataMachines.sort((a: any, b: any) => {
+      const dateA = new Date(a[4]);
+      const dateB = new Date(b[4]);
+
+      return dateA.getTime() - dateB.getTime(); // Mais antigo para o mais novo
     });
   }
 }

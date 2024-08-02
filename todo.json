@@ -2,16 +2,16 @@
   "ALL": {
     "DCPS": "Docker compose utilizando apache"
   },
-  "Home": {},
+  "Home": { "DHSB": "Ajusta dashboard, incluir Windows server junto com os windows e freebsd no linux" },
   "Computer": { "FLTR": "Filtro nos dispositivos, por software" },
   "Computer Details": {
     "Upgrade": {
       "Others": "Aba outros que contera documentos e consigo possibilitar deixar o computador para lugar",
       "LCNSW": "Deixar a licença Windows na aba Outros",
       "ARCHR": "Uma ancora que vai ate os catalogos (palca mae, processador, etc... e que vai ate o topo tambem",
-      "PORTS": "sobre portas tambem, como :800 etc",
+      "PORTS": "sobre portas tambem, como :80 etc",
       "PRST": "Portas fisicas tambem",
-      "LcLZC": "Localização",
+      "LcLZC": "Localização Devices",
       "HKSV": "Verificcar Hard Disk Sata Verion Windows",
       "GPU": "Verificar Clock GPU e logical Name Windows",
       "DVCAD": "Audio Device Windows",

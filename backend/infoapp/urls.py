@@ -68,4 +68,10 @@ urlpatterns = [
         views.getQuantity,
         name="central-get-quantity",
     ),
+    path("computers/get-data-SO", views.getDataSO, name="central-get-data-SO"),
+    path(
+        "computers/get-data-SO-filter/<str:quantity>/<str:so>",
+        views.getDataSoFilter,
+        name="central-get-data-so-filter",
+    ),
 ]
