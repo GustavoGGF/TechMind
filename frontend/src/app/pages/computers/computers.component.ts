@@ -26,6 +26,7 @@ export class ComputersComponent implements OnInit {
   device_class: string = '';
   errorType: string = '';
   fifty_quantity: string = '';
+  input_name: string = '';
   home_class: string = '';
   messageError: string = '';
   one_hundred_quantity: string = '';
@@ -38,6 +39,7 @@ export class ComputersComponent implements OnInit {
   showMessage: boolean = false;
 
   // Declarando variaveis list
+  dis_list: string[] = [];
   so_list: string[] = [];
 
   // Função iniciada ao carregar a pagina
@@ -109,12 +111,34 @@ export class ComputersComponent implements OnInit {
           }
 
           this.canViewMachines = true;
+          // Apos pegar os dados principais chama a função para preencher o filtro de SO
           this.getSO();
         }
       });
   }
 
+  // Função para pegar os valores do filto de SO
   getSO(): void {
+    this.http
+      .get('/home/computers/get-data-DIS', {})
+      .pipe(
+        catchError((error) => {
+          this.status = error.status;
+
+          return throwError(error);
+        })
+      )
+      .subscribe((data: any) => {
+        if (data) {
+          this.dis_list = data.DIS;
+          // Após pegar os dados do filtro chama a função para pegar os dados do filtro de Distribuição
+          this.getDistribution();
+        }
+      });
+  }
+
+  // Função para pegar os valores do filto de Distribuição
+  getDistribution(): void {
     this.http
       .get('/home/computers/get-data-SO', {})
       .pipe(
@@ -127,6 +151,8 @@ export class ComputersComponent implements OnInit {
       .subscribe((data: any) => {
         if (data) {
           this.so_list = data.SO;
+          // Após pegar os dados do filtro chama a função para pegar os dados do filtro de Distribuição
+          this.getDistribution();
         }
       });
   }
@@ -161,6 +187,46 @@ export class ComputersComponent implements OnInit {
     this.http
       .get(
         '/home/computers/get-data-SO-filter/' + this.quantity_filter + '/' + so,
+        {}
+      )
+      .pipe(
+        catchError((error) => {
+          this.status = error.status;
+
+          return throwError(error);
+        })
+      )
+      .subscribe((data: any) => {
+        if (data) {
+          this.dataMachines = data.machines;
+
+          this.canViewMachines = true;
+        }
+      });
+  }
+
+  // Função obter o valor de distribution que deseja filtrar
+  onRowClickDIS(index: number): void {
+    this.canViewMachines = false;
+
+    this.dataMachines = null;
+
+    let so;
+
+    if (index == 69) {
+      so = 'all';
+    } else {
+      const selectedDis = this.dis_list[index];
+
+      so = selectedDis[0];
+    }
+
+    this.http
+      .get(
+        '/home/computers/get-data-DIS-filter/' +
+          this.quantity_filter +
+          '/' +
+          so,
         {}
       )
       .pipe(
@@ -301,6 +367,7 @@ export class ComputersComponent implements OnInit {
       });
   }
 
+  // Função que formata as datas que aparecem na tabela dos computadores
   formatDate(date: string): string {
     const parsedDate = new Date(date);
     const day = String(parsedDate.getDate()).padStart(2, '0');
@@ -310,6 +377,7 @@ export class ComputersComponent implements OnInit {
     return `${day}/${month}/${year}`;
   }
 
+  // Reorganiza os os computadores pelo nome em ordem alfabetica
   sortByName(): void {
     this.dataMachines.sort((a: any, b: any) => {
       const nameA = a[1].toUpperCase(); // Ignore case
@@ -324,6 +392,7 @@ export class ComputersComponent implements OnInit {
     });
   }
 
+  // Reorganiza os os computadores pelo nome em ordem alfabetica invertido
   sortDataByNameDescending(): void {
     this.dataMachines.sort((a: any, b: any) => {
       const nameA = a[1].toUpperCase(); // Ignore case
@@ -338,6 +407,7 @@ export class ComputersComponent implements OnInit {
     });
   }
 
+  // Reorganiza os os computadores pelo SO em ordem alfabetica
   sortByNameSO(): void {
     this.dataMachines.sort((a: any, b: any) => {
       const nameA = a[2].toUpperCase(); // Ignore case
@@ -352,6 +422,7 @@ export class ComputersComponent implements OnInit {
     });
   }
 
+  // Reorganiza os os computadores pelo SO em ordem alfabetica invertido
   sortDataByNameDescendingSO(): void {
     this.dataMachines.sort((a: any, b: any) => {
       const nameA = a[2].toUpperCase(); // Ignore case
@@ -366,6 +437,7 @@ export class ComputersComponent implements OnInit {
     });
   }
 
+  // Reorganiza os os computadores pela Distribuição em ordem alfabetica
   sortByNameDis(): void {
     this.dataMachines.sort((a: any, b: any) => {
       const nameA = a[3].toUpperCase(); // Ignore case
@@ -380,6 +452,7 @@ export class ComputersComponent implements OnInit {
     });
   }
 
+  // Reorganiza os os computadores pela Distribuição em ordem alfabetica invertido
   sortDataByNameDescendingDis(): void {
     this.dataMachines.sort((a: any, b: any) => {
       const nameA = a[3].toUpperCase(); // Ignore case
@@ -394,6 +467,7 @@ export class ComputersComponent implements OnInit {
     });
   }
 
+  // Reorganiza os os computadores pela data em ordem decrecente
   sortByDateDesc(): void {
     this.dataMachines.sort((a: any, b: any) => {
       const dateA = new Date(a[4]);
@@ -403,6 +477,7 @@ export class ComputersComponent implements OnInit {
     });
   }
 
+  // Reorganiza os os computadores pela data em ordem crescente
   sortByDateASC(): void {
     this.dataMachines.sort((a: any, b: any) => {
       const dateA = new Date(a[4]);
@@ -410,5 +485,41 @@ export class ComputersComponent implements OnInit {
 
       return dateA.getTime() - dateB.getTime(); // Mais antigo para o mais novo
     });
+  }
+
+  // Obtenendo o nome do dispositivo que o usuario deseja buscar
+  getName(event: any): void {
+    this.input_name = event.target.value;
+
+    this.canViewMachines = false;
+
+    this.dataMachines = null;
+
+    if (this.input_name.length === 0) {
+      return this.getData();
+    }
+
+    this.http
+      .get(
+        '/home/computers/get-machine-varchar/' +
+          this.quantity_filter +
+          '/' +
+          this.input_name,
+        {}
+      )
+      .pipe(
+        catchError((error) => {
+          this.status = error.status;
+
+          return throwError(error);
+        })
+      )
+      .subscribe((data: any) => {
+        if (data) {
+          this.dataMachines = data.machines;
+
+          this.canViewMachines = true;
+        }
+      });
   }
 }

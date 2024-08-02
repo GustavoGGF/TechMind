@@ -47,7 +47,16 @@
       </div>
     </div>
     <div class="filter_back">
-      <div><input type="text" placeholder="Nome" /></div>
+      <div class="form-floating mb-3">
+        <input
+          type="text"
+          class="form-control"
+          id="floatingModel"
+          placeholder="LP00-DTI00"
+          (input)="getName($event)"
+        />
+        <label for="floatingModel">Name</label>
+      </div>
       <div>
         <select class="form-select" name="selectSO">
           <option value="None" disabled selected>SO</option>
@@ -62,8 +71,16 @@
         </select>
       </div>
       <div>
-        <select name="" id="">
-          <option value="" selected>distribution/option></option>
+        <select class="form-select" name="dis">
+          <option value="" disabled selected>distribution</option>
+          <option
+            *ngFor="let dis of dis_list; let i = index"
+            [value]="i"
+            (click)="onRowClickDIS(i)"
+          >
+            {{ dis }}
+          </option>
+          <option value="" (click)="onRowClickDIS(69)">todos</option>
         </select>
       </div>
     </div>

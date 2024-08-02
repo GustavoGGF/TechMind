@@ -39,7 +39,7 @@
 
 .trcls:hover {
   background-color: var(--Piction-Blue);
-  transform: scale(1.04);
+  transform: scale(1);
   cursor: pointer;
 }
 

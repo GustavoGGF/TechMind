@@ -68,10 +68,26 @@ urlpatterns = [
         views.getQuantity,
         name="central-get-quantity",
     ),
+    # URL que busca os SO para o filtro
     path("computers/get-data-SO", views.getDataSO, name="central-get-data-SO"),
+    # URL que busca os distribution para o filtro
+    path("computers/get-data-DIS", views.getDataDIS, name="central-get-data-DIS"),
+    # URL que busca os computadores pelo fitlro do SO
     path(
         "computers/get-data-SO-filter/<str:quantity>/<str:so>",
         views.getDataSoFilter,
         name="central-get-data-so-filter",
+    ),
+    # URL que busca os computadores pelo fitlro de distribution
+    path(
+        "computers/get-data-DIS-filter/<str:quantity>/<str:dis>",
+        views.getDataDisFilter,
+        name="central-get-data-so-filter",
+    ),
+    # URL que busca os computadores pelo filtro de nome
+    path(
+        "computers/get-machine-varchar/<str:quantity>/<str:name>",
+        views.getDataVarchar,
+        name="central-get-data-varchar",
     ),
 ]

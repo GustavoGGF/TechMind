@@ -8,4 +8,5 @@ import { PagesModule } from './pages/pages.module';
   imports: [BrowserModule, RouterModule.forRoot(routes), PagesModule],
   providers: [],
 })
+// Aplicação principal, tudo se origina daqui
 export class AppModule {}
