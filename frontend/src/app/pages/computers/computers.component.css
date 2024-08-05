@@ -92,3 +92,12 @@
   width: 100%;
   justify-content: inherit;
 }
+
+.dashReport {
+  background-color: var(--white);
+  padding: 2em;
+  border-radius: 1em;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}

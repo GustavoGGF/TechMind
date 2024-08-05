@@ -1,7 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { UtilitiesModule } from '../../utilities/utilities.module';
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpClientModule,
+  HttpHeaders,
+} from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
 
 @Component({
@@ -17,6 +21,7 @@ export class ComputersComponent implements OnInit {
   dataMachines: any;
   name: any;
   status: any;
+  token: any;
 
   // Declarando variaveis string
   all_quantity: string = '';
@@ -27,6 +32,8 @@ export class ComputersComponent implements OnInit {
   errorType: string = '';
   fifty_quantity: string = '';
   input_name: string = '';
+  input_pwd: string = '';
+  input_username: string = '';
   home_class: string = '';
   messageError: string = '';
   one_hundred_quantity: string = '';
@@ -35,7 +42,9 @@ export class ComputersComponent implements OnInit {
 
   // Declarando variaveis boolean
   canView: boolean = false;
+  canViewCredentials: boolean = false;
   canViewMachines: boolean = false;
+  canViewMessage: boolean = false;
   showMessage: boolean = false;
 
   // Declarando variaveis list
@@ -62,9 +71,30 @@ export class ComputersComponent implements OnInit {
       this.showMessage = true;
     } else {
       this.canView = true;
-
+      this.getToken();
       this.getData();
     }
+  }
+
+  // Função que obtem o token CSRF
+  getToken(): void {
+    this.http
+      .get('/home/get-token', {})
+      .pipe(
+        catchError((error) => {
+          this.status = error.status;
+
+          if (this.status === 0) {
+          }
+
+          return throwError(error);
+        })
+      )
+      .subscribe((data: any) => {
+        if (data) {
+          this.token = data.token;
+        }
+      });
   }
 
   // Buscando as maquinas disponiveis
@@ -112,13 +142,13 @@ export class ComputersComponent implements OnInit {
 
           this.canViewMachines = true;
           // Apos pegar os dados principais chama a função para preencher o filtro de SO
-          this.getSO();
+          return this.getSO();
         }
       });
   }
 
   // Função para pegar os valores do filto de SO
-  getSO(): void {
+  getDistribution(): string[] | any {
     this.http
       .get('/home/computers/get-data-DIS', {})
       .pipe(
@@ -130,15 +160,14 @@ export class ComputersComponent implements OnInit {
       )
       .subscribe((data: any) => {
         if (data) {
-          this.dis_list = data.DIS;
+          return (this.dis_list = data.DIS);
           // Após pegar os dados do filtro chama a função para pegar os dados do filtro de Distribuição
-          this.getDistribution();
         }
       });
   }
 
   // Função para pegar os valores do filto de Distribuição
-  getDistribution(): void {
+  getSO(): string[] | any {
     this.http
       .get('/home/computers/get-data-SO', {})
       .pipe(
@@ -152,7 +181,7 @@ export class ComputersComponent implements OnInit {
         if (data) {
           this.so_list = data.SO;
           // Após pegar os dados do filtro chama a função para pegar os dados do filtro de Distribuição
-          this.getDistribution();
+          return this.getDistribution();
         }
       });
   }
@@ -519,6 +548,60 @@ export class ComputersComponent implements OnInit {
           this.dataMachines = data.machines;
 
           this.canViewMachines = true;
+        }
+      });
+  }
+
+  // Pega o usuario inserido
+  getUserName(event: any): void {
+    this.input_username = event.target.value;
+  }
+
+  // Pega a senha inserida
+  getPwd(event: any): void {
+    this.input_pwd = event.target.value;
+  }
+
+  // Habilita a tela de credencial
+  reportDNS(): void {
+    this.canViewCredentials = true;
+  }
+
+  // Envia o usuario e senha para o backend
+  submitReportDNS(): void {
+    this.http
+      .post(
+        '/home/computers/report-dns',
+        {
+          username: this.input_username,
+          pwd: this.input_pwd,
+        },
+        {
+          headers: new HttpHeaders({
+            'X-CSRFToken': this.token,
+            'Content-Type': 'application/json',
+          }),
+        }
+      )
+      .pipe(
+        catchError((error) => {
+          this.status = error.status;
+
+          if (this.status === 401) {
+            this.errorType = 'Invalid Credentials';
+            this.messageError = 'Usuario e/ou Senha Incorreto';
+            this.canViewMessage = true;
+          }
+          return throwError(error);
+        })
+      )
+      .subscribe((data: any) => {
+        if (data) {
+          const link = document.createElement('a');
+          link.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${data.filedata}`;
+          link.download = data.filename;
+          link.click();
+          this.canViewCredentials = false;
         }
       });
   }

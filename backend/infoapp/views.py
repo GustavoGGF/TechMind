@@ -9,6 +9,11 @@ from decouple import config
 import logging
 from re import sub
 from django.middleware.csrf import get_token
+from ldap3 import Server, Connection, ALL, SUBTREE
+import dns.resolver
+import pandas as pd
+import base64
+from io import BytesIO
 
 # Configuração básica de logging
 logging.basicConfig(level=logging.INFO)
@@ -1465,6 +1470,7 @@ def getDataDisFilter(request, quantity, dis):
     if request.method == "POST":
         return
 
+
 # Função que busca o nome de computar que equivale ao que o usuario esta escrevendo
 def getDataVarchar(request, quantity, name):
     if request.method == "GET":
@@ -1524,3 +1530,86 @@ def getDataVarchar(request, quantity, name):
 
     if request.method == "POST":
         return
+
+
+# Função que gera relatorio DNS mostrando ip Identicos
+def getReportDNS(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            username = data.get("username")
+            pwd = data.get("pwd")
+
+            # Conectar ao servidor LDAP
+            server = Server(config("SERVER1"), get_info=ALL)
+            conn = Connection(
+                server,
+                user=f"nt-lupatech\{username}",
+                password=pwd,
+                auto_bind=True,
+                read_only=True,
+            )
+
+            # Realizar a pesquisa
+            conn.search(
+                search_base=config("LDAP_BASE"),
+                search_filter="(objectClass=computer)",
+                attributes=["dnsHostName"],
+                search_scope=SUBTREE,
+                types_only=False,
+            )
+
+            # Processar e imprimir os resultados
+            ip_to_hostnames = {}
+            for entry in conn.entries:
+                if "dnsHostName" in entry:
+                    hostname = entry.dnsHostName.value
+                    if hostname:
+                        ips = get_ip_from_dns(hostname)
+                        if ips is not None:
+                            for ip in ips:
+                                if ip not in ip_to_hostnames:
+                                    ip_to_hostnames[ip] = []
+                                ip_to_hostnames[ip].append(hostname)
+                        else:
+                            logger.error(f"get_ip_from_dns returned None for hostname: {hostname}")
+
+            # Filtrar IPs com múltiplos hostnames e preparar os dados para o DataFrame
+            dataPD = []
+            for ip, hostnames in ip_to_hostnames.items():
+                if len(hostnames) > 1:
+                    dataPD.append({"ip": ip, "hostnames": ", ".join(hostnames)})
+            
+            # Criar DataFrame
+            df = pd.DataFrame(dataPD)
+
+            # Salvar DataFrame em um buffer de memória
+            buffer = BytesIO()
+            with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+                df.to_excel(writer, index=False)
+
+            # Obter o conteúdo do buffer e codificá-lo em base64
+            buffer.seek(0)
+            excel_base64 = base64.b64encode(buffer.read()).decode("utf-8")
+
+            # Criar a resposta JSON
+            response_data = {"filename": "duplicated_ips.xlsx", "filedata": excel_base64}
+
+            return JsonResponse(response_data, status=200)
+
+        except Exception as e:
+            logger.error(f"An error occurred: {e}")
+            return JsonResponse({}, status=420)
+    elif request.method == "GET":
+        return
+
+
+# Função que gera os ip's do DNS
+def get_ip_from_dns(hostname):
+    try:
+        # Consulta DNS para registros A (IPv4)
+        answers = dns.resolver.resolve(hostname, "A")
+        ips = [rdata.address for rdata in answers]
+        return ips
+    except Exception as e:
+        pass

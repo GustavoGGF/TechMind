@@ -90,4 +90,6 @@ urlpatterns = [
         views.getDataVarchar,
         name="central-get-data-varchar",
     ),
+    # URL que gera relatorio de DNS que visa mostrar ip identicos
+    path("computers/report-dns", views.getReportDNS, name="central-get-report-dns"),
 ]
