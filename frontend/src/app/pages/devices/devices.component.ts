@@ -30,6 +30,8 @@ export class DevicesComponent {
 
   // Declarando as variaveis string
   all_quantity: string = '';
+  arrow_down: string = '/static/assets/images/seta.png';
+  arrow_up: string = '/static/assets/images/seta2.png';
   close_button: string = '/static/assets/images/fechar.png';
   computers_class: string = '';
   device_class: string = 'active';
@@ -340,5 +342,155 @@ export class DevicesComponent {
           this.canViewDevices = true;
         }
       });
+  }
+
+  // Reorganiza os dispositivos pelo equipamento em ordem alfabetica
+  sortByEquip(): void {
+    this.devices.sort((a: any, b: any) => {
+      const nameA = a[0].toUpperCase(); // Ignore case
+      const nameB = b[0].toUpperCase(); // Ignore case
+      if (nameA < nameB) {
+        return -1;
+      }
+      if (nameA > nameB) {
+        return 1;
+      }
+      return 0;
+    });
+  }
+
+  // Reorganiza os computadores pelo equipamento em ordem alfabetica invertido
+  sortDataByEquipDescending(): void {
+    this.devices.sort((a: any, b: any) => {
+      const nameA = a[0].toUpperCase(); // Ignore case
+      const nameB = b[0].toUpperCase(); // Ignore case
+      if (nameA < nameB) {
+        return 1;
+      }
+      if (nameA > nameB) {
+        return -1;
+      }
+      return 0;
+    });
+  }
+
+  // Reorganiza os dispositivos pela Marca em ordem alfabetica
+  sortByBrand(): void {
+    this.devices.sort((a: any, b: any) => {
+      const nameA = a[4].toUpperCase(); // Ignore case
+      const nameB = b[4].toUpperCase(); // Ignore case
+      if (nameA < nameB) {
+        return -1;
+      }
+      if (nameA > nameB) {
+        return 1;
+      }
+      return 0;
+    });
+  }
+
+  // Reorganiza os computadores pela Marca em ordem alfabetica invertido
+  sortDataByBrandDescending(): void {
+    this.devices.sort((a: any, b: any) => {
+      const nameA = a[4].toUpperCase(); // Ignore case
+      const nameB = b[4].toUpperCase(); // Ignore case
+      if (nameA < nameB) {
+        return 1;
+      }
+      if (nameA > nameB) {
+        return -1;
+      }
+      return 0;
+    });
+  }
+
+  // Reorganiza os dispositivos pelo equipamento em ordem alfabetica
+  sortByModel(): void {
+    this.devices.sort((a: any, b: any) => {
+      const nameA = a[1].toUpperCase(); // Ignore case
+      const nameB = b[1].toUpperCase(); // Ignore case
+      if (nameA < nameB) {
+        return -1;
+      }
+      if (nameA > nameB) {
+        return 1;
+      }
+      return 0;
+    });
+  }
+
+  // Reorganiza os computadores pelo equipamento em ordem alfabetica invertido
+  sortDataByModelDescending(): void {
+    this.devices.sort((a: any, b: any) => {
+      const nameA = a[1].toUpperCase(); // Ignore case
+      const nameB = b[1].toUpperCase(); // Ignore case
+      if (nameA < nameB) {
+        return 1;
+      }
+      if (nameA > nameB) {
+        return -1;
+      }
+      return 0;
+    });
+  }
+
+  // Reorganiza os dispositivos pelo SN em ordem alfabetica
+  sortBySN(): void {
+    this.devices.sort((a: any, b: any) => {
+      const nameA = a[2].toUpperCase(); // Ignore case
+      const nameB = b[2].toUpperCase(); // Ignore case
+      if (nameA < nameB) {
+        return -1;
+      }
+      if (nameA > nameB) {
+        return 1;
+      }
+      return 0;
+    });
+  }
+
+  // Reorganiza os computadores pelo SN em ordem alfabetica invertido
+  sortDataBySNDescending(): void {
+    this.devices.sort((a: any, b: any) => {
+      const nameA = a[2].toUpperCase(); // Ignore case
+      const nameB = b[2].toUpperCase(); // Ignore case
+      if (nameA < nameB) {
+        return 1;
+      }
+      if (nameA > nameB) {
+        return -1;
+      }
+      return 0;
+    });
+  }
+
+  // Reorganiza os dispositivos pelo SN em ordem alfabetica
+  sortByImob(): void {
+    this.devices.sort((a: any, b: any) => {
+      const nameA = a[3].toUpperCase(); // Ignore case
+      const nameB = b[3].toUpperCase(); // Ignore case
+      if (nameA < nameB) {
+        return -1;
+      }
+      if (nameA > nameB) {
+        return 1;
+      }
+      return 0;
+    });
+  }
+
+  // Reorganiza os computadores pelo SN em ordem alfabetica invertido
+  sortDataByImobDescending(): void {
+    this.devices.sort((a: any, b: any) => {
+      const nameA = a[3].toUpperCase(); // Ignore case
+      const nameB = b[3].toUpperCase(); // Ignore case
+      if (nameA < nameB) {
+        return 1;
+      }
+      if (nameA > nameB) {
+        return -1;
+      }
+      return 0;
+    });
   }
 }

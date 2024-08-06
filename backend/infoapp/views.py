@@ -274,6 +274,7 @@ def postMachines(request):
             memories = str(memories)
             hard_disk_model = data.get("hardDiskModel")
             hard_disk_serial_number = data.get("hardDiskSerialNumber")
+            logger.info(f"hard_disk_serial_number:{hard_disk_serial_number}")
             hard_disk_user_capacity = data.get("hardDiskUserCapacity")
             hard_disk_sata_version = data.get("hardDiskSataVersion")
             cpu_architecture = data.get("cpuArchitecture")
@@ -308,6 +309,7 @@ def postMachines(request):
                     distribution == "Windows 10"
                     or distribution == "Windows 8.1"
                     or distribution == "Windows Server 2012 R2"
+                    or distribution == "Windows Server 2012"
                 ):
                     softwares = str(softwares_list)
                 else:

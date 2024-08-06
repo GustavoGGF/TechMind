@@ -515,8 +515,19 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
         if (data) {
           if (data.imob) {
             this.imob = data.imob;
+            if (data.location) {
+              this.location = data.location;
+              if (data.note) {
+                this.note = data.note;
+              }
+            } else if (data.note) {
+              this.note = data.note;
+            }
           } else if (data.location) {
             this.location = data.location;
+            if (data.note) {
+              this.note = data.note;
+            }
           } else if (data.note) {
             this.note = data.note;
           }

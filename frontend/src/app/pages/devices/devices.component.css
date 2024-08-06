@@ -102,3 +102,8 @@
   background-color: var(--white);
   color: var(--black);
 }
+
+.img_arrows {
+  width: 1.5em;
+  cursor: pointer;
+}

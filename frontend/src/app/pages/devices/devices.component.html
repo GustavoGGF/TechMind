@@ -60,11 +60,101 @@
       <table class="tb mt-3">
         <thead>
           <tr>
-            <th class="thcls text-uppercase">Equipamento</th>
-            <th class="thcls text-uppercase">Marca</th>
-            <th class="thcls text-uppercase">Modelo</th>
-            <th class="thcls text-uppercase">SN</th>
-            <th class="thcls text-uppercase">Imob</th>
+            <th class="thcls text-uppercase">
+              <div class="w-100 d-flex justify-content-center">
+                <div>Equipamento</div>
+                <div class="mleft">
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_up"
+                    alt="seta para cima"
+                    (click)="sortByEquip()"
+                  />
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_down"
+                    alt="seta para baixo"
+                    (click)="sortDataByEquipDescending()"
+                  />
+                </div>
+              </div>
+            </th>
+            <th class="thcls text-uppercase">
+              <div class="w-100 d-flex justify-content-center">
+                <div>Marca</div>
+                <div class="mleft">
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_up"
+                    alt="seta para cima"
+                    (click)="sortByBrand()"
+                  />
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_down"
+                    alt="seta para baixo"
+                    (click)="sortDataByBrandDescending()"
+                  />
+                </div>
+              </div>
+            </th>
+            <th class="thcls text-uppercase">
+              <div class="w-100 d-flex justify-content-center">
+                <div>Modelo</div>
+                <div class="mleft">
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_up"
+                    alt="seta para cima"
+                    (click)="sortByModel()"
+                  />
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_down"
+                    alt="seta para baixo"
+                    (click)="sortDataByModelDescending()"
+                  />
+                </div>
+              </div>
+            </th>
+            <th class="thcls text-uppercase">
+              <div class="w-100 d-flex justify-content-center">
+                <div>SN</div>
+                <div class="mleft">
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_up"
+                    alt="seta para cima"
+                    (click)="sortBySN()"
+                  />
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_down"
+                    alt="seta para baixo"
+                    (click)="sortDataBySNDescending()"
+                  />
+                </div>
+              </div>
+            </th>
+            <th class="thcls text-uppercase">
+              <div class="w-100 d-flex justify-content-center">
+                <div>Imob</div>
+                <div class="mleft">
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_up"
+                    alt="seta para cima"
+                    (click)="sortByImob()"
+                  />
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_down"
+                    alt="seta para baixo"
+                    (click)="sortDataByImobDescending()"
+                  />
+                </div>
+              </div>
+            </th>
           </tr>
         </thead>
         <tbody *ngIf="canViewDevices">
