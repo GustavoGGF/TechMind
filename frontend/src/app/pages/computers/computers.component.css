@@ -20,7 +20,7 @@
 
 .thcls {
   width: calc(
-    100% / 6
+    100% / 7
   ); /* Dividir a largura total igualmente entre 6 colunas */
   border: 1px solid var(--white);
   text-align: center;
@@ -31,7 +31,7 @@
 
 .tdsadj {
   width: calc(
-    100% / 6
+    100% / 7
   ); /* Dividir a largura total igualmente entre 6 colunas */
   text-align: center;
   padding: 10px; /* Ajuste conforme necessário */
@@ -100,4 +100,9 @@
   display: flex;
   flex-direction: column;
   text-align: center;
+}
+
+.ckip {
+  width: 2em;
+  height: 2em;
 }

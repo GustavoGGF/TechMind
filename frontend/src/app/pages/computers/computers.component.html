@@ -99,6 +99,16 @@
   <table class="tb">
     <thead>
       <tr>
+        <th class="thcls">
+          <div class="form-check d-flex justify-content-center">
+            <input
+              class="ckip form-check-input"
+              type="checkbox"
+              value=""
+              (change)="selectAll()"
+            />
+          </div>
+        </th>
         <th class="thcls text-uppercase">mac_address</th>
         <th class="thcls text-uppercase">
           <div class="w-100 d-flex justify-content-center">
@@ -179,16 +189,23 @@
       </tr>
     </thead>
     <tbody *ngIf="canViewMachines">
-      <tr
-        class="trcls"
-        *ngFor="let machine of dataMachines; let i = index"
-        (click)="onRowClick(i)"
-      >
-        <td class="tdsadj">{{ machine[0] }}</td>
-        <td class="tdsadj">{{ machine[1] }}</td>
-        <td class="tdsadj">{{ machine[2] }}</td>
-        <td class="tdsadj">{{ machine[3] }}</td>
-        <td class="tdsadj">{{ formatDate(machine[4]) }}</td>
+      <tr class="trcls" *ngFor="let machine of dataMachines; let i = index">
+        <td class="tdsadj">
+          <div class="form-check d-flex justify-content-center">
+            <input
+              class="ckip form-check-input"
+              type="checkbox"
+              [value]="machine[0]"
+            />
+          </div>
+        </td>
+        <td class="tdsadj" (click)="onRowClick(i)">{{ machine[0] }}</td>
+        <td class="tdsadj" (click)="onRowClick(i)">{{ machine[1] }}</td>
+        <td class="tdsadj" (click)="onRowClick(i)">{{ machine[2] }}</td>
+        <td class="tdsadj" (click)="onRowClick(i)">{{ machine[3] }}</td>
+        <td class="tdsadj" (click)="onRowClick(i)">
+          {{ formatDate(machine[4]) }}
+        </td>
       </tr>
     </tbody>
   </table>

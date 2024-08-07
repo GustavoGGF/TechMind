@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
 import { UtilitiesModule } from '../../utilities/utilities.module';
 import { CommonModule } from '@angular/common';
 import {
@@ -16,7 +16,11 @@ import { catchError, throwError } from 'rxjs';
   styleUrl: './computers.component.css',
 })
 export class ComputersComponent implements OnInit {
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private renderer: Renderer2,
+    private el: ElementRef
+  ) {}
   // Declarando variaveis any
   dataMachines: any;
   name: any;
@@ -45,6 +49,7 @@ export class ComputersComponent implements OnInit {
   canViewCredentials: boolean = false;
   canViewMachines: boolean = false;
   canViewMessage: boolean = false;
+  checkedAll: boolean = true;
   showMessage: boolean = false;
 
   // Declarando variaveis list
@@ -604,5 +609,21 @@ export class ComputersComponent implements OnInit {
           this.canViewCredentials = false;
         }
       });
+  }
+
+  selectAll(): void {
+    const checkboxes = this.el.nativeElement.querySelectorAll('.ckip');
+    checkboxes.forEach((checkbox: HTMLInputElement) => {
+      if (this.checkedAll) {
+        this.renderer.setProperty(checkbox, 'checked', true);
+      } else {
+        this.renderer.setProperty(checkbox, 'checked', false);
+      }
+    });
+    if (this.checkedAll) {
+      this.checkedAll = false;
+    } else {
+      this.checkedAll = true;
+    }
   }
 }

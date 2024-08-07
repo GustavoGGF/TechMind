@@ -1,19 +1,23 @@
-import json
-from django.shortcuts import redirect, render
-from django.views.decorators.csrf import requires_csrf_token, csrf_exempt
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-import mysql.connector
-from mysql.connector import Error
-from decouple import config
-import logging
-from re import sub
-from django.middleware.csrf import get_token
-from ldap3 import Server, Connection, ALL, SUBTREE
-import dns.resolver
-import pandas as pd
 import base64
+import dns.resolver
+import json
+import logging
+import mysql.connector
+import pandas as pd
+from decouple import config
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.http import JsonResponse
+from django.middleware.csrf import get_token
+from django_ratelimit.decorators import ratelimit
+from django.shortcuts import redirect, render
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_exempt, requires_csrf_token
+from django.views.decorators.http import require_POST
 from io import BytesIO
+from ldap3 import ALL, Connection, Server, SUBTREE
+from mysql.connector import Error
+from re import sub
 
 # Configuração básica de logging
 logging.basicConfig(level=logging.INFO)
@@ -190,162 +194,177 @@ def contains_backslash(s):
     return "\\" in s
 
 
+# Função que recebe os dados do computador
 @csrf_exempt
+@require_POST
+@transaction.atomic
+@ratelimit(key="ip", rate="200/d", method="POST", block=True)
+@never_cache()
 def postMachines(request):
-    if request.method == "POST":
-        data = None
-        system = None
-        name = None
-        distribution = None
-        insertionDate = None
-        macAddress = None
-        connection = None
-        cursor = None
-        results = None
-        select_query = None
-        update_query = None
-        currentUser = None
-        user = None
-        version = None
-        domain = None
-        ip = None
-        model = None
-        serial_number = None
-        max_capacity_memory = None
-        number_of_slots = None
-        hard_disk_model = None
-        hard_disk_serial_number = None
-        hard_disk_user_capacity = None
-        hard_disk_sata_version = None
-        cpu_architecture = None
-        cpu_operation_mode = None
-        cpus = None
-        cpu_vendor_id = None
-        cpu_model_name = None
-        cpu_thread = None
-        cpu_core = None
-        cpu_socket = None
-        cpu_max_mhz = None
-        cpu_min_mhz = None
-        gpu_product = None
-        gpu_vendor_id = None
-        gpu_bus_info = None
-        gpu_logical_name = None
-        gpu_clock = None
-        gpu_configuration = None
-        audio_device_product = None
-        audio_device_model = None
-        bios_version = None
-        motherboard_manufacturer = None
-        motherboard_product_name = None
-        motherboard_version = None
-        motherboard_serial_name = None
-        motherboard_asset_tag = None
+    # Declarando varaiveis
+    audio_device_model = None
+    audio_device_product = None
+    bios_version = None
+    connection = None
+    cpu_architecture = None
+    cpu_core = None
+    cpu_max_mhz = None
+    cpu_min_mhz = None
+    cpu_model_name = None
+    cpu_operation_mode = None
+    cpu_socket = None
+    cpu_thread = None
+    cpu_vendor_id = None
+    cpus = None
+    currentUser = None
+    cursor = None
+    data = None
+    distribution = None
+    domain = None
+    gpu_bus_info = None
+    gpu_clock = None
+    gpu_configuration = None
+    gpu_logical_name = None
+    gpu_product = None
+    gpu_vendor_id = None
+    hard_disk_model = None
+    hard_disk_sata_version = None
+    hard_disk_serial_number = None
+    hard_disk_user_capacity = None
+    insertionDate = None
+    ip = None
+    macAddress = None
+    max_capacity_memory = None
+    memories = None
+    model = None
+    motherboard_asset_tag = None
+    motherboard_manufacturer = None
+    motherboard_product_name = None
+    motherboard_serial_name = None
+    motherboard_version = None
+    name = None
+    number_of_slots = None
+    results = None
+    select_query = None
+    serial_number = None
+    softwares = None
+    softwares_list = None
+    system = None
+    update_query = None
+    user = None
+    version = None
+    try:
+        # Pegando os dados
+        data = json.loads(request.body.decode("utf-8"))
+        system = data.get("system")
+        name = data.get("name")
+        distribution = data.get("distribution")
+        insertionDate = data.get("insertionDate")
+        macAddress = data.get("macAddress")
+        user = data.get("currentUser")
+
+        # Validando o usuario
+        if user != None:
+            if contains_backslash(user):
+                currentUser = user.split("\\")[-1]
+            else:
+                currentUser = user
+
+        # Validando a versão do SO
+        ver = data.get("platformVersion")
+        if ver != None:
+            version = ver.split(" ")[0]
+
+        domain = data.get("domain")
+        ip = data.get("ip")
+        manufacturer = data.get("manufacturer")
+        model = data.get("model")
+        serial_number = data.get("serialNumber")
+        max_capacity_memory = data.get("maxCapacityMemory")
+        number_of_slots = data.get("numberOfDevices")
+        memories = data.get("memories")
+        memories = str(memories)
+        hard_disk_model = data.get("hardDiskModel")
+        hard_disk_serial_number = data.get("hardDiskSerialNumber")
+        hard_disk_user_capacity = data.get("hardDiskUserCapacity")
+        hard_disk_sata_version = data.get("hardDiskSataVersion")
+        cpu_architecture = data.get("cpuArchitecture")
+        cpu_operation_mode = data.get("cpuOperationMode")
+        cpus = data.get("cpus")
+        cpu_vendor_id = data.get("cpuVendorID")
+        cpu_model_name = data.get("cpuModelName")
+        cpu_thread = data.get("cpuThread")
+        cpu_core = data.get("cpuCore")
+        cpu_socket = data.get("cpuSocket")
+        cpu_max_mhz = data.get("cpuMaxMHz")
+        cpu_min_mhz = data.get("cpuMinMHz")
+        gpu_product = data.get("gpuProduct")
+        gpu_vendor_id = data.get("gpuVendorID")
+        gpu_bus_info = data.get("gpuBusInfo")
+        gpu_logical_name = data.get("gpuLogicalName")
+        gpu_clock = data.get("gpuClock")
+        gpu_configuration = data.get("gpuConfiguration")
+        audio_device_product = data.get("audioDeviceProduct")
+
+        logger.info(audio_device_product)
+
+        audio_device_model = data.get("audioDeviceModel")
+        bios_version = data.get("biosVersion")
+        motherboard_manufacturer = data.get("motherboardManufacturer")
+        motherboard_product_name = data.get("motherboardProductName")
+        motherboard_version = data.get("motherboardVersion")
+        motherboard_serial_name = data.get("motherbaoardSerialName")
+        motherboard_asset_tag = data.get("motherboardAssetTag")
+        # Ajustando a lista de softwares
+        softwares_list = data.get("installedPackages")
         softwares = None
-        softwares_list = None
-        memories = None
-        try:
-            data = json.loads(request.body.decode("utf-8"))
-            system = data.get("system")
-            name = data.get("name")
-            distribution = data.get("distribution")
-            insertionDate = data.get("insertionDate")
-            macAddress = data.get("macAddress")
-            user = data.get("currentUser")
+        if softwares_list != None:
+            if (
+                distribution == "Windows 10"
+                or distribution == "Windows 8.1"
+                or distribution == "Windows Server 2012 R2"
+                or distribution == "Windows Server 2012"
+                or distribution == "Windows10"
+            ):
+                softwares = str(softwares_list)
+            else:
+                softwares = ""
+                for soft in softwares_list:
+                    softwares += soft + ","
 
-            if user != None:
-                if contains_backslash(user):
-                    currentUser = user.split("\\")[-1]
-                else:
-                    currentUser = user
-
-            ver = data.get("platformVersion")
-            if ver != None:
-                version = ver.split(" ")[0]
-
-            domain = data.get("domain")
-            ip = data.get("ip")
-            manufacturer = data.get("manufacturer")
-            model = data.get("model")
-            serial_number = data.get("serialNumber")
-            max_capacity_memory = data.get("maxCapacityMemory")
-            number_of_slots = data.get("numberOfDevices")
-            memories = data.get("memories")
-            memories = str(memories)
-            hard_disk_model = data.get("hardDiskModel")
-            hard_disk_serial_number = data.get("hardDiskSerialNumber")
-            logger.info(f"hard_disk_serial_number:{hard_disk_serial_number}")
-            hard_disk_user_capacity = data.get("hardDiskUserCapacity")
-            hard_disk_sata_version = data.get("hardDiskSataVersion")
-            cpu_architecture = data.get("cpuArchitecture")
-            cpu_operation_mode = data.get("cpuOperationMode")
-            cpus = data.get("cpus")
-            cpu_vendor_id = data.get("cpuVendorID")
-            cpu_model_name = data.get("cpuModelName")
-            cpu_thread = data.get("cpuThread")
-            cpu_core = data.get("cpuCore")
-            cpu_socket = data.get("cpuSocket")
-            cpu_max_mhz = data.get("cpuMaxMHz")
-            cpu_min_mhz = data.get("cpuMinMHz")
-            gpu_product = data.get("gpuProduct")
-            gpu_vendor_id = data.get("gpuVendorID")
-            gpu_bus_info = data.get("gpuBusInfo")
-            gpu_logical_name = data.get("gpuLogicalName")
-            gpu_clock = data.get("gpuClock")
-            gpu_configuration = data.get("gpuConfiguration")
-            audio_device_product = data.get("audioDeviceProduct")
-            audio_device_model = data.get("audioDeviceModel")
-            bios_version = data.get("biosVersion")
-            motherboard_manufacturer = data.get("motherboardManufacturer")
-            motherboard_product_name = data.get("motherboardProductName")
-            motherboard_version = data.get("motherboardVersion")
-            motherboard_serial_name = data.get("motherbaoardSerialName")
-            motherboard_asset_tag = data.get("motherboardAssetTag")
-            softwares_list = data.get("installedPackages")
-            softwares = None
-            if softwares_list != None:
-                logger.info(distribution)
-                if (
-                    distribution == "Windows 10"
-                    or distribution == "Windows 8.1"
-                    or distribution == "Windows Server 2012 R2"
-                    or distribution == "Windows Server 2012"
-                ):
-                    softwares = str(softwares_list)
-                else:
-                    softwares = ""
-                    for soft in softwares_list:
-                        softwares += soft + ","
-
-            if macAddress == None:
-                logger.error("Mac Address is required")
-                return JsonResponse(
-                    {"error": "Mac Address is required"}, status=400, safe=False
-                )
-
-            connection = mysql.connector.connect(
-                host=config("DB_HOST"),
-                database=config("DB_NAME"),
-                user=config("DB_USER"),
-                password=config("DB_PASSWORD"),
+        # Verificando a existencia do macAddress
+        if macAddress == None:
+            logger.error("Mac Address is required")
+            return JsonResponse(
+                {"error": "Mac Address is required"}, status=400, safe=False
             )
 
-            if connection.is_connected():
-                cursor = connection.cursor()
+        # Conectando no banco de dados
+        connection = mysql.connector.connect(
+            host=config("DB_HOST"),
+            database=config("DB_NAME"),
+            user=config("DB_USER"),
+            password=config("DB_PASSWORD"),
+        )
 
-                # Comando SQL para verificar se o endereço MAC existe na tabela
-            select_query = "SELECT * FROM machines WHERE mac_address = %s"
-            # Normalizando o endereço MAC
-            normalized_mac = normalize_mac_address(macAddress)
+        if connection.is_connected():
+            cursor = connection.cursor()
 
-            cursor.execute(select_query, (normalized_mac,))
+        # Comando SQL para verificar se o endereço MAC existe na tabela
+        select_query = "SELECT * FROM machines WHERE mac_address = %s"
 
-            # Obtendo os resultados
-            results = cursor.fetchall()
+        # Exectando a query
+        cursor.execute(select_query, (normalize_mac_address(macAddress),))
 
-            if results:
-                # Comando SQL para atualizar o nome do dispositivo
-                update_query = """UPDATE machines SET name = %s, system_name = %s, 
+        # Obtendo os resultados
+        results = cursor.fetchall()
+
+        cursor.close()
+        connection.close()
+
+        if results:
+            # Comando SQL para atualizar o nome do dispositivo
+            update_query = """UPDATE machines SET name = %s, system_name = %s, 
                 distribution = %s, insertion_date = %s, logged_user = %s, version = %s , 
                 domain = %s, ip = %s, manufacturer= %s, model = %s,
                 serial_number = %s, max_capacity_memory = %s, number_of_slots = %s,  
@@ -359,66 +378,66 @@ def postMachines(request):
                 motherboard_version = %s, motherboard_serial_name = %s,
                 motherboard_asset_tag = %s, softwares = %s, memories = %s WHERE mac_address = %s"""
 
-                cursor.execute(
-                    update_query,
-                    (
-                        name,
-                        system,
-                        distribution,
-                        insertionDate,
-                        currentUser,
-                        version,
-                        domain,
-                        ip,
-                        manufacturer,
-                        model,
-                        serial_number,
-                        max_capacity_memory,
-                        number_of_slots,
-                        hard_disk_model,
-                        hard_disk_serial_number,
-                        hard_disk_user_capacity,
-                        hard_disk_sata_version,
-                        cpu_architecture,
-                        cpu_operation_mode,
-                        cpus,
-                        cpu_vendor_id,
-                        cpu_model_name,
-                        cpu_thread,
-                        cpu_core,
-                        cpu_socket,
-                        cpu_max_mhz,
-                        cpu_min_mhz,
-                        gpu_product,
-                        gpu_vendor_id,
-                        gpu_bus_info,
-                        gpu_logical_name,
-                        gpu_clock,
-                        gpu_configuration,
-                        audio_device_product,
-                        audio_device_model,
-                        bios_version,
-                        motherboard_manufacturer,
-                        motherboard_product_name,
-                        motherboard_version,
-                        motherboard_serial_name,
-                        motherboard_asset_tag,
-                        softwares,
-                        memories,
-                        normalized_mac,
-                    ),
-                )
+            cursor.execute(
+                update_query,
+                (
+                    name,
+                    system,
+                    distribution,
+                    insertionDate,
+                    currentUser,
+                    version,
+                    domain,
+                    ip,
+                    manufacturer,
+                    model,
+                    serial_number,
+                    max_capacity_memory,
+                    number_of_slots,
+                    hard_disk_model,
+                    hard_disk_serial_number,
+                    hard_disk_user_capacity,
+                    hard_disk_sata_version,
+                    cpu_architecture,
+                    cpu_operation_mode,
+                    cpus,
+                    cpu_vendor_id,
+                    cpu_model_name,
+                    cpu_thread,
+                    cpu_core,
+                    cpu_socket,
+                    cpu_max_mhz,
+                    cpu_min_mhz,
+                    gpu_product,
+                    gpu_vendor_id,
+                    gpu_bus_info,
+                    gpu_logical_name,
+                    gpu_clock,
+                    gpu_configuration,
+                    audio_device_product,
+                    audio_device_model,
+                    bios_version,
+                    motherboard_manufacturer,
+                    motherboard_product_name,
+                    motherboard_version,
+                    motherboard_serial_name,
+                    motherboard_asset_tag,
+                    softwares,
+                    memories,
+                    (normalize_mac_address(macAddress)),
+                ),
+            )
 
-                # Confirmando a inserção
-                connection.commit()
+            # Confirmando a inserção
+            connection.commit()
 
-                # Fechando a conexão
-                cursor.close()
-                connection.close()
+            # Fechando a conexão
+            cursor.close()
+            connection.close()
 
-                return JsonResponse({}, status=200, safe=False)
-            else:
-                query = """INSERT INTO machines (mac_address, name, system_name, distribution, 
+            return JsonResponse({}, status=200, safe=False)
+        else:
+            query = """INSERT INTO machines (mac_address, name, system_name, distribution, 
                 insertion_date, logged_user, version, domain, ip, manufacturer, model, serial_number,
                 max_capacity_memory, number_of_slots, hard_disk_model, hard_disk_serial_number, 
                 hard_disk_user_capacity, hard_disk_sata_version, cpu_architecture, cpu_operation_mode, 
@@ -430,79 +449,76 @@ def postMachines(request):
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                 %s , %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
-                cursor.execute(
-                    query,
-                    (
-                        normalized_mac,
-                        name,
-                        system,
-                        distribution,
-                        insertionDate,
-                        currentUser,
-                        version,
-                        domain,
-                        ip,
-                        manufacturer,
-                        model,
-                        serial_number,
-                        max_capacity_memory,
-                        number_of_slots,
-                        hard_disk_model,
-                        hard_disk_serial_number,
-                        hard_disk_user_capacity,
-                        hard_disk_sata_version,
-                        cpu_architecture,
-                        cpu_operation_mode,
-                        cpus,
-                        cpu_vendor_id,
-                        cpu_model_name,
-                        cpu_thread,
-                        cpu_core,
-                        cpu_socket,
-                        cpu_max_mhz,
-                        cpu_min_mhz,
-                        gpu_product,
-                        gpu_vendor_id,
-                        gpu_bus_info,
-                        gpu_logical_name,
-                        gpu_clock,
-                        gpu_configuration,
-                        audio_device_product,
-                        audio_device_model,
-                        bios_version,
-                        motherboard_manufacturer,
-                        motherboard_product_name,
-                        motherboard_version,
-                        motherboard_serial_name,
-                        motherboard_asset_tag,
-                        softwares,
-                        memories,
-                    ),
-                )
+            cursor.execute(
+                query,
+                (
+                    (normalize_mac_address(macAddress)),
+                    name,
+                    system,
+                    distribution,
+                    insertionDate,
+                    currentUser,
+                    version,
+                    domain,
+                    ip,
+                    manufacturer,
+                    model,
+                    serial_number,
+                    max_capacity_memory,
+                    number_of_slots,
+                    hard_disk_model,
+                    hard_disk_serial_number,
+                    hard_disk_user_capacity,
+                    hard_disk_sata_version,
+                    cpu_architecture,
+                    cpu_operation_mode,
+                    cpus,
+                    cpu_vendor_id,
+                    cpu_model_name,
+                    cpu_thread,
+                    cpu_core,
+                    cpu_socket,
+                    cpu_max_mhz,
+                    cpu_min_mhz,
+                    gpu_product,
+                    gpu_vendor_id,
+                    gpu_bus_info,
+                    gpu_logical_name,
+                    gpu_clock,
+                    gpu_configuration,
+                    audio_device_product,
+                    audio_device_model,
+                    bios_version,
+                    motherboard_manufacturer,
+                    motherboard_product_name,
+                    motherboard_version,
+                    motherboard_serial_name,
+                    motherboard_asset_tag,
+                    softwares,
+                    memories,
+                ),
+            )
 
-                # Confirmando a inserção
-                connection.commit()
+            # Confirmando a inserção
+            connection.commit()
 
-                # Fechando a conexão
-                cursor.close()
-                connection.close()
+            # Fechando a conexão
+            cursor.close()
+            connection.close()
 
-                return JsonResponse({}, status=200, safe=False)
+            return JsonResponse({}, status=200, safe=False)
 
-        except json.JSONDecodeError:
-            logger.error("Erro ao decodificar JSON")
-            return JsonResponse({"error": "Invalid JSON"}, status=400, safe=False)
+    except json.JSONDecodeError:
+        logger.error("Erro ao decodificar JSON")
+        return JsonResponse({"error": "Invalid JSON"}, status=400, safe=False)
 
-        except mysql.connector.Error as err:
-            logger.error(f"Erro ao inserir dados: {err}")
-            return JsonResponse({"error": "Invalid MYSQL"}, status=400, safe=False)
+    except mysql.connector.Error as err:
+        logger.error(f"Erro ao inserir dados: {err}")
+        return JsonResponse({"error": "Invalid MYSQL"}, status=400, safe=False)
 
-        except Exception as e:
-            logger.error(f"Error: {str(e)}")
-            return JsonResponse({"error": str(e)}, status=400)
-
-    if request.method == "GET":
-        return redirect("/computers")
+    except Exception as e:
+        logger.error(f"Error: {str(e)}")
+        return JsonResponse({"error": str(e)}, status=400)
 
 
 def postMachinesWithMac(request, mac_address):
@@ -1574,14 +1590,16 @@ def getReportDNS(request):
                                     ip_to_hostnames[ip] = []
                                 ip_to_hostnames[ip].append(hostname)
                         else:
-                            logger.error(f"get_ip_from_dns returned None for hostname: {hostname}")
+                            logger.error(
+                                f"get_ip_from_dns returned None for hostname: {hostname}"
+                            )
 
             # Filtrar IPs com múltiplos hostnames e preparar os dados para o DataFrame
             dataPD = []
             for ip, hostnames in ip_to_hostnames.items():
                 if len(hostnames) > 1:
                     dataPD.append({"ip": ip, "hostnames": ", ".join(hostnames)})
-            
+
             # Criar DataFrame
             df = pd.DataFrame(dataPD)
 
@@ -1595,7 +1613,10 @@ def getReportDNS(request):
             excel_base64 = base64.b64encode(buffer.read()).decode("utf-8")
 
             # Criar a resposta JSON
-            response_data = {"filename": "duplicated_ips.xlsx", "filedata": excel_base64}
+            response_data = {
+                "filename": "duplicated_ips.xlsx",
+                "filedata": excel_base64,
+            }
 
             return JsonResponse(response_data, status=200)
 
