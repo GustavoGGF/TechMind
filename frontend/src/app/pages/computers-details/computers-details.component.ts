@@ -72,6 +72,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
   input_imob: string = '';
   input_note: string = '';
   ip: string = '';
+  license: string = '';
   list_softwares: string = '';
   location: string = '';
   macAddress: string = '';
@@ -345,6 +346,7 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
           this.imob = this.info_PC[44];
           this.location = this.info_PC[45];
           this.note = this.info_PC[46];
+          this.license = this.info_PC[47];
         }
       });
   }

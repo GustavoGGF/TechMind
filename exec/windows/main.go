@@ -1,5 +1,6 @@
 package main
 
+// Imports de dependecias
 import (
 	"bytes"
 	"encoding/json"
@@ -12,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -29,75 +31,57 @@ import (
 )
 
 var (
-	modntdll          = syscall.NewLazyDLL("ntdll.dll")
-	procRtlGetVersion = modntdll.NewProc("RtlGetVersion")
-)
-
-var (
 	modkernel32         = syscall.NewLazyDLL("kernel32.dll")
 	procGetComputerName = modkernel32.NewProc("GetComputerNameW")
 )
 
-type RTL_OSVERSIONINFOEX struct {
-	dwOSVersionInfoSize uint32
-	dwMajorVersion      uint32
-	dwMinorVersion      uint32
-	dwBuildNumber       uint32
-	dwPlatformId        uint32
-	szCSDVersion        [128]uint16
-	wServicePackMajor   uint16
-	wServicePackMinor   uint16
-	wSuiteMask          uint16
-	wProductType        byte
-	wReserved           byte
-}
-
+// Classe da estrutura do DataJson que será enviado
 type Data struct {
-	System                  string                   `json:"system"`
-	Name                    string                   `json:"name"`
-	Distribution            string                   `json:"distribution"`
-	InterfaceInternet       string                   `json:"interfaceInternet"`
-	MacAddress              string                   `json:"macAddress"`
-	InsertionDate           string                   `json:"insertionDate"`
-	CurrentUser             string                   `json:"currentUser"`
-	PlatformVersion         string                   `json:"platformVersion"`
-	Domain                  string                   `json:"domain"`
-	IP                      string                   `json:"ip"`
-	Manufacturer            string                   `json:"manufacturer"`
-	Model                   string                   `json:"model"`
-	SerialNumber            string                   `json:"serialNumber"`
-	MaxCapacityMemory       string                   `json:"maxCapacityMemory"`
-	NumberOfDevices         string                   `json:"numberOfDevices"`
-	HardDiskModel           string                   `json:"hardDiskModel"`
-	HardDiskSerialNumber    string                   `json:"hardDiskSerialNumber"`
-	HardDiskUserCapacity    string                   `json:"hardDiskUserCapacity"`
-	HardDiskSataVersion     string                   `json:"hardDiskSataVersion"`
+	AudioDeviceModel        string                   `json:"audioDeviceModel"`
+	AudioDeviceProduct      string                   `json:"audioDeviceProduct"`
+	BiosVersion             string                   `json:"biosVersion"`
 	CPUArchitecture         string                   `json:"cpuArchitecture"`
-	CPUOperationMode        string                   `json:"cpuOperationMode"`
-	CPUS                    uint32                   `json:"cpus"`
-	CPUVendorID             string                   `json:"cpuVendorID"`
-	CPUModelName            string                   `json:"cpuModelName"`
-	CPUThread               uint32                   `json:"cpuThread"`
-	CPUCore                 uint32                   `json:"cpuCore"`
-	CPUSocket               int                      `json:"cpuSocket"`
+	CPUCores                uint32                   `json:"cpuCore"`
 	CPUMaxMHz               uint32                   `json:"cpuMaxMHz"`
 	CPUMinMHz               uint32                   `json:"cpuMinMHz"`
-	GPUProduct              string                   `json:"gpuProduct"`
-	GPUVendorID             string                   `json:"gpuVendorID"`
-	GPUBusInfo              string                   `json:"gpuBusInfo"`
-	GPULogicalName          string                   `json:"gpuLogicalName"`
+	CPUS                    uint32                   `json:"cpus"`
+	CPUSocket               int                      `json:"cpuSocket"`
+	CPUVendorID             string                   `json:"cpuVendorID"`
+	CPUModelName            string                   `json:"cpuModelName"`
+	CPUOperationMode        string                   `json:"cpuOperationMode"`
+	CPUThread               uint32                   `json:"cpuThread"`
+	CurrentUser             string                   `json:"currentUser"`
+	Domain                  string                   `json:"domain"`
+	Distribution            string                   `json:"distribution"`
 	GPUClock                string                   `json:"gpuClock"`
 	GPUConfiguration        string                   `json:"gpuConfiguration"`
-	AudioDeviceProduct      string                   `json:"audioDeviceProduct"`
-	AudioDeviceModel        string                   `json:"audioDeviceModel"`
-	BiosVersion             string                   `json:"biosVersion"`
+	GPUProduct              string                   `json:"gpuProduct"`
+	GPUBusInfo              string                   `json:"gpuBusInfo"`
+	GPULogicalName          string                   `json:"gpuLogicalName"`
+	GPUVendorID             string                   `json:"gpuVendorID"`
+	HardDiskModel           string                   `json:"hardDiskModel"`
+	HardDiskSerialNumber    string                   `json:"hardDiskSerialNumber"`
+	HardDiskSataVersion     string                   `json:"hardDiskSataVersion"`
+	HardDiskUserCapacity    string                   `json:"hardDiskUserCapacity"`
+	IP                      string                   `json:"ip"`
+	InsertionDate           string                   `json:"insertionDate"`
+	License                 string                   `json:"license"`
+	MacAddress              string                   `json:"macAddress"`
+	Manufacturer            string                   `json:"manufacturer"`
+	MaxCapacityMemory       string                   `json:"maxCapacityMemory"`
+	Memories                []map[string]interface{} `json:"memories"`
+	MotherboardAssetTag     string                   `json:"motherboardAssetTag"`
 	MotherboardManufacturer string                   `json:"motherboardManufacturer"`
 	MotherboardProductName  string                   `json:"motherboardProductName"`
+	MotherboardSerialName   string                   `json:"motherboardSerialName"`
 	MotherboardVersion      string                   `json:"motherboardVersion"`
-	MotherbaoardSerialName  string                   `json:"motherboardSerialName"`
-	MotherboardAssetTag     string                   `json:"motherboardAssetTag"`
+	Name                    string                   `json:"name"`
+	NumberOfDevices         string                   `json:"numberOfDevices"`
+	PlatformVersion         string                   `json:"platformVersion"`
+	SerialNumber            string                   `json:"serialNumber"`
 	SoftwareNames           []InstalledSoftware      `json:"installedPackages"`
-	Memories                []map[string]interface{} `json:"memories"`
+	System                  string                   `json:"system"`
+	
 }
 
 // Win32_ComputerSystem representa a classe WMI Win32_ComputerSystem
@@ -190,40 +174,6 @@ type InstalledSoftware struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
 	Vendor  string `json:"vendor"`
-}
-
-func getWindowsVersion() (string, error) {
-	var info RTL_OSVERSIONINFOEX
-	info.dwOSVersionInfoSize = uint32(unsafe.Sizeof(info))
-
-	ret, _, _ := procRtlGetVersion.Call(uintptr(unsafe.Pointer(&info)))
-	if ret != 0 {
-		return "", syscall.GetLastError()
-	}
-
-	major := info.dwMajorVersion
-	minor := info.dwMinorVersion
-
-	switch {
-	case major == 10 && minor == 0:
-		return "Windows 10", nil
-	case major == 6 && minor == 3:
-		if info.wProductType == 1 {
-			return "Windows 8.1", nil
-		} else {
-			return "Windows Server 2012 R2", nil
-		}
-	case major == 6 && minor == 2:
-		if info.wProductType == 1 {
-			return "Windows 8", nil
-		} else {
-			return "Windows Server 2012", nil
-		}
-	case major == 6 && minor == 1:
-		return "Windows 7", nil
-	default:
-		return fmt.Sprintf("Windows (versão %d.%d)", major, minor), nil
-	}
 }
 
 func getComputerName() (string, error) {
@@ -867,18 +817,83 @@ func getInstalledSoftwareFromRegistry() ([]InstalledSoftware, error) {
 	return softwares, nil
 }
 
-func main() {
-	distribution := ""
+// Função que obtem algumas informações do Windows atravez de uma função PowerShell ISE
+func getWindowsLicenseInfo() (string, error) {
+	// Função do Shell
+	var script = `
+function Get-WindowsKey {
+    param ($targets = ".")
+    $hklm = 2147483650
+    $regPath = "Software\Microsoft\Windows NT\CurrentVersion"
+    $regValue = "DigitalProductId4"
+    Foreach ($target in $targets) {
+        $productKey = $null
+        $win32os = $null
+        $wmi = [WMIClass]"\\$target\root\default:stdRegProv"
+        $data = $wmi.GetBinaryValue($hklm,$regPath,$regValue)
+        $binArray = ($data.uValue)[52..66]
+        $charsArray = "B","C","D","F","G","H","J","K","M","P","Q","R","T","V","W","X","Y","2","3","4","6","7","8","9" 
+        For ($i = 24; $i -ge 0; $i--) {
+            $k = 0
+            For ($j = 14; $j -ge 0; $j--) {
+                $k = $k * 256 -bxor $binArray[$j]
+                $binArray[$j] = [math]::truncate($k / 24)
+                $k = $k % 24
+            }
+            $productKey = $charsArray[$k] + $productKey
+            If (($i % 5 -eq 0) -and ($i -ne 0)) {
+                $productKey = "-" + $productKey
+            }
+        }
+        $win32os = Get-WmiObject Win32_OperatingSystem -computer $target
+        $obj = New-Object Object
+        $obj | Add-Member Noteproperty "Nome do Computador" -value $target
+        $obj | Add-Member Noteproperty "Edicao do Windows" -value $win32os.Caption
+        $obj | Add-Member Noteproperty "Versao do Service Pack" -value $win32os.CSDVersion
+        $obj | Add-Member Noteproperty "Arquitetura" -value $win32os.OSArchitecture
+        $obj | Add-Member Noteproperty "Número da Versão" -value $win32os.BuildNumber
+        $obj | Add-Member Noteproperty "Registado para" -value $win32os.RegisteredUser
+        $obj | Add-Member Noteproperty "Canal de origem (ProductID)" -value $win32os.SerialNumber
+        $obj | Add-Member Noteproperty "Chave do produto (ProductKey)" -value $productkey
+        $obj
+    }
+}
+Get-WindowsKey
+`
+	// Cria o comando PowerShell
+	cmd := exec.Command("powershell", "-Command", script)
 
-	if ver, err := getWindowsVersion(); err == nil {
-
-		distribution = ver
-
-	} else {
-		logToFile(fmt.Sprintf("Erro ao obter a versão do Windows: %v", err))
-		return
+	// Executa o comando e obtém a saída
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", err
 	}
 
+	return string(out), nil
+}
+
+// Função para extrair o valor da Edição do Windows
+func extractWindowsEdition(output string) (string, error) {
+	// Expressão regular para encontrar a linha da Edição do Windows
+	re := regexp.MustCompile(`Edicao do Windows\s*:\s*(.*)`)
+	match := re.FindStringSubmatch(output)
+	if len(match) < 2 {
+		return "", fmt.Errorf("não foi possível encontrar a Edição do Windows")
+	}
+	return match[1], nil
+}
+
+// Função para extrair o valor da Edição do Windows
+func extractWindowsLicense(output string) (string, error) {
+	re := regexp.MustCompile(`Chave do produto \(ProductKey\)\s*:\s*(.*)`)
+	match := re.FindStringSubmatch(output)
+	if len(match) < 2 {
+		return "", fmt.Errorf("não foi possível encontrar a Chave do Produto")
+	}
+	return match[1], nil
+}
+
+func main() {
 	sys := runtime.GOOS
 
 	hostname := ""
@@ -893,7 +908,6 @@ func main() {
 	// Remover espaços do começo e do final
 	sys = strings.TrimSpace(sys)
 	hostname = strings.ReplaceAll(hostname, " ", "")
-	distribution = strings.ReplaceAll(distribution, " ", "")
 
 	url := "http://10.1.1.73:3000/home/computers/post-machines" //env
 
@@ -1123,10 +1137,32 @@ func main() {
 		combinedSoftware = append(combinedSoftware, software)
 	}
 
+	// Varaivel que obtem informações do shell
+	output, err := getWindowsLicenseInfo()
+	if err != nil {
+		logToFile(fmt.Sprintln("Erro ao obter informações da licença:", err))
+	}
+
+	// Extrai e exibe a Edição do Windows
+	edition, err := extractWindowsEdition(output)
+	if err != nil {
+		logToFile(fmt.Sprintln("Erro ao extrair a Edição do Windows:", err))
+	}
+
+	// Removendo espaços indevidos
+	edition = strings.TrimSpace(edition)
+
+	// Extrai licença do windows
+	license, err := extractWindowsLicense(output)
+	if err != nil {
+		logToFile(fmt.Sprintln("Erro ao extrair a licença do Windows:", err))
+	}
+
+	// Montando Json
 	jsonData := Data{
 		System:               sys,
 		Name:                 hostname,
-		Distribution:         distribution,
+		Distribution:         edition,
 		InsertionDate:        formated_date,
 		MacAddress:           macAddress,
 		CurrentUser:          nameUser,
@@ -1160,6 +1196,7 @@ func main() {
 		GPUConfiguration:     configurationGPU,
 		AudioDeviceProduct:   product,
 		SoftwareNames:        combinedSoftware,
+		License:              license,
 	}
 
 	requestBody, err := json.Marshal(jsonData)
@@ -1188,9 +1225,9 @@ func main() {
 	if resp.StatusCode != http.StatusOK {
 		logToFile(fmt.Sprintf("Resposta com status code %d: %s", resp.StatusCode, body))
 		if resp.StatusCode == http.StatusBadRequest {
-			fmt.Println("Erro: Resposta 400 - Solicitação inválida.")
+			logToFile(fmt.Sprintln("Erro: Resposta 400 - Solicitação inválida."))
 		} else {
-			fmt.Printf("Erro: Resposta %d\n", resp.StatusCode)
+			logToFile(fmt.Sprintf("Erro: Resposta %d\n", resp.StatusCode))
 		}
 		return
 	}

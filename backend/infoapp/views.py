@@ -199,7 +199,7 @@ def contains_backslash(s):
 @require_POST
 @transaction.atomic
 @ratelimit(key="ip", rate="200/d", method="POST", block=True)
-@never_cache()
+@never_cache
 def postMachines(request):
     # Declarando varaiveis
     audio_device_model = None
@@ -233,6 +233,7 @@ def postMachines(request):
     hard_disk_user_capacity = None
     insertionDate = None
     ip = None
+    license = None
     macAddress = None
     max_capacity_memory = None
     memories = None
@@ -325,12 +326,15 @@ def postMachines(request):
                 or distribution == "Windows Server 2012 R2"
                 or distribution == "Windows Server 2012"
                 or distribution == "Windows10"
+                or distribution == "Microsoft Windows 10 Pro"
             ):
                 softwares = str(softwares_list)
             else:
                 softwares = ""
                 for soft in softwares_list:
                     softwares += soft + ","
+
+        license = data.get("license")
 
         # Verificando a existencia do macAddress
         if macAddress == None:
@@ -359,9 +363,6 @@ def postMachines(request):
         # Obtendo os resultados
         results = cursor.fetchall()
 
-        cursor.close()
-        connection.close()
-
         if results:
             # Comando SQL para atualizar o nome do dispositivo
             update_query = """UPDATE machines SET name = %s, system_name = %s, 
@@ -376,7 +377,8 @@ def postMachines(request):
                 , audio_device_product = %s, audio_device_model = %s, bios_version = %s, 
                 motherboard_manufacturer = %s, motherboard_product_name = %s,
                 motherboard_version = %s, motherboard_serial_name = %s,
-                motherboard_asset_tag = %s, softwares = %s, memories = %s WHERE mac_address = %s"""
+                motherboard_asset_tag = %s, softwares = %s, memories = %s, license = %s 
+                WHERE mac_address = %s"""
 
             cursor.execute(
                 update_query,
@@ -424,6 +426,7 @@ def postMachines(request):
                     motherboard_asset_tag,
                     softwares,
                     memories,
+                    license,
                     (normalize_mac_address(macAddress)),
                 ),
             )
@@ -445,9 +448,10 @@ def postMachines(request):
                 cpu_min_mhz, gpu_product, gpu_vendor_id, gpu_bus_info, gpu_logical_name, gpu_clock,
                 gpu_configuration, audio_device_product, audio_device_model, bios_version, motherboard_manufacturer,
                 motherboard_product_name, motherboard_version, motherboard_serial_name, motherboard_asset_tag,
-                softwares, memories) 
+                softwares, memories, license) 
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s , %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                %s , %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                %s)"""
 
             cursor.execute(
                 query,
@@ -496,6 +500,7 @@ def postMachines(request):
                     motherboard_asset_tag,
                     softwares,
                     memories,
+                    license,
                 ),
             )
 
