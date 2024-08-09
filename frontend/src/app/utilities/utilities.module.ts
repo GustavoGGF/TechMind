@@ -1,12 +1,28 @@
-import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MessageComponent } from './message/message.component';
+import { NgModule } from '@angular/core';
+import { NgApexchartsModule } from 'ng-apexcharts';
+import { ChartPieComponent } from './chart-pie/chart-pie.component';
 import { LoadingComponent } from './loading/loading.component';
+import { LoadingSearchComponent } from './loading-search/loading-search.component';
+import { MessageComponent } from './message/message.component';
 import { NavbarComponent } from './navbar/navbar.component';
 
+// Modulo que gerencia os utilitarios Disponibilizando eles onde o Modulo for importado
 @NgModule({
-  declarations: [MessageComponent, LoadingComponent, NavbarComponent],
-  imports: [CommonModule],
-  exports: [MessageComponent, LoadingComponent, NavbarComponent],
+  declarations: [
+    ChartPieComponent,
+    LoadingComponent,
+    LoadingSearchComponent,
+    MessageComponent,
+    NavbarComponent,
+  ],
+  imports: [CommonModule, NgApexchartsModule],
+  exports: [
+    ChartPieComponent,
+    LoadingComponent,
+    LoadingSearchComponent,
+    MessageComponent,
+    NavbarComponent,
+  ],
 })
 export class UtilitiesModule {}

@@ -1,6 +1,7 @@
 {
   "ALL": {
-    "DCPS": "Docker compose utilizando apache"
+    "DCPS": "Docker compose utilizando apache",
+    "Estudy": "tsconfig, angular.json, .editor.config, package.json"
   },
   "Home": {},
   "Computer": { "FLTR": "Filtro nos dispositivos, por software" },

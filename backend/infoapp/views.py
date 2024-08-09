@@ -4,6 +4,7 @@ import json
 import logging
 import mysql.connector
 import pandas as pd
+from contextlib import contextmanager
 from decouple import config
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -13,7 +14,7 @@ from django_ratelimit.decorators import ratelimit
 from django.shortcuts import redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt, requires_csrf_token
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from io import BytesIO
 from ldap3 import ALL, Connection, Server, SUBTREE
 from mysql.connector import Error
@@ -22,6 +23,26 @@ from re import sub
 # Configuração básica de logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def get_database_connection():
+    """Context manager for managing database connections."""
+    connection = None
+    try:
+        connection = mysql.connector.connect(
+            host=config("DB_HOST"),
+            database=config("DB_NAME"),
+            user=config("DB_USER"),
+            password=config("DB_PASSWORD"),
+        )
+        yield connection
+    except mysql.connector.Error as err:
+        logger.error(f"Database connection error: {err}")
+        raise
+    finally:
+        if connection and connection.is_connected():
+            connection.close()
 
 
 # Create your views here.
@@ -103,6 +124,37 @@ def getInfoMainPanel(request):
             status=200,
             safe=True,
         )
+
+
+@csrf_exempt
+@require_GET
+@login_required(login_url="/login")
+def getInfoSOChart(request):
+    cursor = None
+    query = ""
+    results = None
+    results_list = None
+    try:
+        with get_database_connection() as connection:
+            cursor = connection.cursor()
+            query = """SELECT distribution, COUNT(*) as count 
+                       FROM machines 
+                       GROUP BY distribution;"""
+            cursor.execute(query)
+            results = cursor.fetchall()
+
+            # Converta os resultados para uma lista de dicionários
+            results_list = [{"system_name": row[0], "count": row[1]} for row in results]
+
+    except mysql.connector.Error as e:
+        logger.error(f"Database query error: {e}")
+        return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({"error": "Erro inesperado"}, status=500)
+
+    return JsonResponse(results_list, status=200, safe=False)
 
 
 @requires_csrf_token
