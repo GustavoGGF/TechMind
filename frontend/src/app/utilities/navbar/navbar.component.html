@@ -61,7 +61,17 @@
             <li><a class="dropdown-item" href="#">Something else here</a></li>
           </ul>
         </li> -->
-        <li class="d-flex align-items-center">{{ name }}</li>
+        <li class="d-flex align-items-center">
+          {{ name }}
+          <div>
+            <img
+              class="img-fluid img_logout"
+              (click)="logoutApp()"
+              [src]="logoutIMG"
+              alt="Sair"
+            />
+          </div>
+        </li>
       </ul>
     </div>
   </div>

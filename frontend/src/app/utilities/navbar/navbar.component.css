@@ -15,3 +15,9 @@
 .pages_direction:hover {
   color: var(--black);
 }
+
+.img_logout {
+  width: 2.4em;
+  cursor: pointer;
+  margin: 0.2em;
+}

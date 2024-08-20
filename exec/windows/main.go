@@ -1,191 +1,127 @@
 package main
 
-// Imports de dependecias
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"os/exec"
 	"os/user"
-	"regexp"
 	"runtime"
-	"strconv"
 	"strings"
-	"syscall"
 	"time"
-	"unicode/utf16"
-	"unsafe"
 
-	"github.com/go-ole/go-ole"
-	"github.com/go-ole/go-ole/oleutil"
+	"techmind/windows/audioinformation"
+	"techmind/windows/cpuinformation"
+	"techmind/windows/generalinformation"
+	"techmind/windows/gpuinformation"
+	"techmind/windows/harddiskinformation"
+	"techmind/windows/internetinformation"
+	"techmind/windows/memoryinformation"
+	"techmind/windows/softwareinformation"
+
+	"github.com/kardianos/service"
 	"github.com/shirou/gopsutil/host"
-	"github.com/yusufpapurcu/wmi"
-	"golang.org/x/sys/windows"
-	"golang.org/x/sys/windows/registry"
 )
 
 var (
-	modkernel32         = syscall.NewLazyDLL("kernel32.dll")
-	procGetComputerName = modkernel32.NewProc("GetComputerNameW")
+	Sys                  string
+	Hostname             string
+	Edition              string
+	Formated_Date        string
+	MacAddress           string
+	CurrentUser          string
+	Version              string
+	Domain               string
+	Ip                   string
+	ManuFacturer         string
+	Model                string
+	SerialNumber         string
+	MaxCapacityMemory    string
+	MemorySlots          string
+	Mem                  string
+	MemoryArray          []map[string]interface{}
+	ModelHardDisk        string
+	SerialNumberHardDisk string
+	CapacityHardDisk     string
+	HardDiskSerialNumber []string
+	Arch                 string
+	OperationMode        string
+	CPUCount             uint32
+	VendorID             string
+	ModelName            string
+	Threads              uint32
+	Cores                uint32
+	Sockets              int
+	MaxMHz               uint32
+	MinMHz               uint32
+	GPUProduct           string
+	VendordIDGPU         string
+	BusInfo              string
+	GPULogicalName       string
+	Clock                string
+	ConfigurationGPU     string
+	Product              string
+	SMBiosInfo           string
+	License              string
+	VendorIDGPU          string
+	CombinedSoftware     []softwareinformation.InstalledSoftware
 )
 
-// Classe da estrutura do DataJson que será enviado
+// Struct onde que mandará o JSON
 type Data struct {
-	AudioDeviceModel        string                   `json:"audioDeviceModel"`
-	AudioDeviceProduct      string                   `json:"audioDeviceProduct"`
-	BiosVersion             string                   `json:"biosVersion"`
-	CPUArchitecture         string                   `json:"cpuArchitecture"`
-	CPUCores                uint32                   `json:"cpuCore"`
-	CPUMaxMHz               uint32                   `json:"cpuMaxMHz"`
-	CPUMinMHz               uint32                   `json:"cpuMinMHz"`
-	CPUS                    uint32                   `json:"cpus"`
-	CPUSocket               int                      `json:"cpuSocket"`
-	CPUVendorID             string                   `json:"cpuVendorID"`
-	CPUModelName            string                   `json:"cpuModelName"`
-	CPUOperationMode        string                   `json:"cpuOperationMode"`
-	CPUThread               uint32                   `json:"cpuThread"`
-	CurrentUser             string                   `json:"currentUser"`
-	Domain                  string                   `json:"domain"`
-	Distribution            string                   `json:"distribution"`
-	GPUClock                string                   `json:"gpuClock"`
-	GPUConfiguration        string                   `json:"gpuConfiguration"`
-	GPUProduct              string                   `json:"gpuProduct"`
-	GPUBusInfo              string                   `json:"gpuBusInfo"`
-	GPULogicalName          string                   `json:"gpuLogicalName"`
-	GPUVendorID             string                   `json:"gpuVendorID"`
-	HardDiskModel           string                   `json:"hardDiskModel"`
-	HardDiskSerialNumber    string                   `json:"hardDiskSerialNumber"`
-	HardDiskSataVersion     string                   `json:"hardDiskSataVersion"`
-	HardDiskUserCapacity    string                   `json:"hardDiskUserCapacity"`
-	IP                      string                   `json:"ip"`
-	InsertionDate           string                   `json:"insertionDate"`
-	License                 string                   `json:"license"`
-	MacAddress              string                   `json:"macAddress"`
-	Manufacturer            string                   `json:"manufacturer"`
-	MaxCapacityMemory       string                   `json:"maxCapacityMemory"`
-	Memories                []map[string]interface{} `json:"memories"`
-	MotherboardAssetTag     string                   `json:"motherboardAssetTag"`
-	MotherboardManufacturer string                   `json:"motherboardManufacturer"`
-	MotherboardProductName  string                   `json:"motherboardProductName"`
-	MotherboardSerialName   string                   `json:"motherboardSerialName"`
-	MotherboardVersion      string                   `json:"motherboardVersion"`
-	Name                    string                   `json:"name"`
-	NumberOfDevices         string                   `json:"numberOfDevices"`
-	PlatformVersion         string                   `json:"platformVersion"`
-	SerialNumber            string                   `json:"serialNumber"`
-	SoftwareNames           []InstalledSoftware      `json:"installedPackages"`
-	System                  string                   `json:"system"`
-	
+	System                  string                                  `json:"system"`
+	Name                    string                                  `json:"name"`
+	Distribution            string                                  `json:"distribution"`
+	InsertionDate           string                                  `json:"insertionDate"`
+	MacAddress              string                                  `json:"macAddress"`
+	CurrentUser             string                                  `json:"currentUser"`
+	PlatformVersion         string                                  `json:"platformVersion"`
+	Domain                  string                                  `json:"domain"`
+	IP                      string                                  `json:"ip"`
+	Manufacturer            string                                  `json:"manufacturer"`
+	Model                   string                                  `json:"model"`
+	SerialNumber            string                                  `json:"serialNumber"`
+	MaxCapacityMemory       string                                  `json:"maxCapacityMemory"`
+	NumberOfDevices         string                                  `json:"numberOfDevices"`
+	HardDiskModel           string                                  `json:"hardDiskModel"`
+	HardDiskSerialNumber    string                                  `json:"hardDiskSerialNumber"`
+	HardDiskUserCapacity    string                                  `json:"hardDiskUserCapacity"`
+	HardDiskSataVersion     string                                  `json:"hardDiskSataVersion"`
+	CPUArchitecture         string                                  `json:"cpuArchitecture"`
+	CPUOperationMode        string                                  `json:"cpuOperationMode"`
+	CPUS                    uint32                                  `json:"cpus"`
+	CPUVendorID             string                                  `json:"cpuVendorID"`
+	CPUModelName            string                                  `json:"cpuModelName"`
+	CPUThread               uint32                                  `json:"cpuThread"`
+	CPUCore                 uint32                                  `json:"cpuCore"`
+	CPUSocket               int                                     `json:"cpuSocket"`
+	CPUMaxMHz               uint32                                  `json:"cpuMaxMHz"`
+	CPUMinMHz               uint32                                  `json:"cpuMinMHz"`
+	GPUProduct              string                                  `json:"gpuProduct"`
+	GPUVendorID             string                                  `json:"gpuVendorID"`
+	GPUBusInfo              string                                  `json:"gpuBusInfo"`
+	GPULogicalName          string                                  `json:"gpuLogicalName"`
+	GPUClock                string                                  `json:"gpuClock"`
+	GPUConfiguration        string                                  `json:"gpuConfiguration"`
+	AudioDeviceProduct      string                                  `json:"audioDeviceProduct"`
+	AudioDeviceModel        string                                  `json:"audioDeviceModel"`
+	BiosVersion             string                                  `json:"biosVersion"`
+	MotherboardManufacturer string                                  `json:"motherboardManufacturer"`
+	MotherboardProductName  string                                  `json:"motherboardProductName"`
+	MotherboardVersion      string                                  `json:"motherboardVersion"`
+	MotherbaoardSerialName  string                                  `json:"motherboardSerialName"`
+	MotherboardAssetTag     string                                  `json:"motherboardAssetTag"`
+	SoftwareNames           []softwareinformation.InstalledSoftware `json:"installedPackages"`
+	Memories                []map[string]interface{}                `json:"memories"`
+	License                 string                                  `json:"license"`
 }
 
-// Win32_ComputerSystem representa a classe WMI Win32_ComputerSystem
-type Win32_ComputerSystem struct {
-	Manufacturer string
-	Model        string
-}
-
-// Win32_BIOS representa a classe WMI Win32_BIOS
-type Win32_BIOS struct {
-	SerialNumber string
-}
-
-// Win32_PhysicalMemoryArray representa a classe WMI Win32_PhysicalMemoryArray
-type Win32_PhysicalMemoryArray struct {
-	MaxCapacity uint32
-}
-
-// Win32_PhysicalMemoryArray representa a classe WMI Win32_PhysicalMemoryArray
-type Win32_PhysicalMemoryArray2 struct {
-	MemoryDevices uint32
-}
-
-// Win32_PhysicalMemory representa a classe WMI Win32_PhysicalMemory
-type Win32_PhysicalMemory struct {
-	BankLabel     string
-	Capacity      uint64
-	DeviceLocator string
-	MemoryType    uint16
-	TypeDetail    uint16
-	Speed         uint32
-	SerialNumber  string
-}
-
-type MemoryInfo struct {
-	BankLabel     string `json:"BankLabel"`
-	Capacity      uint64 `json:"Capacity"`
-	DeviceLocator string `json:"DeviceLocator"`
-	MemoryType    uint16 `json:"MemoryType"`
-	TypeDetail    uint16 `json:"TypeDetail"`
-	Speed         uint32 `json:"Speed"`
-	SerialNumber  string `json:"SerialNumber"`
-}
-
-// Estrutura que representa os dados que queremos obter do WMI
-type Win32_DiskDrive struct {
-	Model string
-}
-
-// Estrutura para mapear a consulta WMI
-type Win32_DiskDrive2 struct {
-	SerialNumber string
-}
-
-// Estrutura para mapear a consulta WMI
-type Win32_DiskDrive3 struct {
-	Size string // O campo Size é retornado como string
-}
-
-type Win32_Processor struct {
-	Architecture              uint16
-	Manufacturer              string
-	Name                      string
-	NumberOfLogicalProcessors uint32
-	NumberOfCores             uint32
-	SocketDesignation         string
-	MaxClockSpeed             uint32
-	CurrentClockSpeed         uint32
-}
-
-type Win32_OperatingSystem struct {
-	OSArchitecture string
-}
-
-type Win32_VideoController struct {
-	Name                        string
-	AdapterCompatibility        string
-	DeviceID                    string
-	DriverVersion               string
-	CurrentHorizontalResolution uint32
-	CurrentVerticalResolution   uint32
-	AdapterRAM                  uint32
-}
-
-type Win32_SoundDevice struct {
-	ProductName string
-}
-
-type InstalledSoftware struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-	Vendor  string `json:"vendor"`
-}
-
-func getComputerName() (string, error) {
-	var nSize uint32 = 256
-	nameBuf := make([]uint16, nSize)
-	ret, _, err := procGetComputerName.Call(uintptr(unsafe.Pointer(&nameBuf[0])), uintptr(unsafe.Pointer(&nSize)))
-	if ret == 0 {
-		return "", err
-	}
-	return string(utf16.Decode(nameBuf[:nSize-1])), nil
-}
-
+// Função que cria um arquivo de log
 func logToFile(msg string) {
 	// Abrir arquivo de log
 	file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -202,781 +138,116 @@ func logToFile(msg string) {
 	logger.Println(msg)
 }
 
-func getMac(dis string) (string, error) {
-	if dis == "Windows 10" {
-		// Obtém todas as interfaces de rede do sistema
-		interfaces, err := net.Interfaces()
-		if err != nil {
-			logToFile(fmt.Sprintf("erro ao obter interfaces de rede: %v", err))
-			return "", nil
-		}
-
-		// Itera sobre as interfaces de rede para encontrar o endereço MAC
-		for _, iface := range interfaces {
-			// Ignora as interfaces loopback e desativadas
-			if iface.Flags&net.FlagLoopback != 0 || iface.Flags&net.FlagUp == 0 {
-				continue
-			}
-
-			// Obtém o endereço MAC da interface
-			mac := iface.HardwareAddr
-			if mac != nil {
-				return mac.String(), nil
-			}
-		}
-		logToFile(fmt.Sprintln("nenhum endereço MAC encontrado"))
-		return "", nil
-	}
-	logToFile(fmt.Sprintln("sistema operacional não suportado ou não especificado"))
-	return "", nil
+type program struct {
+	service.Service
 }
 
-func getDomain() (string, error) {
-	var buf [windows.MAX_PATH]uint16
-	var size uint32 = windows.MAX_PATH
-
-	// Obtém o nome do domínio do sistema
-	err := windows.GetComputerNameEx(windows.ComputerNameDnsDomain, &buf[0], &size)
-	if err != nil {
-		logToFile(fmt.Sprintf("Erro ao obter o nome do domínio: %v\n", err))
-		return "", nil
-	}
-
-	// Converte o buffer UTF16 para string UTF-8
-	domain := syscall.UTF16ToString(buf[:])
-	return domain, nil
-
+func (p *program) Start(s service.Service) error {
+	go p.run()
+	return nil
 }
 
-func getIP() (string, error) {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		logToFile(fmt.Sprintf("erro ao obter endereços de rede: %v", err))
-		return "", nil
-	}
-
-	for _, addr := range addrs {
-		// Verifica se o endereço é do tipo *net.IPNet e não é um endereço de loopback
-		if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
-			// Verifica se é um endereço IPv4
-			if ipNet.IP.To4() != nil {
-				return ipNet.IP.String(), nil
-			}
-		}
-	}
-	logToFile(fmt.Sprintln("nenhum endereço IP encontrado"))
-	return "", errors.New("nenhum endereço IP encontrado")
-}
-
-func getDeviceBrand() (string, string, error) {
-	var dst []Win32_ComputerSystem
-	query := "SELECT Manufacturer, Model FROM Win32_ComputerSystem"
-	err := wmi.Query(query, &dst)
-	if err != nil {
-		return "", "", fmt.Errorf("erro ao consultar WMI: %v", err)
-	}
-	if len(dst) == 0 {
-		return "", "", fmt.Errorf("nenhuma informação encontrada")
-	}
-	return dst[0].Manufacturer, dst[0].Model, nil
-}
-
-func getSerialNumber() (string, error) {
-	var dst []Win32_BIOS
-	query := "SELECT SerialNumber FROM Win32_BIOS"
-	err := wmi.Query(query, &dst)
-	if err != nil {
-		return "", fmt.Errorf("erro ao consultar WMI: %v", err)
-	}
-	if len(dst) == 0 {
-		return "", fmt.Errorf("nenhuma informação encontrada")
-	}
-	return dst[0].SerialNumber, nil
-}
-
-func getMaxMemoryCapacity() (string, error) {
-	var arrays []Win32_PhysicalMemoryArray
-
-	// Consulta para obter a capacidade máxima suportada
-	err := wmi.Query("SELECT MaxCapacity FROM Win32_PhysicalMemoryArray", &arrays)
-	if err != nil {
-		return "", fmt.Errorf("erro ao consultar WMI (PhysicalMemoryArray): %v", err)
-	}
-
-	// Assume que há apenas um PhysicalMemoryArray e pega a capacidade máxima suportada
-	var maxCapacity uint32
-	if len(arrays) > 0 {
-		maxCapacity = arrays[0].MaxCapacity
-	}
-
-	maxCapacityGB := float64(maxCapacity) / (1024 * 1024)
-	// Converte o número para string
-	maxCapacityStr := fmt.Sprintf("%.0f GB", maxCapacityGB)
-
-	return maxCapacityStr, nil
-}
-
-func getMemorySlots() (string, error) {
-	var arrays []Win32_PhysicalMemoryArray2
-
-	// Consulta para obter o número de slots de memória
-	err := wmi.Query("SELECT MemoryDevices FROM Win32_PhysicalMemoryArray", &arrays)
-	if err != nil {
-		return "", fmt.Errorf("erro ao consultar WMI (PhysicalMemoryArray2): %v", err)
-	}
-
-	// Assume que há apenas um PhysicalMemoryArray e pega o número de slots de memória
-	if len(arrays) > 0 {
-		return fmt.Sprintf("%d", arrays[0].MemoryDevices), nil
-	}
-
-	return "", fmt.Errorf("nenhuma informação encontrada")
-}
-
-func getMemoryDetails() ([]Win32_PhysicalMemory, error) {
-	var memories []Win32_PhysicalMemory
-
-	// Consulta para obter informações detalhadas da memória RAM
-	err := wmi.Query("SELECT BankLabel, Capacity, DeviceLocator, MemoryType, TypeDetail, Speed, SerialNumber FROM Win32_PhysicalMemory", &memories)
-	if err != nil {
-		return nil, fmt.Errorf("erro ao consultar WMI (PhysicalMemory): %v", err)
-	}
-
-	return memories, nil
-}
-
-// Função para obter o modelo do disco rígido
-func getHardDiskModel() ([]string, error) {
-	var dst []Win32_DiskDrive
-	query := "SELECT Model FROM Win32_DiskDrive"
-	err := wmi.Query(query, &dst)
-	if err != nil {
-		return nil, fmt.Errorf("falha ao executar a consulta WMI: %v", err)
-	}
-
-	var models []string
-	for _, disk := range dst {
-		models = append(models, disk.Model)
-	}
-
-	return models, nil
-}
-
-// Função para obter o número de série do disco rígido
-func getHardDiskSerialNumber() ([]string, error) {
-	var dst []Win32_DiskDrive2
-	query := "SELECT SerialNumber FROM Win32_DiskDrive"
-	err := wmi.Query(query, &dst)
-	if err != nil {
-		return nil, fmt.Errorf("falha ao executar a consulta WMI: %v", err)
-	}
-
-	var serialNumbers []string
-	for _, disk := range dst {
-		serialNumbers = append(serialNumbers, disk.SerialNumber)
-	}
-
-	return serialNumbers, nil
-}
-
-// Função para obter a capacidade do disco rígido em GB
-func getHardDiskCapacity() ([]float64, error) {
-	var dst []Win32_DiskDrive3
-	query := "SELECT Size FROM Win32_DiskDrive"
-	err := wmi.Query(query, &dst)
-	if err != nil {
-		return nil, fmt.Errorf("falha ao executar a consulta WMI: %v", err)
-	}
-
-	var capacities []float64
-	for _, disk := range dst {
-		size, err := strconv.ParseUint(disk.Size, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("falha ao converter o tamanho do disco: %v", err)
-		}
-		capacities = append(capacities, float64(size)/(1024*1024*1024)) // Convertendo bytes para gigabytes
-	}
-
-	return capacities, nil
-}
-
-func getCPUArchitecture() (string, error) {
-	var dst []Win32_Processor
-	query := wmi.CreateQuery(&dst, "")
-	if err := wmi.Query(query, &dst); err != nil {
-		return "", err
-	}
-
-	if len(dst) == 0 {
-		return "", fmt.Errorf("no processors found")
-	}
-
-	architecture := dst[0].Architecture
-	var arch string
-	switch architecture {
-	case 0:
-		arch = "x86"
-	case 1:
-		arch = "MIPS"
-	case 2:
-		arch = "Alpha"
-	case 3:
-		arch = "PowerPC"
-	case 5:
-		arch = "ARM"
-	case 6:
-		arch = "ia64"
-	case 9:
-		arch = "x64"
-	default:
-		arch = "Unknown"
-	}
-
-	return arch, nil
-}
-
-func getCPUOperationMode() (string, error) {
-	var dst []Win32_OperatingSystem
-	query := wmi.CreateQuery(&dst, "")
-	if err := wmi.Query(query, &dst); err != nil {
-		return "", err
-	}
-
-	if len(dst) == 0 {
-		return "", fmt.Errorf("no operating systems found")
-	}
-
-	return dst[0].OSArchitecture, nil
-}
-
-func getCPUCount() (uint32, error) {
-	var dst []Win32_Processor
-	query := wmi.CreateQuery(&dst, "")
-	if err := wmi.Query(query, &dst); err != nil {
-		return 0, err
-	}
-
-	if len(dst) == 0 {
-		return 0, fmt.Errorf("no processors found")
-	}
-
-	// Somando o número de núcleos de todos os processadores
-	var totalCores uint32
-	for _, processor := range dst {
-		totalCores += processor.NumberOfCores
-	}
-
-	return totalCores, nil
-}
-
-func getCPUVendorID() (string, error) {
-	var dst []Win32_Processor
-	query := wmi.CreateQuery(&dst, "")
-	if err := wmi.Query(query, &dst); err != nil {
-		return "", err
-	}
-
-	if len(dst) == 0 {
-		return "", fmt.Errorf("no processors found")
-	}
-
-	// Escolhe o primeiro processador
-	return dst[0].Manufacturer, nil
-}
-
-func getCPUModelName() (string, error) {
-	var dst []Win32_Processor
-	query := wmi.CreateQuery(&dst, "")
-	if err := wmi.Query(query, &dst); err != nil {
-		return "", err
-	}
-
-	if len(dst) == 0 {
-		return "", fmt.Errorf("no processors found")
-	}
-
-	// Escolhe o primeiro processador
-	return dst[0].Name, nil
-}
-
-func getCPUThreads() (uint32, error) {
-	var dst []Win32_Processor
-	query := wmi.CreateQuery(&dst, "")
-	if err := wmi.Query(query, &dst); err != nil {
-		return 0, err
-	}
-
-	if len(dst) == 0 {
-		return 0, fmt.Errorf("no processors found")
-	}
-
-	// Escolhe o primeiro processador
-	return dst[0].NumberOfLogicalProcessors, nil
-}
-
-func getCPUCores() (uint32, error) {
-	var dst []Win32_Processor
-	query := wmi.CreateQuery(&dst, "")
-	if err := wmi.Query(query, &dst); err != nil {
-		return 0, err
-	}
-
-	if len(dst) == 0 {
-		return 0, fmt.Errorf("no processors found")
-	}
-
-	// Escolhe o primeiro processador
-	return dst[0].NumberOfCores, nil
-}
-
-func getCPUSockets() (int, error) {
-	var dst []Win32_Processor
-	query := wmi.CreateQuery(&dst, "")
-	if err := wmi.Query(query, &dst); err != nil {
-		return 0, err
-	}
-
-	if len(dst) == 0 {
-		return 0, fmt.Errorf("no processors found")
-	}
-
-	return len(dst), nil
-}
-
-func getCPUMaxMHz() (uint32, error) {
-	var dst []Win32_Processor
-	query := wmi.CreateQuery(&dst, "")
-	if err := wmi.Query(query, &dst); err != nil {
-		return 0, err
-	}
-
-	if len(dst) == 0 {
-		return 0, fmt.Errorf("no processors found")
-	}
-
-	// Escolhe o primeiro processador
-	return dst[0].MaxClockSpeed, nil
-}
-
-func getCPUMinMHz() (uint32, error) {
-	var dst []Win32_Processor
-	query := wmi.CreateQuery(&dst, "")
-	if err := wmi.Query(query, &dst); err != nil {
-		return 0, err
-	}
-
-	if len(dst) == 0 {
-		return 0, fmt.Errorf("no processors found")
-	}
-
-	// Escolhe o primeiro processador
-	return dst[0].CurrentClockSpeed, nil
-}
-
-func getGPUProduct() (string, error) {
-	var dst []Win32_VideoController
-	query := wmi.CreateQuery(&dst, "")
-	if err := wmi.Query(query, &dst); err != nil {
-		return "", err
-	}
-
-	if len(dst) == 0 {
-		return "", fmt.Errorf("no video controllers found")
-	}
-
-	// Escolhe o primeiro controlador de vídeo
-	return dst[0].Name, nil
-}
-
-func getGPUVendorID() (string, error) {
-	var dst []Win32_VideoController
-	query := wmi.CreateQuery(&dst, "")
-	if err := wmi.Query(query, &dst); err != nil {
-		return "", err
-	}
-
-	if len(dst) == 0 {
-		return "", fmt.Errorf("no video controllers found")
-	}
-
-	// Escolhe o primeiro controlador de vídeo
-	return dst[0].AdapterCompatibility, nil
-}
-
-func getGPUBusInfo() (string, error) {
-	var dst []Win32_VideoController
-	query := wmi.CreateQuery(&dst, "")
-	if err := wmi.Query(query, &dst); err != nil {
-		return "", err
-	}
-
-	if len(dst) == 0 {
-		return "", fmt.Errorf("no video controllers found")
-	}
-
-	// Escolhe o primeiro controlador de vídeo
-	return dst[0].DeviceID, nil
-}
-
-func getGPULogicalName() (string, error) {
-	var dst []Win32_VideoController
-	query := wmi.CreateQuery(&dst, "")
-	if err := wmi.Query(query, &dst); err != nil {
-		return "", err
-	}
-
-	if len(dst) == 0 {
-		return "", fmt.Errorf("no video controllers found")
-	}
-
-	// Itera sobre todos os controladores de vídeo para obter nomes lógicos
-	for _, controller := range dst {
-		fmt.Printf("GPU Logical Name: %s\n", controller.Name)
-	}
-
-	// Retorna o nome da primeira GPU encontrada como exemplo
-	return dst[0].Name, nil
-}
-
-func getGPUClock() (string, error) {
-	var dst []Win32_VideoController
-	query := wmi.CreateQuery(&dst, "")
-	if err := wmi.Query(query, &dst); err != nil {
-		return "", err
-	}
-
-	if len(dst) == 0 {
-		return "", fmt.Errorf("no video controllers found")
-	}
-
-	// Exibe a versão do driver como uma aproximação para a frequência do clock
-	return dst[0].DriverVersion, nil
-}
-
-func getGPUConfiguration() (uint32, uint32, uint32, error) {
-	var dst []Win32_VideoController
-	query := wmi.CreateQuery(&dst, "")
-	if err := wmi.Query(query, &dst); err != nil {
-		return 0, 0, 0, err
-	}
-
-	if len(dst) == 0 {
-		return 0, 0, 0, fmt.Errorf("no video controllers found")
-	}
-
-	// Escolhe o primeiro controlador de vídeo
-	controller := dst[0]
-	return controller.CurrentHorizontalResolution, controller.CurrentVerticalResolution, controller.AdapterRAM, nil
-}
-
-func getAudioDeviceProduct() (string, error) {
-	var dst []Win32_SoundDevice
-	query := wmi.CreateQuery(&dst, "")
-	if err := wmi.Query(query, &dst); err != nil {
-		return "", err
-	}
-
-	if len(dst) == 0 {
-		return "", fmt.Errorf("no audio devices found")
-	}
-
-	// Escolhe o primeiro dispositivo de áudio encontrado
-	return dst[0].ProductName, nil
-}
-
-// Função para executar um comando e retornar a saída como string
-func runCommand(command string, args ...string) (string, error) {
-	cmd := exec.Command(command, args...)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		return "", err
-	}
-	return out.String(), nil
-}
-
-func getSMBIOS() (string, error) {
-	// Executa o comando WMIC para obter informações SMBIOS
-	output, err := runCommand("wmic", "bios", "get", "serialnumber,version,manufacturer")
-	if err != nil {
-		return "", err
-	}
-
-	// Processa a saída para remover linhas em branco e espaços extras
-	lines := strings.Split(output, "\n")
-	var result []string
-	for _, line := range lines {
-		if strings.TrimSpace(line) != "" {
-			result = append(result, line)
-		}
-	}
-
-	return strings.Join(result, "\n"), nil
-}
-
-func getInstalledSoftwareFromWMI() ([]InstalledSoftware, error) {
-	ole.CoInitialize(0)
-	defer ole.CoUninitialize()
-
-	unknown, err := oleutil.CreateObject("WbemScripting.SWbemLocator")
-	if err != nil {
-		return nil, err
-	}
-	defer unknown.Release()
-
-	wmi, err := unknown.QueryInterface(ole.IID_IDispatch)
-	if err != nil {
-		return nil, err
-	}
-	defer wmi.Release()
-
-	serviceRaw, err := oleutil.CallMethod(wmi, "ConnectServer", nil, `root\cimv2`)
-	if err != nil {
-		return nil, err
-	}
-	service := serviceRaw.ToIDispatch()
-	defer service.Release()
-
-	resultRaw, err := oleutil.CallMethod(service, "ExecQuery", "SELECT * FROM Win32_Product")
-	if err != nil {
-		return nil, err
-	}
-	result := resultRaw.ToIDispatch()
-	defer result.Release()
-
-	var softwares []InstalledSoftware
-	countVar := oleutil.MustGetProperty(result, "Count")
-	count := int(countVar.Val)
-
-	for i := 0; i < count; i++ {
-		itemRaw := oleutil.MustCallMethod(result, "ItemIndex", i)
-		item := itemRaw.ToIDispatch()
-		defer item.Release()
-
-		name := oleutil.MustGetProperty(item, "Name").ToString()
-		version := oleutil.MustGetProperty(item, "Version").ToString()
-		vendor := oleutil.MustGetProperty(item, "Vendor").ToString()
-
-		software := InstalledSoftware{
-			Name:    name,
-			Version: version,
-			Vendor:  vendor,
-		}
-		softwares = append(softwares, software)
-	}
-
-	return softwares, nil
-}
-
-func getInstalledSoftwareFromRegistry() ([]InstalledSoftware, error) {
-	var softwares []InstalledSoftware
-
-	// Localização das chaves de registro
-	registryPaths := []string{
-		`SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall`,
-		`SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall`,
-	}
-
-	for _, path := range registryPaths {
-		k, err := registry.OpenKey(registry.LOCAL_MACHINE, path, registry.READ)
-		if err != nil {
-			return nil, err
-		}
-		defer k.Close()
-
-		subkeys, err := k.ReadSubKeyNames(-1)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, subkey := range subkeys {
-			subk, err := registry.OpenKey(k, subkey, registry.READ)
-			if err != nil {
-				continue
-			}
-			defer subk.Close()
-
-			name, _, err := subk.GetStringValue("DisplayName")
-			if err != nil || name == "" {
-				continue
-			}
-
-			version, _, _ := subk.GetStringValue("DisplayVersion")
-			vendor, _, _ := subk.GetStringValue("Publisher")
-
-			software := InstalledSoftware{
-				Name:    name,
-				Version: version,
-				Vendor:  vendor,
-			}
-			softwares = append(softwares, software)
-		}
-	}
-
-	return softwares, nil
-}
-
-// Função que obtem algumas informações do Windows atravez de uma função PowerShell ISE
-func getWindowsLicenseInfo() (string, error) {
-	// Função do Shell
-	var script = `
-function Get-WindowsKey {
-    param ($targets = ".")
-    $hklm = 2147483650
-    $regPath = "Software\Microsoft\Windows NT\CurrentVersion"
-    $regValue = "DigitalProductId4"
-    Foreach ($target in $targets) {
-        $productKey = $null
-        $win32os = $null
-        $wmi = [WMIClass]"\\$target\root\default:stdRegProv"
-        $data = $wmi.GetBinaryValue($hklm,$regPath,$regValue)
-        $binArray = ($data.uValue)[52..66]
-        $charsArray = "B","C","D","F","G","H","J","K","M","P","Q","R","T","V","W","X","Y","2","3","4","6","7","8","9" 
-        For ($i = 24; $i -ge 0; $i--) {
-            $k = 0
-            For ($j = 14; $j -ge 0; $j--) {
-                $k = $k * 256 -bxor $binArray[$j]
-                $binArray[$j] = [math]::truncate($k / 24)
-                $k = $k % 24
-            }
-            $productKey = $charsArray[$k] + $productKey
-            If (($i % 5 -eq 0) -and ($i -ne 0)) {
-                $productKey = "-" + $productKey
-            }
-        }
-        $win32os = Get-WmiObject Win32_OperatingSystem -computer $target
-        $obj = New-Object Object
-        $obj | Add-Member Noteproperty "Nome do Computador" -value $target
-        $obj | Add-Member Noteproperty "Edicao do Windows" -value $win32os.Caption
-        $obj | Add-Member Noteproperty "Versao do Service Pack" -value $win32os.CSDVersion
-        $obj | Add-Member Noteproperty "Arquitetura" -value $win32os.OSArchitecture
-        $obj | Add-Member Noteproperty "Número da Versão" -value $win32os.BuildNumber
-        $obj | Add-Member Noteproperty "Registado para" -value $win32os.RegisteredUser
-        $obj | Add-Member Noteproperty "Canal de origem (ProductID)" -value $win32os.SerialNumber
-        $obj | Add-Member Noteproperty "Chave do produto (ProductKey)" -value $productkey
-        $obj
-    }
-}
-Get-WindowsKey
-`
-	// Cria o comando PowerShell
-	cmd := exec.Command("powershell", "-Command", script)
-
-	// Executa o comando e obtém a saída
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", err
-	}
-
-	return string(out), nil
-}
-
-// Função para extrair o valor da Edição do Windows
-func extractWindowsEdition(output string) (string, error) {
-	// Expressão regular para encontrar a linha da Edição do Windows
-	re := regexp.MustCompile(`Edicao do Windows\s*:\s*(.*)`)
-	match := re.FindStringSubmatch(output)
-	if len(match) < 2 {
-		return "", fmt.Errorf("não foi possível encontrar a Edição do Windows")
-	}
-	return match[1], nil
-}
-
-// Função para extrair o valor da Edição do Windows
-func extractWindowsLicense(output string) (string, error) {
-	re := regexp.MustCompile(`Chave do produto \(ProductKey\)\s*:\s*(.*)`)
-	match := re.FindStringSubmatch(output)
-	if len(match) < 2 {
-		return "", fmt.Errorf("não foi possível encontrar a Chave do Produto")
-	}
-	return match[1], nil
-}
-
-func main() {
+func (p *program) run() {
+	// Pega informação do Sistema, como se é Windows, FreeBSD, Linux, etc...
 	sys := runtime.GOOS
+	Sys = strings.TrimSpace(sys)
 
-	hostname := ""
-
-	if computerName, err := getComputerName(); err == nil {
-		hostname = computerName
-	} else {
-		logToFile(fmt.Sprintf("Erro ao obter o nome da máquina: %v", err))
-		return
-	}
-
-	// Remover espaços do começo e do final
-	sys = strings.TrimSpace(sys)
-	hostname = strings.ReplaceAll(hostname, " ", "")
-
-	url := "http://10.1.1.73:3000/home/computers/post-machines" //env
-
-	date_now := time.Now()
-
-	formated_date := date_now.Format("2006-01-02 15:04")
-
-	macAddress, err := getMac("Windows 10")
-
+	// Pega o nome do computador
+	hostname, err := generalinformation.GetComputerName()
 	if err != nil {
-		logToFile(fmt.Sprintf("Erro ao obter o endereço MAC: %v", err))
-		return
+		fmt.Println("Erro ao obter o nome do computador:", err)
+	}
+	Hostname = strings.TrimSpace(hostname)
+
+	// Varaivel que armazena informações gerais do windows
+	output, err := generalinformation.GetWindowsInfo()
+	if err != nil {
+		logToFile(fmt.Sprintln("Erro ao obter informações do Windows:", err))
 	}
 
+	// Extrai e exibe a Edição do Windows
+	edition, err := generalinformation.ExtractWindowsEdition(output)
+	if err != nil {
+		logToFile(fmt.Sprintln("Erro ao extrair a Edição do Windows:", err))
+	}
+	Edition = strings.TrimSpace(edition)
+
+	// Pega a data atual e formatada
+	date_now := time.Now()
+	Formated_Date = date_now.Format("2006-01-02 15:04")
+
+	// Obtem macAddress
+	macAddress, err := internetinformation.GetMac()
+	if err != nil {
+		logToFile(fmt.Sprintln(err))
+		return
+	}
+	MacAddress = macAddress
+
+	// Pega o usuario que esta logado
 	currentUser, err := user.Current()
 	if err != nil {
 		logToFile(fmt.Sprintf("Erro ao obter o usuário atual: %v", err))
 	}
 
-	nameUser := string(currentUser.Username)
+	CurrentUser = currentUser.Username
 
+	// Pega diversas informações do computador
 	info, err := host.Info()
 	if err != nil {
 		logToFile(fmt.Sprintf("Error: %v", err))
-		return
 	}
+	// Obtem a versão do SO
+	Version = info.PlatformVersion
 
-	version := info.PlatformVersion
-
-	domain, err := getDomain()
-
+	// Obtem o dominio como nt-lupatech.com.br
+	domain, err := generalinformation.GetDomain()
 	if err != nil {
-		logToFile(fmt.Sprintf("Erro ao obter o dominio: %v", err))
-		return
+		logToFile(fmt.Sprintln(err))
 	}
+	Domain = domain
 
-	ip, err := getIP()
-	if err != nil {
-		logToFile(fmt.Sprintf("Erro: %v", err))
-	}
-
-	manufacturer, model, err := getDeviceBrand()
+	// Armazena o IP
+	ip, err := internetinformation.GetIP()
 	if err != nil {
 		logToFile(fmt.Sprintf("Erro: %v", err))
 	}
+	Ip = ip
 
-	serialNumber, err := getSerialNumber()
+	// Armazena o Manufacturer e o Model
+	manufacturer, model, err := generalinformation.GetDeviceBrand()
 	if err != nil {
 		logToFile(fmt.Sprintf("Erro: %v", err))
 	}
+	ManuFacturer = manufacturer
+	Model = model
 
-	maxCapacityMemory, err := getMaxMemoryCapacity()
+	// Armazena o Serial Number
+	serialNumber, err := generalinformation.GetSerialNumber()
 	if err != nil {
 		logToFile(fmt.Sprintf("Erro: %v", err))
 	}
+	SerialNumber = serialNumber
 
-	memorySlots, err := getMemorySlots()
+	// Armazena a quantidade Máxima de memoria RAM suportada
+	maxCapacityMemory, err := memoryinformation.GetMaxMemoryCapacity()
+	if err != nil {
+		logToFile(fmt.Sprintf("Erro: %v", err))
+	}
+	MaxCapacityMemory = maxCapacityMemory
+
+	// Armazena informações sobre os slot's de memoria
+	memorySlots, err := memoryinformation.GetMemorySlots()
 	if err != nil {
 		logToFile(fmt.Sprintf("Erro: %d", err))
 	}
+	MemorySlots = memorySlots
 
-	mem, err := getMemoryDetails()
+	// Armazena informações detalhadas sobnre cada memoria
+	mem, err := memoryinformation.GetMemoryDetails()
 	if err != nil {
 		logToFile(fmt.Sprintf("Erro: %d", err))
-		return
 	}
-
-	// Armazena informações em um array
-	var memoryArray []map[string]interface{}
 
 	for _, memory := range mem {
 		memoryInfo := map[string]interface{}{
@@ -988,10 +259,10 @@ func main() {
 			"Speed":         memory.Speed,
 			"SerialNumber":  memory.SerialNumber,
 		}
-		memoryArray = append(memoryArray, memoryInfo)
+		MemoryArray = append(MemoryArray, memoryInfo)
 	}
 
-	models, err := getHardDiskModel()
+	models, err := harddiskinformation.GetHardDiskModel()
 	if err != nil {
 		logToFile(fmt.Sprintf("Erro: %v", err))
 	}
@@ -999,204 +270,205 @@ func main() {
 	for _, model := range models {
 		modelHardDisk = model
 	}
+	ModelHardDisk = modelHardDisk
 
-	hardDiskSerialNumber, err := getHardDiskSerialNumber()
+	hardDiskSerialNumber, err := harddiskinformation.GetHardDiskSerialNumber()
 	if err != nil {
 		logToFile(fmt.Sprintf("Erro: %v", err))
 	}
+	HardDiskSerialNumber = hardDiskSerialNumber
 
-	var serialNumberHardDisk string
 	for _, serialNumber := range hardDiskSerialNumber {
-		serialNumberHardDisk = serialNumber
+		SerialNumberHardDisk = serialNumber
 	}
 
-	capacities, err := getHardDiskCapacity()
+	capacities, err := harddiskinformation.GetHardDiskCapacity()
 	if err != nil {
 		logToFile(fmt.Sprint("Erro:", err))
-		return
-	}
-	var capacityHardDisk string
-	for _, capacity := range capacities {
-		capacityHardDisk = fmt.Sprintf("%.2f", capacity)
 	}
 
-	arch, err := getCPUArchitecture()
+	for _, capacity := range capacities {
+		CapacityHardDisk = fmt.Sprintf("%.2f", capacity)
+	}
+
+	arch, err := cpuinformation.GetCPUArchitecture()
 	if err != nil {
 		logToFile(fmt.Sprintf("Failed to get CPU architecture: %v", err))
 	}
+	Arch = arch
 
-	operationMode, err := getCPUOperationMode()
+	operationMode, err := cpuinformation.GetCPUOperationMode()
 	if err != nil {
 		logToFile(fmt.Sprintf("Failed to get CPU operation mode: %v", err))
 	}
+	OperationMode = operationMode
 
-	cpuCount, err := getCPUCount()
+	cpuCount, err := cpuinformation.GetCPUCount()
 	if err != nil {
 		logToFile(fmt.Sprintf("Failed to get CPU count: %v", err))
 	}
+	CPUCount = cpuCount
 
-	vendorID, err := getCPUVendorID()
+	vendorID, err := cpuinformation.GetCPUVendorID()
 	if err != nil {
 		logToFile(fmt.Sprintf("Failed to get CPU Vendor ID: %v", err))
 	}
+	VendorID = vendorID
 
-	modelName, err := getCPUModelName()
+	modelName, err := cpuinformation.GetCPUModelName()
 	if err != nil {
 		logToFile(fmt.Sprintf("Failed to get CPU Model Name: %v", err))
 	}
+	ModelName = modelName
 
-	threads, err := getCPUThreads()
+	threads, err := cpuinformation.GetCPUThreads()
 	if err != nil {
 		logToFile(fmt.Sprintf("Failed to get CPU threads: %v", err))
 	}
+	Threads = threads
 
-	cores, err := getCPUCores()
+	cores, err := cpuinformation.GetCPUCores()
 	if err != nil {
 		logToFile(fmt.Sprintf("Failed to get CPU cores: %v", err))
 	}
+	Cores = cores
 
-	sockets, err := getCPUSockets()
+	sockets, err := cpuinformation.GetCPUSockets()
 	if err != nil {
 		logToFile(fmt.Sprintf("Failed to get CPU sockets: %v", err))
 	}
+	Sockets = sockets
 
-	maxMHz, err := getCPUMaxMHz()
+	maxMHz, err := cpuinformation.GetCPUMaxMHz()
 	if err != nil {
 		logToFile(fmt.Sprintf("Failed to get CPU Max MHz: %v", err))
 	}
+	MaxMHz = maxMHz
 
-	minMHz, err := getCPUMinMHz()
+	minMHz, err := cpuinformation.GetCPUMinMHz()
 	if err != nil {
 		logToFile(fmt.Sprintf("Failed to get CPU Min MHz: %v", err))
 	}
+	MinMHz = minMHz
 
-	gpuProduct, err := getGPUProduct()
+	gpuProduct, err := gpuinformation.GetGPUProduct()
 	if err != nil {
 		logToFile(fmt.Sprintf("Failed to get GPU product: %v", err))
 	}
+	GPUProduct = gpuProduct
 
-	vendorIDGPU, err := getGPUVendorID()
+	vendorIDGPU, err := gpuinformation.GetGPUVendorID()
 	if err != nil {
 		logToFile(fmt.Sprintf("Failed to get GPU Vendor ID: %v", err))
 	}
+	VendorIDGPU = vendorIDGPU
 
-	busInfo, err := getGPUBusInfo()
+	busInfo, err := gpuinformation.GetGPUBusInfo()
 	if err != nil {
 		logToFile(fmt.Sprintf("Failed to get GPU Bus Info: %v", err))
 	}
+	BusInfo = busInfo
 
-	gpuLogicalName, err := getGPULogicalName()
+	gpuLogicalName, err := gpuinformation.GetGPULogicalName()
 	if err != nil {
 		logToFile(fmt.Sprintf("Failed to get GPU Logical Name: %v", err))
 	}
+	GPULogicalName = gpuLogicalName
 
-	clock, err := getGPUClock()
+	clock, err := gpuinformation.GetGPUClock()
 	if err != nil {
 		logToFile(fmt.Sprintf("Failed to get GPU Clock: %v", err))
 	}
+	Clock = clock
 
-	horizRes, vertRes, ram, err := getGPUConfiguration()
+	horizRes, vertRes, ram, err := gpuinformation.GetGPUConfiguration()
 	if err != nil {
 		logToFile(fmt.Sprintf("Failed to get GPU configuration: %v", err))
 	}
 
 	// Formata a string com as informações da GPU
 	configurationGPU := fmt.Sprintf("Resolution %dx%d, RAM %d MB", horizRes, vertRes, ram/1024/1024)
+	ConfigurationGPU = configurationGPU
 
-	product, err := getAudioDeviceProduct()
+	product, err := audioinformation.GetAudioDeviceProduct()
 	if err != nil {
 		logToFile(fmt.Sprintf("Failed to get audio device product: %v", err))
 	}
+	Product = product
 
-	smbiosInfo, err := getSMBIOS()
+	smbiosInfo, err := generalinformation.GetSMBIOS()
 	if err != nil {
 		logToFile(fmt.Sprintf("Failed to get SMBIOS information: %v", err))
 	}
+	SMBiosInfo = smbiosInfo
 
-	fmt.Sprintln(smbiosInfo)
-
-	wmiSoftware, err := getInstalledSoftwareFromWMI()
+	wmiSoftware, err := softwareinformation.GetInstalledSoftwareFromWMI()
 	if err != nil {
-		log.Printf("Error querying WMI: %v", err)
+		logToFile(fmt.Sprintln("Error querying WMI:", err))
 	}
 
-	registrySoftware, err := getInstalledSoftwareFromRegistry()
+	registrySoftware, err := softwareinformation.GetInstalledSoftwareFromRegistry()
 	if err != nil {
-		log.Printf("Error querying Registry: %v", err)
+		logToFile(fmt.Sprintln("Error querying Registry:", err))
 	}
 
 	// Combinar as listas de software, removendo duplicatas
-	softwareMap := make(map[string]InstalledSoftware)
+	softwareMap := make(map[string]softwareinformation.InstalledSoftware)
 	for _, software := range append(wmiSoftware, registrySoftware...) {
 		key := strings.ToLower(software.Name)
 		softwareMap[key] = software
 	}
 
-	var combinedSoftware []InstalledSoftware
 	for _, software := range softwareMap {
-		combinedSoftware = append(combinedSoftware, software)
+		CombinedSoftware = append(CombinedSoftware, software)
 	}
 
-	// Varaivel que obtem informações do shell
-	output, err := getWindowsLicenseInfo()
-	if err != nil {
-		logToFile(fmt.Sprintln("Erro ao obter informações da licença:", err))
-	}
-
-	// Extrai e exibe a Edição do Windows
-	edition, err := extractWindowsEdition(output)
-	if err != nil {
-		logToFile(fmt.Sprintln("Erro ao extrair a Edição do Windows:", err))
-	}
-
-	// Removendo espaços indevidos
-	edition = strings.TrimSpace(edition)
-
-	// Extrai licença do windows
-	license, err := extractWindowsLicense(output)
+	license, err := generalinformation.ExtractWindowsLicense(output)
 	if err != nil {
 		logToFile(fmt.Sprintln("Erro ao extrair a licença do Windows:", err))
 	}
+	License = license
 
-	// Montando Json
+	// Montando o Json
 	jsonData := Data{
-		System:               sys,
-		Name:                 hostname,
-		Distribution:         edition,
-		InsertionDate:        formated_date,
-		MacAddress:           macAddress,
-		CurrentUser:          nameUser,
-		PlatformVersion:      version,
-		Domain:               domain,
-		IP:                   ip,
-		Manufacturer:         manufacturer,
-		Model:                model,
-		SerialNumber:         serialNumber,
-		MaxCapacityMemory:    maxCapacityMemory,
-		NumberOfDevices:      memorySlots,
-		Memories:             memoryArray,
-		HardDiskModel:        modelHardDisk,
-		HardDiskSerialNumber: serialNumberHardDisk,
-		HardDiskUserCapacity: capacityHardDisk,
-		CPUArchitecture:      arch,
-		CPUOperationMode:     operationMode,
-		CPUS:                 cpuCount,
-		CPUVendorID:          vendorID,
-		CPUModelName:         modelName,
-		CPUThread:            threads,
-		CPUCore:              cores,
-		CPUSocket:            sockets,
-		CPUMaxMHz:            maxMHz,
-		CPUMinMHz:            minMHz,
-		GPUProduct:           gpuProduct,
-		GPUVendorID:          vendorIDGPU,
-		GPUBusInfo:           busInfo,
-		GPULogicalName:       gpuLogicalName,
-		GPUClock:             clock,
-		GPUConfiguration:     configurationGPU,
-		AudioDeviceProduct:   product,
-		SoftwareNames:        combinedSoftware,
-		License:              license,
+		System:               Sys,
+		Name:                 Hostname,
+		Distribution:         Edition,
+		InsertionDate:        Formated_Date,
+		MacAddress:           MacAddress,
+		CurrentUser:          CurrentUser,
+		PlatformVersion:      Version,
+		Domain:               Domain,
+		IP:                   Ip,
+		Manufacturer:         ManuFacturer,
+		Model:                Model,
+		SerialNumber:         SerialNumber,
+		MaxCapacityMemory:    MaxCapacityMemory,
+		NumberOfDevices:      MemorySlots,
+		Memories:             MemoryArray,
+		HardDiskModel:        ModelHardDisk,
+		HardDiskSerialNumber: SerialNumberHardDisk,
+		HardDiskUserCapacity: CapacityHardDisk,
+		CPUArchitecture:      Arch,
+		CPUOperationMode:     OperationMode,
+		CPUS:                 CPUCount,
+		CPUVendorID:          VendorID,
+		CPUModelName:         ModelName,
+		CPUThread:            Threads,
+		CPUCore:              Cores,
+		CPUSocket:            Sockets,
+		CPUMaxMHz:            MaxMHz,
+		CPUMinMHz:            MinMHz,
+		GPUProduct:           GPUProduct,
+		GPUVendorID:          VendorIDGPU,
+		GPUBusInfo:           BusInfo,
+		GPULogicalName:       GPULogicalName,
+		GPUClock:             Clock,
+		GPUConfiguration:     ConfigurationGPU,
+		BiosVersion:          SMBiosInfo,
+		AudioDeviceProduct:   Product,
+		SoftwareNames:        CombinedSoftware,
+		License:              License,
 	}
 
 	requestBody, err := json.Marshal(jsonData)
@@ -1205,9 +477,13 @@ func main() {
 		return
 	}
 
+	// Acessar variáveis de ambiente
+	url := "http://10.1.1.73:3000/home/computers/post-machines"
+
 	resp, erro := http.Post(url, "application/json", bytes.NewBuffer(requestBody))
 	if erro != nil {
 		logToFile(fmt.Sprintf("Erro ao fazer o post: %v", err))
+		return
 	}
 
 	// Erro response 400 gerar aviso na tela
@@ -1231,8 +507,124 @@ func main() {
 		}
 		return
 	}
+}
 
-	// Exibir a resposta no console
-	fmt.Printf("Resposta: %s\n", body)
+func (p *program) Stop(s service.Service) error {
+	// Código para parar o serviço
+	return nil
+}
+
+// Configura o tipo de início do serviço
+func configureServiceStartType(serviceName, startType string) error {
+	var startTypeFlag string
+	switch startType {
+	case "auto":
+		startTypeFlag = "auto"
+	case "manual":
+		startTypeFlag = "demand"
+	case "disabled":
+		startTypeFlag = "disabled"
+	default:
+		return fmt.Errorf("tipo de início inválido: %s", startType)
+	}
+
+	// Usa o comando sc.exe para configurar o tipo de início
+	cmd := exec.Command("sc", "config", serviceName, "start=", startTypeFlag)
+	return cmd.Run()
+}
+
+// Instala o serviço
+func installService() {
+	svcConfig := &service.Config{
+		Name:        "TechMind",
+		DisplayName: "TechMind Inventory",
+		Description: "Ferramenta de inventário da empresa Lupatech",
+	}
+
+	prg := &program{}
+	svc, err := service.New(prg, svcConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = svc.Install()
+	if err != nil {
+		log.Fatal("Falha ao instalar o serviço:", err)
+	}
+
+	// Configura o serviço para iniciar automaticamente
+	err = configureServiceStartType("TechMind", "auto")
+	if err != nil {
+		log.Fatal("Falha ao configurar o tipo de início do serviço:", err)
+	}
+
+	err = svc.Start()
+	if err != nil {
+		log.Fatal("Falha ao iniciar o serviço: ", err)
+	}
+
+	// Configura o serviço para iniciar automaticamente
+	cmd := exec.Command("sc", "config", "TechMind", "start=", "auto")
+	err = cmd.Run()
+	if err != nil {
+		log.Fatal("Falha ao configurar o serviço para iniciar automaticamente: ", err)
+	}
+
+	log.Println("Servico instalado com sucesso.")
+}
+
+// Desinstala o serviço
+func uninstallService() {
+	svcConfig := &service.Config{
+		Name: "TechMind",
+	}
+
+	prg := &program{}
+	svc, err := service.New(prg, svcConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = svc.Uninstall()
+	if err != nil {
+		log.Fatal("Falha ao desinstalar o serviço:", err)
+	}
+
+	log.Println("Servico desinstalado com sucesso.")
+}
+
+func main() {
+
+	install := flag.Bool("install", false, "Instalar o serviço")
+	uninstall := flag.Bool("uninstall", false, "Desinstalar o serviço")
+	flag.Parse()
+
+	if *install {
+		installService()
+		return
+	}
+
+	if *uninstall {
+		uninstallService()
+		return
+	}
+
+	// Cria e executa o serviço
+	svcConfig := &service.Config{
+		Name:        "TechMind",
+		DisplayName: "TechMind Inventory",
+		Description: "Ferramenta de inventário da empresa Lupatech",
+	}
+
+	prg := &program{}
+	svc, err := service.New(prg, svcConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = svc.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 }

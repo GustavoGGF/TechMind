@@ -20,7 +20,13 @@
     "useDefineForClassFields": false,
     "lib": ["ES2022", "dom"],
     "typeRoots": ["node_modules/@types"],
-    "types": ["node", "ws"]
+    "types": ["node", "ws"],
+    "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "strictNullChecks": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

@@ -3,9 +3,24 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.django
-    ports:
-      - "3000:3000"
     volumes:
       - /node/TechMind/backend:/TechMind
     env_file:
       - ../.env
+    networks:
+      - techmind
+
+  nginx_techmind:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    depends_on:
+      - techmind
+    ports:
+      - "3000:3000"
+    networks:
+      - techmind
+
+networks:
+  techmind:
+    driver: bridge

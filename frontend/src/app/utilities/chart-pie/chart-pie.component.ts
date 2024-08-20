@@ -1,12 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ChartComponent } from 'ng-apexcharts';
 import {
   ApexChart,
   ApexFill,
   ApexNonAxisChartSeries,
   ApexResponsive,
   ApexStroke,
+  ChartComponent,
 } from 'ng-apexcharts';
 import { catchError, tap, throwError } from 'rxjs';
 

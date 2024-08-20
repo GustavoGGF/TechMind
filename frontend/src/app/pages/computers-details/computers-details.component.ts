@@ -10,6 +10,7 @@ import {
   OnInit,
   Renderer2,
   ViewChild,
+  OnDestroy,
 } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -23,7 +24,9 @@ import { UtilitiesModule } from '../../utilities/utilities.module';
   templateUrl: './computers-details.component.html',
   styleUrl: './computers-details.component.css',
 })
-export class ComputersDetailsComponent implements OnInit, AfterViewInit {
+export class ComputersDetailsComponent
+  implements OnInit, AfterViewInit, OnDestroy
+{
   private clickListener: (() => void) | undefined;
 
   constructor(
@@ -128,6 +131,13 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
     );
   }
 
+  ngOnDestroy() {
+    // Remove o event listener se estiver definido
+    if (this.clickListener) {
+      this.clickListener();
+    }
+  }
+
   // Caso o click não seja na aba de guia ou no botão de resize, a barra de informações é escondida
   handleClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
@@ -189,6 +199,9 @@ export class ComputersDetailsComponent implements OnInit, AfterViewInit {
               this.url_logo = '/static/assets/images/brands/ubuntu.png';
               break;
             case 'windows10':
+              this.url_logo = '/static/assets/images/brands/windows10.png';
+              break;
+            case 'Microsoft Windows 10 Pro':
               this.url_logo = '/static/assets/images/brands/windows10.png';
               break;
           }

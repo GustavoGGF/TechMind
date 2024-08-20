@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import { UtilitiesModule } from '../../utilities/utilities.module';
 import { CommonModule } from '@angular/common';
 import {

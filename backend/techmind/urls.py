@@ -10,6 +10,8 @@ urlpatterns = [
     path("login/", TemplateView.as_view(template_name="index.html"), name="login"),
     path("credential/", views.credential, name="central-credential"),
     path("home/", include("infoapp.urls")),
+    # URL para fazer logout
+    path("logout", views.logoutFunc, name="central-logout"),
 ]
 
 urlpatterns += staticfiles_urlpatterns()

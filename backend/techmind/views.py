@@ -1,13 +1,15 @@
-import json
-from os import getenv
-import time
+from django.contrib.auth import login
+from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.http import JsonResponse
-from ldap3 import ALL_ATTRIBUTES, SAFE_SYNC, Connection
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from dotenv import load_dotenv
-from django.contrib.auth.models import User
-from django.contrib.auth import login
+from ldap3 import ALL_ATTRIBUTES, SAFE_SYNC, Connection
+from os import getenv
+import json
 
 
 @csrf_exempt
@@ -94,3 +96,12 @@ def credential(request):
 
     if request.method == "GET":
         return redirect("login")
+
+
+# Função que realiza logout
+@login_required
+@csrf_exempt
+@require_http_methods(["GET"])
+def logoutFunc(request):
+    logout(request)
+    return redirect("/login")

@@ -157,6 +157,38 @@ def getInfoSOChart(request):
     return JsonResponse(results_list, status=200, safe=False)
 
 
+@csrf_exempt
+@require_GET
+@login_required(login_url="/login")
+def getInfoLastUpdate(request):
+    cursor = None
+    query = ""
+    results = None
+    results_list = None
+    try:
+        with get_database_connection() as connection:
+            cursor = connection.cursor()
+            query = """SELECT DISTINCT date_format(insertion_date, '%M %Y'), COUNT(*) AS computer_count
+                        from machines
+                        GROUP BY date_format(insertion_date, '%M %Y')
+                        ORDER BY date_format(insertion_date, '%M %Y');"""
+            cursor.execute(query)
+            results = cursor.fetchall()
+
+            # Converta os resultados para uma lista de dicionários
+            results_list = [{"date": row[0], "count": row[1]} for row in results]
+
+    except mysql.connector.Error as e:
+        logger.error(f"Database query error: {e}")
+        return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({"error": "Erro inesperado"}, status=500)
+
+    return JsonResponse(results_list, status=200, safe=False)
+
+
 @requires_csrf_token
 @login_required(login_url="/login")
 def computers(request):
@@ -330,6 +362,7 @@ def postMachines(request):
 
         domain = data.get("domain")
         ip = data.get("ip")
+        logger.info(ip)
         manufacturer = data.get("manufacturer")
         model = data.get("model")
         serial_number = data.get("serialNumber")
@@ -352,9 +385,15 @@ def postMachines(request):
         cpu_max_mhz = data.get("cpuMaxMHz")
         cpu_min_mhz = data.get("cpuMinMHz")
         gpu_product = data.get("gpuProduct")
+
+        logger.info(gpu_product)
+
         gpu_vendor_id = data.get("gpuVendorID")
         gpu_bus_info = data.get("gpuBusInfo")
         gpu_logical_name = data.get("gpuLogicalName")
+
+        logger.info(gpu_logical_name)
+
         gpu_clock = data.get("gpuClock")
         gpu_configuration = data.get("gpuConfiguration")
         audio_device_product = data.get("audioDeviceProduct")
@@ -362,7 +401,10 @@ def postMachines(request):
         logger.info(audio_device_product)
 
         audio_device_model = data.get("audioDeviceModel")
-        bios_version = data.get("biosVersion")
+        bios_version = data.get("biosVersion").strip()
+
+        logger.info(bios_version)
+
         motherboard_manufacturer = data.get("motherboardManufacturer")
         motherboard_product_name = data.get("motherboardProductName")
         motherboard_version = data.get("motherboardVersion")
@@ -371,20 +413,23 @@ def postMachines(request):
         # Ajustando a lista de softwares
         softwares_list = data.get("installedPackages")
         softwares = None
-        if softwares_list != None:
-            if (
-                distribution == "Windows 10"
-                or distribution == "Windows 8.1"
-                or distribution == "Windows Server 2012 R2"
-                or distribution == "Windows Server 2012"
-                or distribution == "Windows10"
-                or distribution == "Microsoft Windows 10 Pro"
-            ):
-                softwares = str(softwares_list)
-            else:
-                softwares = ""
-                for soft in softwares_list:
-                    softwares += soft + ","
+        logger.info(distribution)
+        try:
+            if softwares_list != None:
+                if (
+                    distribution == "Windows 10"
+                    or distribution == "Windows 8.1"
+                    or distribution == "Windows Server 2012 R2"
+                    or distribution == "Windows Server 2012"
+                    or distribution == "Windows10"
+                    or distribution == "Microsoft Windows 10 Pro"
+                    or distribution == "Microsoft Windows 11 Pro"
+                ):
+                    softwares = str(softwares_list)
+                else:
+                    softwares = ",".join(str(soft) for soft in softwares_list)
+        except TypeError as e:
+            softwares = ""
 
         license = data.get("license")
 

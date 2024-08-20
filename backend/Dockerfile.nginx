@@ -1,0 +1,26 @@
+FROM nginx:latest
+
+RUN mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
+
+COPY ./nginx-configs/techmind.conf /etc/nginx/sites-available/techmind.conf
+
+RUN chown -R nginx:nginx /var/cache/nginx
+
+RUN ln -s /etc/nginx/sites-available/techmind.conf /etc/nginx/sites-enabled/
+
+# RUN mkdir -p /etc/nginx/ssl
+
+# COPY ./certs/* /etc/nginx/ssl/
+
+# Cria o diretório para logs
+RUN mkdir -p /var/log/nginx
+
+COPY ../nginx-configs/nginx.conf /etc/nginx/
+
+RUN mkdir -p /etc/nginx/logs/
+
+RUN mkdir -p /var/www/html/static
+
+COPY ./static/ /var/www/html/static
+
+ENTRYPOINT ["nginx", "-g", "daemon off;"]

@@ -6,6 +6,7 @@ import { LoadingComponent } from './loading/loading.component';
 import { LoadingSearchComponent } from './loading-search/loading-search.component';
 import { MessageComponent } from './message/message.component';
 import { NavbarComponent } from './navbar/navbar.component';
+import { ChartSplineLineComponent } from './chart-spline-line/chart-spline-line.component';
 
 // Modulo que gerencia os utilitarios Disponibilizando eles onde o Modulo for importado
 @NgModule({
@@ -15,6 +16,7 @@ import { NavbarComponent } from './navbar/navbar.component';
     LoadingSearchComponent,
     MessageComponent,
     NavbarComponent,
+    ChartSplineLineComponent,
   ],
   imports: [CommonModule, NgApexchartsModule],
   exports: [
@@ -23,6 +25,7 @@ import { NavbarComponent } from './navbar/navbar.component';
     LoadingSearchComponent,
     MessageComponent,
     NavbarComponent,
+    ChartSplineLineComponent,
   ],
 })
 export class UtilitiesModule {}

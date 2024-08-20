@@ -6,6 +6,12 @@ urlpatterns = [
     path("get-Info-Main-Panel/", views.getInfoMainPanel, name="Get-Info-Main-Panel"),
     # URL para pegar os sistemas operacionais para o gráfico
     path("get-info-SO", views.getInfoSOChart, name="central-get-info-so-chart"),
+    # URL para pegar as entradas dos computadores
+    path(
+        "get-info-last-update",
+        views.getInfoLastUpdate,
+        name="central-get-info-last-update",
+    ),
     path("computers/", views.computers, name="computers"),
     # Função da url /computers que solicita dados dos computadores conforme quantidade solicitada
     path(
