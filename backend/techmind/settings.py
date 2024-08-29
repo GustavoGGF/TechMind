@@ -27,7 +27,17 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "techmind",
     "infoapp",
+    "channels",
 ]
+
+ASGI_APPLICATION = "techmind.asgi.application"
+
+# Configuração do canal de camada usando InMemoryChannelLayer
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

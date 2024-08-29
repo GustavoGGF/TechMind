@@ -17,7 +17,7 @@
       "BS": "SMBIOS Windows",
       "LZT": "Localização esta zoado",
       "SOFT": "Softwares não estão renderizando direito",
-      "UPHT": "Adicionar imagem de modelo de computador HP ProDesk 600 G1 SFF,  IPMH610G, Vostro 3400,Vostro 15 3510, OptiPlex 780| SO Microsoft Windows 11 Pro"
+      "UPHT": "Adicionar imagem de modelo de computador HP ProDesk 600 G1 SFF,OptiPlex 7010,  IPMH610G, Vostro 3400,Vostro 15 3510, OptiPlex 780| SO Microsoft Windows 11 Pro"
     },
     "Devices": { "LE": "LE171 sem foto" }
   },
@@ -39,7 +39,7 @@
     "LDS": "Lp00-dcorp3 não funciona o exec",
     "LP@": "lp00-dfiscal05 nem conecta",
     "LpD": "LP00-DFISCAL06 sem foto",
-    "LP!)": "LP00-DFISCAL10 não roda",
+    "LP!)": "LP00-DFISCAL10 não roda, SWSUS01",
     "SPC": "sacpdl01 não mostra o SO",
     "SENG": "SENG04 voce nao pode se conectar ou compartlhiar arquivoes, pois ele nao é seguro, requeer SMB1 | 10.3.1.63 sem SO",
     "USER": "Mudar Metodologia de pegar usuario ativo",

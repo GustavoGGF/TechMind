@@ -117,6 +117,7 @@ export class ComputersDetailsComponent
   memory_windows: boolean = false;
   modifyOther: boolean = false;
   showBar: boolean = false;
+  available: boolean = false;
 
   // Variaveis Object
   softwareList: { name: string; version: string; vendor: string }[] = [];
@@ -360,6 +361,7 @@ export class ComputersDetailsComponent
           this.location = this.info_PC[45];
           this.note = this.info_PC[46];
           this.license = this.info_PC[47];
+          this.available = this.info_PC[47];
         }
       });
   }
@@ -498,6 +500,12 @@ export class ComputersDetailsComponent
     this.input_note = event.target.value;
   }
 
+  onCheckboxChange(event: Event) {
+    const checkbox = event.target as HTMLInputElement;
+    this.available = checkbox.checked;
+    console.log('Checkbox is checked:', this.available);
+  }
+
   // Função que salva os dados modificados e ja mostra eles atualizados na tela
   submitOthers(): void {
     var mac = this.macAddress.replace(/-/g, '');
@@ -530,21 +538,15 @@ export class ComputersDetailsComponent
         if (data) {
           if (data.imob) {
             this.imob = data.imob;
-            if (data.location) {
-              this.location = data.location;
-              if (data.note) {
-                this.note = data.note;
-              }
-            } else if (data.note) {
-              this.note = data.note;
-            }
-          } else if (data.location) {
+          }
+          if (data.location) {
             this.location = data.location;
-            if (data.note) {
-              this.note = data.note;
-            }
-          } else if (data.note) {
+          }
+          if (data.note) {
             this.note = data.note;
+          }
+          if (data.alocate) {
+            this.available = data.alocate;
           }
         }
       });

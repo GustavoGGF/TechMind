@@ -155,9 +155,32 @@
 
 .dashOthers {
   display: flex;
-  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 1rem; /* Espaçamento entre os itens */
+}
+
+.dashOthers > * {
+  flex: 1 1 calc(33.333% - 1rem); /* Ocupa 1/3 da largura disponível */
+  box-sizing: border-box;
+}
+
+.dashOthers textarea {
+  flex: 1 1 100%; /* O textarea ocupa toda a largura disponível */
 }
 
 .txt {
   resize: none;
+}
+
+.divinput {
+  display: flex;
+  align-content: center;
+  text-align: center;
+  line-height: revert;
+}
+
+.inputcheck {
+  width: 1.3em;
+  height: 1.3em;
+  margin-right: 0.2em;
 }

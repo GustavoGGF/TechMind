@@ -19,6 +19,8 @@ from io import BytesIO
 from ldap3 import ALL, Connection, Server, SUBTREE
 from mysql.connector import Error
 from re import sub
+import websockets
+import asyncio
 
 # Configuração básica de logging
 logging.basicConfig(level=logging.INFO)
@@ -64,55 +66,53 @@ def getInfoMainPanel(request):
         connection = None
         cursor = None
         query = None
-        query2 = None
-        query3 = None
         result = None
         totalWindows = None
         totalUnix = None
         totalMachines = None
         try:
-            # Conectar ao banco de dados
-            connection = mysql.connector.connect(
-                host=config("DB_HOST"),
-                database=config("DB_NAME"),
-                user=config("DB_USER"),
-                password=config("DB_PASSWORD"),
-            )
-
-            if connection.is_connected():
+            with get_database_connection() as connection:
                 cursor = connection.cursor()
+                query = (
+                    "SELECT COUNT(*) FROM machines WHERE system_name LIKE '%windows%'"
+                )
+                cursor.execute(query)
+                result = cursor.fetchone()
 
-                # Consulta SQL para contar os itens na coluna 'windows' da tabela 'machines'
-            query = "SELECT COUNT(*) FROM machines WHERE system_name LIKE '%windows%'"
-            cursor.execute(query)
+                # Converta os resultados para uma lista de dicionários
+                totalWindows = result[0]
 
-            # Pegar o resultado da consulta
-            result = cursor.fetchone()
+        except mysql.connector.Error as e:
+            logger.error(f"Database query error: {e}")
 
-            totalWindows = result[0]
+        try:
+            with get_database_connection() as connection:
+                cursor = connection.cursor()
+                query = "SELECT COUNT(mac_address) FROM machines"
+                cursor.execute(query)
+                result = cursor.fetchone()
 
-            query2 = "SELECT COUNT(mac_address) FROM machines"
-            cursor.execute(query2)
+                # Converta os resultados para uma lista de dicionários
+                totalMachines = result[0]
 
-            # Pegar o resultado da consulta
-            result = cursor.fetchone()
+        except mysql.connector.Error as e:
+            logger.error(f"Database query error: {e}")
 
-            totalMachines = result[0]
-
-            query3 = """SELECT COUNT(*)
+        try:
+            with get_database_connection() as connection:
+                cursor = connection.cursor()
+                query = """SELECT COUNT(*)
                         FROM machines
                         WHERE system_name LIKE '%linux%'
                         OR system_name LIKE '%freebsd%';"""
+                cursor.execute(query)
+                result = cursor.fetchone()
 
-            cursor.execute(query3)
+                # Converta os resultados para uma lista de dicionários
+                totalUnix = result[0]
 
-            # Pegar o resultado da consulta
-            result = cursor.fetchone()
-
-            totalUnix = result[0]
-
-        except Error as e:
-            print("Erro ao conectar ao MySQL", e)
+        except mysql.connector.Error as e:
+            logger.error(f"Database query error: {e}")
 
         finally:
             if connection.is_connected():
@@ -278,6 +278,12 @@ def contains_backslash(s):
     return "\\" in s
 
 
+async def send_json():
+    async with websockets.connect("ws://localhost:3000/home/") as websocket:
+        json_data = {"key": "value", "another_key": "another_value"}
+        await websocket.send(json.dumps(json_data))
+
+
 # Função que recebe os dados do computador
 @csrf_exempt
 @require_POST
@@ -335,6 +341,7 @@ def postMachines(request):
     softwares = None
     softwares_list = None
     system = None
+    totalWindows = None
     update_query = None
     user = None
     version = None
@@ -607,6 +614,59 @@ def postMachines(request):
             # Fechando a conexão
             cursor.close()
             connection.close()
+
+            # Após realizar um novo POST busca pelos dados atualizados
+            try:
+                try:
+                    with get_database_connection() as connection:
+                        cursor = connection.cursor()
+                        query = "SELECT COUNT(*) FROM machines WHERE system_name LIKE '%windows%'"
+                        cursor.execute(query)
+                        result = cursor.fetchone()
+
+                        # Converta os resultados para uma lista de dicionários
+                        totalWindows = result[0]
+
+                except mysql.connector.Error as e:
+                    logger.error(f"Database query error: {e}")
+
+                try:
+                    with get_database_connection() as connection:
+                        cursor = connection.cursor()
+                        query = "SELECT COUNT(mac_address) FROM machines"
+                        cursor.execute(query)
+                        result = cursor.fetchone()
+
+                        # Converta os resultados para uma lista de dicionários
+                        totalMachines = result[0]
+
+                except mysql.connector.Error as e:
+                    logger.error(f"Database query error: {e}")
+
+                try:
+                    with get_database_connection() as connection:
+                        cursor = connection.cursor()
+                        query = """SELECT COUNT(*)
+                                FROM machines
+                                WHERE system_name LIKE '%linux%'
+                                OR system_name LIKE '%freebsd%';"""
+                        cursor.execute(query)
+                        result = cursor.fetchone()
+
+                        # Converta os resultados para uma lista de dicionários
+                        totalUnix = result[0]
+
+                except mysql.connector.Error as e:
+                    logger.error(f"Database query error: {e}")
+
+                finally:
+                    if connection.is_connected():
+                        cursor.close()
+                        connection.close()
+
+                asyncio.get_event_loop().run_until_complete(send_json())
+            except Exception as e:
+                logger.error(e)
 
             return JsonResponse({}, status=200, safe=False)
 
@@ -959,249 +1019,124 @@ def computersDevices(request, mac_address):
 
 
 # Função que salva os dados da aba outros
+@requires_csrf_token
+@require_POST
+@transaction.atomic
+@never_cache
 def computersModify(request, mac_address):
-    if request.method == "GET":
-        return redirect("/devices")
-    if request.method == "POST":
-        # Iniciando as variaveis
-        connection = None
-        cursor = None
-        data = None
-        imob = None
-        location = None
-        note = None
-        result = None
-        result2 = None
-        result3 = None
-        update_query = None
+    # Pegando os dados json
+    data = json.loads(request.body)
+    imob = data.get("imob")
+    location = data.get("location")
+    note = data.get("note")
+    new_imob = None
+    new_location = None
+    new_note = None
+    if len(imob) > 1:
         try:
-            # Pegando os dados json
-            data = json.loads(request.body)
-            imob = data.get("imob")
-            location = data.get("location")
-            note = data.get("note")
-            # Caso o imobilizado tenha sido alterado
-            if imob:
-                connection = mysql.connector.connect(
-                    host=config("DB_HOST"),
-                    database=config("DB_NAME"),
-                    user=config("DB_USER"),
-                    password=config("DB_PASSWORD"),
-                )
+            with get_database_connection() as connection:
+                cursor = connection.cursor()
+                query = "UPDATE machines SET imob = %s WHERE mac_address = %s"
 
-                if connection.is_connected():
-                    cursor = connection.cursor()
+                cursor.execute(query, (imob, mac_address))
 
-                update_query = "UPDATE machines SET imob =%s WHERE mac_address =%s"
-
-                cursor.execute(update_query, (imob, mac_address))
-
-                # Confirmando a inserção
                 connection.commit()
 
-                update_query = "select imob from machines WHERE mac_address =%s"
-
-                cursor.execute(update_query, (mac_address,))
-
-                # Obtendo o resultado
-                result = (
-                    cursor.fetchone()
-                )  # Use fetchall() se esperar mais de um resultado
-
-                # Fechando a conexão
-                cursor.close()
-                connection.close()
-                # Caso location tambem tenha sido alterado
-                if location:
-                    connection = mysql.connector.connect(
-                        host=config("DB_HOST"),
-                        database=config("DB_NAME"),
-                        user=config("DB_USER"),
-                        password=config("DB_PASSWORD"),
-                    )
-
-                    if connection.is_connected():
-                        cursor = connection.cursor()
-
-                    update_query = (
-                        "UPDATE machines SET location =%s WHERE mac_address =%s"
-                    )
-
-                    cursor.execute(update_query, (location, mac_address))
-
-                    # Confirmando a inserção
-                    connection.commit()
-
-                    update_query = "select location from machines WHERE mac_address =%s"
-
-                    cursor.execute(update_query, (mac_address,))
-
-                    # Obtendo o resultado
-                    result2 = (
-                        cursor.fetchone()
-                    )  # Use fetchall() se esperar mais de um resultado
-
-                    # Fechando a conexão
-                    cursor.close()
-                    connection.close()
-
-                    return JsonResponse(
-                        {"imob": result[0], "location": result2[0]},
-                        status=200,
-                        safe=True,
-                    )
-                # Caso note tenha sido alterado tambem
-                if note:
-                    connection = mysql.connector.connect(
-                        host=config("DB_HOST"),
-                        database=config("DB_NAME"),
-                        user=config("DB_USER"),
-                        password=config("DB_PASSWORD"),
-                    )
-
-                    if connection.is_connected():
-                        cursor = connection.cursor()
-
-                    update_query = "UPDATE machines SET note =%s WHERE mac_address =%s"
-
-                    cursor.execute(update_query, (note, mac_address))
-
-                    # Confirmando a inserção
-                    connection.commit()
-
-                    update_query = "select note from machines WHERE mac_address =%s"
-
-                    cursor.execute(update_query, (mac_address,))
-
-                    # Obtendo o resultado
-                    result3 = (
-                        cursor.fetchone()
-                    )  # Use fetchall() se esperar mais de um resultado
-
-                    # Fechando a conexão
-                    cursor.close()
-                    connection.close()
-
-                    return JsonResponse(
-                        {"imob": result[0], "location": result2[0], "note": result3[0]},
-                        status=200,
-                        safe=True,
-                    )
-                else:
-                    return JsonResponse({"imob": result[0]}, status=200, safe=True)
-            # Caso location tenha sido alterado
-            if location:
-                connection = mysql.connector.connect(
-                    host=config("DB_HOST"),
-                    database=config("DB_NAME"),
-                    user=config("DB_USER"),
-                    password=config("DB_PASSWORD"),
-                )
-
-                if connection.is_connected():
-                    cursor = connection.cursor()
-
-                update_query = "UPDATE machines SET location =%s WHERE mac_address =%s"
-
-                cursor.execute(update_query, (location, mac_address))
-
-                # Confirmando a inserção
-                connection.commit()
-
-                update_query = "select location from machines WHERE mac_address =%s"
-
-                cursor.execute(update_query, (mac_address,))
-
-                # Obtendo o resultado
-                result = (
-                    cursor.fetchone()
-                )  # Use fetchall() se esperar mais de um resultado
-                logger.info(result)
-
-                # Fechando a conexão
-                cursor.close()
-                connection.close()
-                # Caso note tambem tenha sido alterado
-                if note:
-                    connection = mysql.connector.connect(
-                        host=config("DB_HOST"),
-                        database=config("DB_NAME"),
-                        user=config("DB_USER"),
-                        password=config("DB_PASSWORD"),
-                    )
-
-                    if connection.is_connected():
-                        cursor = connection.cursor()
-
-                    update_query = "UPDATE machines SET note =%s WHERE mac_address =%s"
-
-                    cursor.execute(update_query, (note, mac_address))
-
-                    # Confirmando a inserção
-                    connection.commit()
-
-                    update_query = "select note from machines WHERE mac_address =%s"
-
-                    cursor.execute(update_query, (mac_address,))
-
-                    # Obtendo o resultado
-                    result2 = (
-                        cursor.fetchone()
-                    )  # Use fetchall() se esperar mais de um resultado
-
-                    # Fechando a conexão
-                    cursor.close()
-                    connection.close()
-
-                    return JsonResponse(
-                        {"location": result[0], "note": result2[0]},
-                        status=200,
-                        safe=True,
-                    )
-                else:
-                    return JsonResponse({"location": result[0]}, status=200, safe=True)
-            # Caso note tenha sido alterado
-            if note:
-                connection = mysql.connector.connect(
-                    host=config("DB_HOST"),
-                    database=config("DB_NAME"),
-                    user=config("DB_USER"),
-                    password=config("DB_PASSWORD"),
-                )
-
-                if connection.is_connected():
-                    cursor = connection.cursor()
-
-                update_query = "UPDATE machines SET note =%s WHERE mac_address =%s"
-
-                cursor.execute(update_query, (note, mac_address))
-
-                # Confirmando a inserção
-                connection.commit()
-
-                update_query = "select note from machines WHERE mac_address =%s"
-
-                cursor.execute(update_query, (mac_address,))
-
-                # Obtendo o resultado
-                result = (
-                    cursor.fetchone()
-                )  # Use fetchall() se esperar mais de um resultado
-                logger.info(result)
-
-                # Fechando a conexão
+        except mysql.connector.Error as e:
+            logger.error(f"Database query error: {e}")
+            return
+        finally:
+            if connection.is_connected():
                 cursor.close()
                 connection.close()
 
-                return JsonResponse({"note": result[0]}, status=200, safe=True)
-            else:
-                return JsonResponse(
-                    {"message": "Imobilizado, Localização ou Observação Obrigatorio"},
-                    status=310,
-                )
-        except Exception as e:
-            logger.error(e)
-            return JsonResponse({}, status=420)
+        try:
+            with get_database_connection() as connection:
+                cursor = connection.cursor()
+                query = "select imob from machines where mac_address = %s"
+
+                cursor.execute(query, (mac_address,))
+                new_imob = cursor.fetchone()
+
+        except mysql.connector.Error as e:
+            logger.error(f"Database query error: {e}")
+            return
+        finally:
+            if connection.is_connected():
+                cursor.close()
+                connection.close()
+
+    if len(location) > 1:
+        try:
+            with get_database_connection() as connection:
+                cursor = connection.cursor()
+                query = "UPDATE machines SET location = %s WHERE mac_address = %s"
+
+                cursor.execute(query, (location, mac_address))
+
+                connection.commit()
+
+        except mysql.connector.Error as e:
+            logger.error(f"Database query error: {e}")
+            return
+        finally:
+            if connection.is_connected():
+                cursor.close()
+                connection.close()
+
+        try:
+            with get_database_connection() as connection:
+                cursor = connection.cursor()
+                query = "select location from machines where mac_address = %s"
+
+                cursor.execute(query, (mac_address,))
+                new_location = cursor.fetchone()
+
+        except mysql.connector.Error as e:
+            logger.error(f"Database query error: {e}")
+            return
+        finally:
+            if connection.is_connected():
+                cursor.close()
+                connection.close()
+                
+    if len(note) > 1:
+        try:
+            with get_database_connection() as connection:
+                cursor = connection.cursor()
+                query = "UPDATE machines SET note = %s WHERE mac_address = %s"
+
+                cursor.execute(query, (note, mac_address))
+
+                connection.commit()
+
+        except mysql.connector.Error as e:
+            logger.error(f"Database query error: {e}")
+            return
+        finally:
+            if connection.is_connected():
+                cursor.close()
+                connection.close()
+
+        try:
+            with get_database_connection() as connection:
+                cursor = connection.cursor()
+                query = "select note from machines where mac_address = %s"
+
+                cursor.execute(query, (mac_address,))
+                new_note = cursor.fetchone()
+
+        except mysql.connector.Error as e:
+            logger.error(f"Database query error: {e}")
+            return
+        finally:
+            if connection.is_connected():
+                cursor.close()
+                connection.close()
+
+    return JsonResponse(
+        {"imob": new_imob, "location": new_location, "note":new_note}, status=200, safe=True
+    )
 
 
 # Função que libera o token CSRF

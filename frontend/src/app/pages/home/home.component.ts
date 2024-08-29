@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { UtilitiesModule } from '../../utilities/utilities.module';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
+import { WebsocketService } from '../../websocket.service';
 
 @Component({
   selector: 'app-home',
@@ -10,9 +11,13 @@ import { catchError, throwError } from 'rxjs';
   imports: [UtilitiesModule, CommonModule, HttpClientModule],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
+  providers: [WebsocketService],
 })
-export class HomeComponent {
-  constructor(private http: HttpClient) {}
+export class HomeComponent implements OnInit {
+  constructor(
+    private http: HttpClient,
+    private websocketService: WebsocketService
+  ) {}
   // Declarando variavel any
   name: any;
   status: any;
@@ -23,6 +28,7 @@ export class HomeComponent {
   errorType: string = '';
   home_class: string = 'active';
   messageError: string = '';
+  message: string = '';
 
   // Declarando variaveis boolean
   canView: boolean = false;
@@ -36,6 +42,9 @@ export class HomeComponent {
 
   // Função inicia ao iniciar o componente
   ngOnInit() {
+    this.websocketService.message.subscribe((data: any) => {
+      console.log('web: ', data);
+    });
     // Pegando os dados do usuario
     this.name = localStorage.getItem('name');
     // Verificando se os dados existem
