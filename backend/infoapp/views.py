@@ -1029,9 +1029,11 @@ def computersModify(request, mac_address):
     imob = data.get("imob")
     location = data.get("location")
     note = data.get("note")
+    alocate = data.get("alocate")
     new_imob = None
     new_location = None
     new_note = None
+    new_alocate = None
     if len(imob) > 1:
         try:
             with get_database_connection() as connection:
@@ -1099,7 +1101,7 @@ def computersModify(request, mac_address):
             if connection.is_connected():
                 cursor.close()
                 connection.close()
-                
+
     if len(note) > 1:
         try:
             with get_database_connection() as connection:
@@ -1133,9 +1135,44 @@ def computersModify(request, mac_address):
             if connection.is_connected():
                 cursor.close()
                 connection.close()
+    if alocate:
+        try:
+            with get_database_connection() as connection:
+                cursor = connection.cursor()
+                query = "UPDATE machines SET alocate = 0 WHERE mac_address = %s"
+
+                cursor.execute(query, (mac_address,))
+
+                connection.commit()
+
+        except mysql.connector.Error as e:
+            logger.error(f"Database query error: {e}")
+            return
+        finally:
+            if connection.is_connected():
+                cursor.close()
+                connection.close()
+
+        try:
+            with get_database_connection() as connection:
+                cursor = connection.cursor()
+                query = "select alocate from machines where mac_address = %s"
+
+                cursor.execute(query, (mac_address,))
+                new_alocate = cursor.fetchone()
+
+        except mysql.connector.Error as e:
+            logger.error(f"Database query error: {e}")
+            return
+        finally:
+            if connection.is_connected():
+                cursor.close()
+                connection.close()
 
     return JsonResponse(
-        {"imob": new_imob, "location": new_location, "note":new_note}, status=200, safe=True
+        {"imob": new_imob, "location": new_location, "note": new_note, "alocate":new_alocate},
+        status=200,
+        safe=True,
     )
 
 

@@ -106,6 +106,7 @@ export class ComputersDetailsComponent
   name: any;
   status: any;
   token: any;
+  alocate: any;
 
   // Variaveis Boolean
   canView: boolean = false;
@@ -244,7 +245,6 @@ export class ComputersDetailsComponent
           this.model = this.info_PC[10];
           // Selecionando a imagem do equipamento
           let model_string = this.model.toLowerCase().replace(/\s+/g, '');
-          console.log(model_string);
 
           switch (model_string) {
             default:
@@ -343,25 +343,30 @@ export class ComputersDetailsComponent
           }
 
           // Ajustando as memorias
-          this.memories = this.info_PC[43];
-          if (this.memories) {
-            let valid = this.memories.replace(/'/g, '"');
+          // this.memories = this.info_PC[43];
+          // if (this.memories) {
+          //   let valid = this.memories.replace(/'/g, '"');
 
-            this.memories = JSON.parse(valid);
+          //   this.memories = JSON.parse(valid);
 
-            switch (this.operational_System) {
-              default:
-                break;
-              case 'Windows10':
-                this.memory_windows = true;
-            }
-          }
+          //   switch (this.operational_System) {
+          //     default:
+          //       break;
+          //     case 'Windows10':
+          //       this.memory_windows = true;
+          //   }
+          // }
 
           this.imob = this.info_PC[44];
           this.location = this.info_PC[45];
           this.note = this.info_PC[46];
           this.license = this.info_PC[47];
-          this.available = this.info_PC[47];
+          const disp = this.info_PC[48];
+          if (disp == 1) {
+            this.available = false;
+          } else {
+            this.available = true;
+          }
         }
       });
   }
@@ -502,8 +507,7 @@ export class ComputersDetailsComponent
 
   onCheckboxChange(event: Event) {
     const checkbox = event.target as HTMLInputElement;
-    this.available = checkbox.checked;
-    console.log('Checkbox is checked:', this.available);
+    this.alocate = checkbox.checked;
   }
 
   // Função que salva os dados modificados e ja mostra eles atualizados na tela
@@ -516,6 +520,7 @@ export class ComputersDetailsComponent
           imob: this.input_imob,
           location: this.select_value,
           note: this.input_note,
+          alocate: this.alocate,
         },
         {
           headers: new HttpHeaders({
@@ -546,7 +551,11 @@ export class ComputersDetailsComponent
             this.note = data.note;
           }
           if (data.alocate) {
-            this.available = data.alocate;
+            if (data.alocate == 1) {
+              this.available = false;
+            } else {
+              this.available = true;
+            }
           }
         }
       });
