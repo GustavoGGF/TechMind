@@ -63,19 +63,6 @@
         <label for="floatingModel">Name</label>
       </div>
       <div>
-        <select class="form-select" name="selectSO">
-          <option value="None" disabled selected>SO</option>
-          <option
-            *ngFor="let so of so_list; let i = index"
-            [value]="i"
-            (click)="onRowClickSO(i)"
-          >
-            {{ so }}
-          </option>
-          <option value="69" (click)="onRowClickSO(69)">todos</option>
-        </select>
-      </div>
-      <div>
         <select class="form-select" name="dis">
           <option value="" disabled selected>distribution</option>
           <option
@@ -131,7 +118,19 @@
         </th>
         <th class="thcls text-uppercase">
           <div class="w-100 d-flex justify-content-center">
-            <div>S.O</div>
+            <div>
+              <select class="form-select" name="selectSO">
+                <option value="None" disabled selected>SO</option>
+                <option
+                  *ngFor="let so of so_list; let i = index"
+                  [value]="i"
+                  (click)="onRowClickSO(i)"
+                >
+                  {{ so }}
+                </option>
+                <option value="69" (click)="onRowClickSO(69)">todos</option>
+              </select>
+            </div>
             <div class="mleft">
               <img
                 class="img_arrows"
