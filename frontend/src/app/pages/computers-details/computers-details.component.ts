@@ -16,7 +16,12 @@ import { catchError, throwError } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { UtilitiesModule } from '../../utilities/utilities.module';
-
+// Definindo a interface
+interface Software {
+  name: string;
+  version: string;
+  vendor: string;
+}
 @Component({
   selector: 'app-computers-details',
   standalone: true,
@@ -39,7 +44,7 @@ export class ComputersDetailsComponent
   // Variaveis Array
   devices: string[] = [];
   divs: string[] = [];
-  softwares: string[] = [];
+  softwares_list: Software[] = [];
 
   // Variaveis String
   audio_device_model: string = '';
@@ -119,6 +124,8 @@ export class ComputersDetailsComponent
   modifyOther: boolean = false;
   showBar: boolean = false;
   available: boolean = false;
+
+  transformedData: any;
 
   // Variaveis Object
   softwareList: { name: string; version: string; vendor: string }[] = [];
@@ -276,6 +283,9 @@ export class ComputersDetailsComponent
               this.url_model =
                 '/static/assets/images/models/24165952843_LenovoV14Gen3ABABlackforTextureIMG_202201050201591696357227289.png';
               break;
+            case 'vostro3480':
+              this.url_model = '/static/assets/images/models/vostro_3480.png';
+              break;
           }
           this.serial_number = this.info_PC[11];
           this.max_capacity_memory = this.info_PC[12];
@@ -325,50 +335,106 @@ export class ComputersDetailsComponent
           this.motherboard_asset_tag = this.info_PC[41];
 
           // Ajustando a lsita de softwares
-          let softwares_list = this.info_PC[42];
-          if (softwares_list) {
-            if (
-              this.operational_System == 'Windows10' ||
-              this.operational_System == 'Windows8.1'
-            ) {
-              let jsonString = softwares_list.replace(/'/g, '"');
-              this.softwareList = JSON.parse(jsonString);
-            } else {
-              let names = softwares_list.split(',');
+          let list = this.info_PC[42];
+          if (list) {
+            let operationalSystem = this.operational_System
+              .toLowerCase()
+              .replace(/\s+/g, '');
 
-              for (let i = 0; i < names.length; i++) {
-                this.softwares.push(names[i]);
-              }
+            console.log(list);
+            console.log(operationalSystem);
+
+            switch (operationalSystem) {
+              default:
+                let names = list.split(',');
+
+                for (let i = 0; i < names.length; i++) {
+                  this.softwares_list.push(names[i]);
+                }
+                break;
+              case 'microsoftwindows10pro':
+                this.softwares_list = this.processSoftwareString(list);
+
+                // Configurando o valor de memory_windows para exibir no template
+                this.memory_windows = true;
+                break;
+              case 'microsoftwindowsserver2012datacenter':
+                this.softwares_list = this.processSoftwareString(list);
+
+                // Configurando o valor de memory_windows para exibir no template
+                this.memory_windows = true;
+                break;
+              case 'windowsserver2012r2':
+                this.softwares_list = this.processSoftwareString(list);
+
+                // Configurando o valor de memory_windows para exibir no template
+                this.memory_windows = true;
+                break;
+              case 'microsoftwindowsserver2012r2standard':
+                this.softwares_list = this.processSoftwareString(list);
+
+                // Configurando o valor de memory_windows para exibir no template
+                this.memory_windows = true;
+                break;
+              case 'microsoftwindows11pro':
+                this.softwares_list = this.processSoftwareString(list);
+
+                // Configurando o valor de memory_windows para exibir no template
+                this.memory_windows = true;
+                break;
+              case 'windows10':
+                this.softwares_list = this.processSoftwareString(list);
+
+                // Configurando o valor de memory_windows para exibir no template
+                this.memory_windows = true;
+                break;
             }
           }
+        }
 
-          // Ajustando as memorias
-          // this.memories = this.info_PC[43];
-          // if (this.memories) {
-          //   let valid = this.memories.replace(/'/g, '"');
-
-          //   this.memories = JSON.parse(valid);
-
-          //   switch (this.operational_System) {
-          //     default:
-          //       break;
-          //     case 'Windows10':
-          //       this.memory_windows = true;
-          //   }
-          // }
-
-          this.imob = this.info_PC[44];
-          this.location = this.info_PC[45];
-          this.note = this.info_PC[46];
-          this.license = this.info_PC[47];
-          const disp = this.info_PC[48];
-          if (disp == 1) {
-            this.available = false;
-          } else {
-            this.available = true;
-          }
+        this.imob = this.info_PC[44];
+        this.location = this.info_PC[45];
+        this.note = this.info_PC[46];
+        this.license = this.info_PC[47];
+        const disp = this.info_PC[48];
+        if (disp == 1) {
+          this.available = false;
+        } else {
+          this.available = true;
         }
       });
+  }
+
+  processSoftwareString(softwaresData: string): Software[] {
+    // Remove espaços em branco extras ao redor da string
+    const trimmedData = softwaresData.trim();
+
+    // Verifica se a string é um array válido
+    if (trimmedData.startsWith('[') && trimmedData.endsWith(']')) {
+      try {
+        // Transformando a string em um array de objetos
+        return JSON.parse(trimmedData.replace(/'/g, '"'));
+      } catch (error) {
+        console.error('Erro ao converter string de array para JSON:', error);
+        return [];
+      }
+    }
+
+    // Verifica se a string é um objeto único
+    else if (trimmedData.startsWith('{') && trimmedData.endsWith('}')) {
+      try {
+        // Adiciona colchetes para transformar em um array com um único item
+        const arrayString = `[${trimmedData}]`;
+        return JSON.parse(arrayString.replace(/'/g, '"'));
+      } catch (error) {
+        console.error('Erro ao converter string de objeto para JSON:', error);
+        return [];
+      }
+    }
+
+    // Caso a string não seja nem um array nem um objeto válido
+    console.error('Formato de string inválido.');
+    return [];
   }
 
   // FUnção que obtem o token CSRF

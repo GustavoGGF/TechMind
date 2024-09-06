@@ -296,11 +296,11 @@
     <div *ngIf="canViewSoftWare">
       <span><b>SoftWares</b></span>
       <div class="dash_memory" *ngIf="!memory_windows">
-        <div *ngFor="let software of softwares">{{ software }}</div>
+        <div *ngFor="let software of softwares_list">{{ software }}</div>
       </div>
       <div class="dash_memory" *ngIf="memory_windows">
         <ul>
-          <li *ngFor="let software of softwareList">
+          <li *ngFor="let software of softwares_list">
             <strong>{{ software.name }}</strong
             ><br />
             Version: {{ software.version }}<br />
