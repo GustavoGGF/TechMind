@@ -14,7 +14,13 @@ PASSWORD = None
 HOST = None
 PORT = None
 
-ALLOWED_HOSTS = ["localhost", "sappp01", "10.1.1.73"]
+ALLOWED_HOSTS = ["localhost", "sappp01", "10.1.1.73", "testserver"]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://sappp01:3000",  # Substitua pelo endereço do seu frontend
+]
+
+CSRF_TRUSTED_ORIGINS = ["http://sappp01:3000"]
 
 # Application definition
 
@@ -27,17 +33,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "techmind",
     "infoapp",
-    "channels",
 ]
 
 ASGI_APPLICATION = "techmind.asgi.application"
-
-# Configuração do canal de camada usando InMemoryChannelLayer
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
-    },
-}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -47,6 +45,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
 ]
 
 ROOT_URLCONF = "techmind.urls"
@@ -124,7 +123,7 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = (
-    BASE_DIR / "staticfiles"
+    BASE_DIR / "/var/www/hmt/static/"
 )  # Diretório onde os arquivos estáticos serão coletados para produção
 STATICFILES_DIRS = [
     path.join(BASE_DIR, "static"),

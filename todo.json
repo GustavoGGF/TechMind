@@ -1,8 +1,6 @@
 {
   "ALL": {},
-  "Home": {
-    "PTAT": "Após ser realizado um POST de computador foarçar uma tualização dos dashboards"
-  },
+  "Home": {},
   "Computer": { "FLTR": "Filtro nos dispositivos, por software" },
   "Computer Details": {
     "Upgrade": {
@@ -17,7 +15,8 @@
       "BS": "SMBIOS Windows",
       "LZT": "Localização esta zoado",
       "SOFT": "Softwares não estão renderizando direito",
-      "UPHT": "Adicionar imagem de modelo de computador HP ProDesk 600 G1 SFF,OptiPlex 7010,  IPMH610G, Vostro 3400,Vostro 15 3510, OptiPlex 780| SO Microsoft Windows 11 Pro"
+      "UPHT": "Adicionar imagem de modelo de computador HP ProDesk 600 G1 SFF,OptiPlex 7010,  IPMH610G, Vostro 3400,Vostro 15 3510, OptiPlex 780| SO Microsoft Windows 11 Pro",
+      "RDHD": "Exec não sabe lidar com RAID"
     },
     "Devices": { "LE": "LE171 sem foto" }
   },
@@ -44,6 +43,7 @@
     "SENG": "SENG04 voce nao pode se conectar ou compartlhiar arquivoes, pois ele nao é seguro, requeer SMB1 | 10.3.1.63 sem SO",
     "USER": "Mudar Metodologia de pegar usuario ativo",
     "SVSD": "Serviço que se comunica com o servidor quando quer",
-    "ERS": "Esta versão de c:\techmind.exe não é compatível com a versão do Windows sendo executada. Verifique, nas informações do sistema do seu computador, se você precisa de uma versão x86 (32 bits) ou x64 (64 bits) do programa e contacte o fornecedor do software."
+    "ERS": "Esta versão de c:\techmind.exe não é compatível com a versão do Windows sendo executada. Verifique, nas informações do sistema do seu computador, se você precisa de uma versão x86 (32 bits) ou x64 (64 bits) do programa e contacte o fornecedor do software.",
+    "EXMD": "Executar a cada 12 horas e Verificar novo metodo de obter usuario logado"
   }
 }

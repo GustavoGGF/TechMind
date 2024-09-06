@@ -3,7 +3,6 @@ import { UtilitiesModule } from '../../utilities/utilities.module';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
-import { WebsocketService } from '../../websocket.service';
 
 @Component({
   selector: 'app-home',
@@ -11,13 +10,9 @@ import { WebsocketService } from '../../websocket.service';
   imports: [UtilitiesModule, CommonModule, HttpClientModule],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
-  providers: [WebsocketService],
 })
 export class HomeComponent implements OnInit {
-  constructor(
-    private http: HttpClient,
-    private websocketService: WebsocketService
-  ) {}
+  constructor(private http: HttpClient) {}
   // Declarando variavel any
   name: any;
   status: any;
@@ -42,9 +37,6 @@ export class HomeComponent implements OnInit {
 
   // Função inicia ao iniciar o componente
   ngOnInit() {
-    this.websocketService.message.subscribe((data: any) => {
-      console.log('web: ', data);
-    });
     // Pegando os dados do usuario
     this.name = localStorage.getItem('name');
     // Verificando se os dados existem
@@ -56,7 +48,7 @@ export class HomeComponent implements OnInit {
     } else {
       this.canView = true;
       // chamando a função para obter os dados
-      this.getData();
+      this.startPolling();
     }
   }
 
@@ -84,5 +76,13 @@ export class HomeComponent implements OnInit {
           this.notData = false;
         }
       });
+  }
+
+  // Polling a cada 10 segundos (10000 ms)
+  startPolling() {
+    this.getData(); // Chamada inicial
+    setInterval(() => {
+      this.getData();
+    }, 60000); // 10 segundos
   }
 }

@@ -21,6 +21,7 @@ from mysql.connector import Error
 from re import sub
 import websockets
 import asyncio
+from django.test import Client
 
 # Configuração básica de logging
 logging.basicConfig(level=logging.INFO)
@@ -50,80 +51,74 @@ def get_database_connection():
 # Create your views here.
 @requires_csrf_token
 @login_required(login_url="/login")
+@require_GET
 def home(request):
-    if request.method == "POST":
-        return
-    if request.method == "GET":
-        return render(request, "index.html", {})
+    return render(request, "index.html", {})
 
 
 @requires_csrf_token
 @login_required(login_url="/login")
+@require_GET
 def getInfoMainPanel(request):
-    if request.method == "POST":
-        return JsonResponse({"Corno": "Manso"}, status=301)
-    if request.method == "GET":
-        connection = None
-        cursor = None
-        query = None
-        result = None
-        totalWindows = None
-        totalUnix = None
-        totalMachines = None
-        try:
-            with get_database_connection() as connection:
-                cursor = connection.cursor()
-                query = (
-                    "SELECT COUNT(*) FROM machines WHERE system_name LIKE '%windows%'"
-                )
-                cursor.execute(query)
-                result = cursor.fetchone()
+    connection = None
+    cursor = None
+    query = None
+    result = None
+    totalWindows = None
+    totalUnix = None
+    totalMachines = None
+    try:
+        with get_database_connection() as connection:
+            cursor = connection.cursor()
+            query = "SELECT COUNT(*) FROM machines WHERE system_name LIKE '%windows%'"
+            cursor.execute(query)
+            result = cursor.fetchone()
 
-                # Converta os resultados para uma lista de dicionários
-                totalWindows = result[0]
+            # Converta os resultados para uma lista de dicionários
+            totalWindows = result[0]
 
-        except mysql.connector.Error as e:
-            logger.error(f"Database query error: {e}")
+    except mysql.connector.Error as e:
+        logger.error(f"Database query error: {e}")
 
-        try:
-            with get_database_connection() as connection:
-                cursor = connection.cursor()
-                query = "SELECT COUNT(mac_address) FROM machines"
-                cursor.execute(query)
-                result = cursor.fetchone()
+    try:
+        with get_database_connection() as connection:
+            cursor = connection.cursor()
+            query = "SELECT COUNT(mac_address) FROM machines"
+            cursor.execute(query)
+            result = cursor.fetchone()
 
-                # Converta os resultados para uma lista de dicionários
-                totalMachines = result[0]
+            # Converta os resultados para uma lista de dicionários
+            totalMachines = result[0]
 
-        except mysql.connector.Error as e:
-            logger.error(f"Database query error: {e}")
+    except mysql.connector.Error as e:
+        logger.error(f"Database query error: {e}")
 
-        try:
-            with get_database_connection() as connection:
-                cursor = connection.cursor()
-                query = """SELECT COUNT(*)
+    try:
+        with get_database_connection() as connection:
+            cursor = connection.cursor()
+            query = """SELECT COUNT(*)
                         FROM machines
                         WHERE system_name LIKE '%linux%'
                         OR system_name LIKE '%freebsd%';"""
-                cursor.execute(query)
-                result = cursor.fetchone()
+            cursor.execute(query)
+            result = cursor.fetchone()
 
-                # Converta os resultados para uma lista de dicionários
-                totalUnix = result[0]
+            # Converta os resultados para uma lista de dicionários
+            totalUnix = result[0]
 
-        except mysql.connector.Error as e:
-            logger.error(f"Database query error: {e}")
+    except mysql.connector.Error as e:
+        logger.error(f"Database query error: {e}")
 
-        finally:
-            if connection.is_connected():
-                cursor.close()
-                connection.close()
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
 
-        return JsonResponse(
-            {"windows": totalWindows, "total": totalMachines, "unix": totalUnix},
-            status=200,
-            safe=True,
-        )
+    return JsonResponse(
+        {"windows": totalWindows, "total": totalMachines, "unix": totalUnix},
+        status=200,
+        safe=True,
+    )
 
 
 @csrf_exempt
@@ -664,7 +659,10 @@ def postMachines(request):
                         cursor.close()
                         connection.close()
 
-                asyncio.get_event_loop().run_until_complete(send_json())
+                client = Client()
+                response = client.get("/home/get-Info-Main-Panel/")
+
+                return response
             except Exception as e:
                 logger.error(e)
 
@@ -1170,7 +1168,12 @@ def computersModify(request, mac_address):
                 connection.close()
 
     return JsonResponse(
-        {"imob": new_imob, "location": new_location, "note": new_note, "alocate":new_alocate},
+        {
+            "imob": new_imob,
+            "location": new_location,
+            "note": new_note,
+            "alocate": new_alocate,
+        },
         status=200,
         safe=True,
     )

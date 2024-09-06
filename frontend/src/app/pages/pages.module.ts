@@ -20,5 +20,6 @@ import { DevicesDetailsComponent } from './devices-details/devices-details.compo
     DevicesComponent,
     DevicesDetailsComponent,
   ],
+  providers: [],
 })
 export class PagesModule {}
