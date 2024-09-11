@@ -1,17 +1,30 @@
 import { Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
 import { UtilitiesModule } from '../../utilities/utilities.module';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import {
   HttpClient,
   HttpClientModule,
   HttpHeaders,
 } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
+import { saveAs } from 'file-saver';
+
+interface Software {
+  name: string;
+  ids: string[];
+  // Adicione outras propriedades se necessário
+}
+
+export interface ReportResponse {
+  file_name: string;
+  file_content: string;
+}
 
 @Component({
   selector: 'app-computers',
   standalone: true,
-  imports: [UtilitiesModule, CommonModule, HttpClientModule],
+  imports: [UtilitiesModule, CommonModule, HttpClientModule, FormsModule],
   templateUrl: './computers.component.html',
   styleUrl: './computers.component.css',
 })
@@ -42,7 +55,9 @@ export class ComputersComponent implements OnInit {
   messageError: string = '';
   one_hundred_quantity: string = '';
   ten_quantity: string = '';
+  reset_filter: string = '/static/assets/images/filtro.png';
   quantity_filter: string | null = '';
+  selectedValue: string = 'None';
 
   // Declarando variaveis boolean
   canView: boolean = false;
@@ -55,6 +70,9 @@ export class ComputersComponent implements OnInit {
   // Declarando variaveis list
   dis_list: string[] = [];
   so_list: string[] = [];
+  soft_list: Software[] = [];
+
+  softwares_list: any;
 
   // Função iniciada ao carregar a pagina
   ngOnInit(): void {
@@ -78,6 +96,8 @@ export class ComputersComponent implements OnInit {
       this.canView = true;
       this.getToken();
       this.getData();
+      this.getSO();
+      this.getDistribution();
     }
   }
 
@@ -147,13 +167,155 @@ export class ComputersComponent implements OnInit {
 
           this.canViewMachines = true;
           // Apos pegar os dados principais chama a função para preencher o filtro de SO
-          return this.getSO();
+          return this.mountSoftwares();
+        }
+      });
+  }
+
+  mountSoftwares(): void {
+    const machineNames = this.dataMachines.map((machine: any[]) => machine[42]);
+    const so = this.dataMachines.map((machine: any[]) => machine[3]);
+    const ids = this.dataMachines.map((machine: any[]) => machine[0]);
+
+    // Encontrar todos os índices onde o valor de `so` é "Microsoft Windows 10 Pro"
+    const windows10ProIndexes = so
+      .map((value: string, index: number) =>
+        value === 'Microsoft Windows 10 Pro' ? index : -1
+      )
+      .filter((index: number) => index !== -1);
+
+    // Usar esses índices para pegar os valores correspondentes de `machineNames` e `ids`
+    const result = windows10ProIndexes.map((index: number) => ({
+      name: machineNames[index],
+      id: ids[index],
+    }));
+
+    // Processar cada resultado com a função `stringToSortedArray`
+    result.forEach(({ name, id }: { name: string; id: string }) => {
+      const names = this.stringToSortedArray(name);
+      return this.updateSoftwareList(names, id);
+    });
+  }
+
+  stringToSortedArray(array: string): string[] {
+    if (!array || array.trim().length <= 1) {
+      // Se a string estiver vazia ou muito curta, retornar o erro
+      console.error('Formato de string inválido.');
+      return [];
+    }
+    try {
+      let soft_list: any[] = [];
+      const trimmedData = array.trim();
+      // Verifica se a string é um array válido
+      if (trimmedData.startsWith('[') && trimmedData.endsWith(']')) {
+        soft_list = JSON.parse(trimmedData.replace(/'/g, '"'));
+      }
+
+      // Verifica se a string é um objeto único
+      else if (trimmedData.startsWith('{') && trimmedData.endsWith('}')) {
+        // Adiciona colchetes para transformar em um array com um único item
+        const arrayString = `[${trimmedData}]`;
+        soft_list = JSON.parse(arrayString.replace(/'/g, '"'));
+      }
+      // Verifica se soft_list é um array de objetos
+      if (
+        Array.isArray(soft_list) &&
+        soft_list.every((item) => typeof item === 'object' && item !== null)
+      ) {
+        // Extrai o valor da propriedade `name` de cada objeto
+        return soft_list.map((item) => item.name);
+      } else {
+        console.error('A string não contém um array de objetos válidos.');
+        return [];
+      }
+    } catch (error) {
+      console.error('Erro ao converter a string para JSON:', error);
+      return [];
+    }
+  }
+
+  updateSoftwareList(names: string[], id: string): void {
+    names.forEach((name: string) => {
+      // Verifica se já existe um objeto com o mesmo nome em soft_list
+      const software = this.soft_list.find(
+        (software) => software.name === name
+      );
+
+      if (software) {
+        // Adiciona o ID ao array de IDs se ainda não estiver presente
+        if (!software.ids.includes(id)) {
+          software.ids.push(id);
+        }
+      } else {
+        // Adiciona um novo objeto com o nome e o ID
+        this.soft_list.push({ name, ids: [id] });
+      }
+    });
+  }
+
+  generateMachineReport(index: number): void {
+    // Obtém o software selecionado usando o índice
+    const selected_Soft = this.soft_list[index];
+
+    // Filtra o array machines para encontrar máquinas cujo ID corresponde ao ID do software selecionado
+    const filteredMachines = this.dataMachines.filter(
+      (machine: string[]) => selected_Soft.ids.includes(machine[0]) // Verifica se o ID da máquina está na lista de IDs do software
+    );
+
+    // Exibe o relatório ou faz algo com as máquinas filtradas
+    this.dataMachines = filteredMachines;
+  }
+
+  resetSoft(): void {
+    this.selectedValue = 'None';
+
+    this.http
+      .get('/home/computers/get-data/' + this.quantity_filter, {})
+      .pipe(
+        catchError((error) => {
+          this.status = error.status;
+
+          return throwError(error);
+        })
+      )
+      .subscribe((data: any) => {
+        if (data) {
+          this.dataMachines = data.machines;
+          // Ajustando filtro de quantidade
+          switch (this.quantity_filter) {
+            default:
+              break;
+            case '10':
+              this.ten_quantity = 'active_filter';
+              this.fifty_quantity = '';
+              this.one_hundred_quantity = '';
+              this.all_quantity = '';
+              break;
+            case '50':
+              this.ten_quantity = '';
+              this.fifty_quantity = 'active_filter';
+              this.one_hundred_quantity = '';
+              this.all_quantity = '';
+              break;
+            case '100':
+              this.ten_quantity = '';
+              this.fifty_quantity = '';
+              this.one_hundred_quantity = 'active_filter';
+              this.all_quantity = '';
+              break;
+            case 'all':
+              this.ten_quantity = '';
+              this.fifty_quantity = '';
+              this.one_hundred_quantity = '';
+              this.all_quantity = 'active_filter';
+          }
+          this.canViewMachines = true;
         }
       });
   }
 
   // Função para pegar os valores do filto de SO
-  getDistribution(): string[] | any {
+  getDistribution(): void {
     this.http
       .get('/home/computers/get-data-DIS', {})
       .pipe(
@@ -165,8 +327,7 @@ export class ComputersComponent implements OnInit {
       )
       .subscribe((data: any) => {
         if (data) {
-          return (this.dis_list = data.DIS);
-          // Após pegar os dados do filtro chama a função para pegar os dados do filtro de Distribuição
+          this.dis_list = data.DIS;
         }
       });
   }
@@ -186,7 +347,6 @@ export class ComputersComponent implements OnInit {
         if (data) {
           this.so_list = data.SO;
           // Após pegar os dados do filtro chama a função para pegar os dados do filtro de Distribuição
-          return this.getDistribution();
         }
       });
   }
@@ -570,6 +730,66 @@ export class ComputersComponent implements OnInit {
   // Habilita a tela de credencial
   reportDNS(): void {
     this.canViewCredentials = true;
+  }
+
+  exportMachineReport(): void {
+    // Seleciona todos os checkboxes com a classe 'ckip'
+    const checkboxes = this.el.nativeElement.querySelectorAll('.ckip');
+
+    // Array para armazenar os valores dos checkboxes marcados
+    const selectedValues: string[] = [];
+
+    // Itera sobre os checkboxes
+    checkboxes.forEach((checkbox: HTMLInputElement) => {
+      if (checkbox.checked) {
+        // Se o checkbox está marcado, adiciona seu valor ao array
+        selectedValues.push(checkbox.value);
+      }
+    });
+
+    // Converte o array em uma string separada por vírgulas
+    const selectedValuesString = selectedValues.join(',');
+
+    // Cria o header
+    const headers = new HttpHeaders({
+      'Selected-Values': selectedValuesString,
+      'X-CSRFToken': this.token,
+    });
+
+    this.http
+      .get<ReportResponse>('/home/computers/get-report/xls/', { headers })
+      .pipe(
+        catchError((error) => {
+          this.status = error.status;
+
+          return throwError(error);
+        })
+      )
+      .subscribe(
+        (response) => {
+          if (response) {
+            const fileName = response.file_name;
+            const fileContent = response.file_content;
+
+            // Converte a string base64 em um Blob
+            const byteCharacters = atob(fileContent);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], {
+              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            });
+
+            // Usa a biblioteca file-saver para salvar o arquivo
+            saveAs(blob, fileName);
+          }
+        },
+        (error) => {
+          console.error('Download error:', error);
+        }
+      );
   }
 
   // Envia o usuario e senha para o backend

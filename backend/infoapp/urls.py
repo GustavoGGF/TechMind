@@ -100,4 +100,8 @@ urlpatterns = [
     ),
     # URL que gera relatorio de DNS que visa mostrar ip identicos
     path("computers/report-dns", views.getReportDNS, name="central-get-report-dns"),
+    # URL para gerar um relatorio com as maquinas em XLS
+    path(
+        "computers/get-report/xls/", views.getReportXLS, name="central-get-report-xls"
+    ),
 ]

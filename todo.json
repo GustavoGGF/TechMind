@@ -27,7 +27,8 @@
   "Back End": {
     "HotFix": {
       "MDRT": "Moderators de csrf e login_required",
-      "QRIS": "Queries mais performaticas"
+      "QRIS": "Queries mais performaticas",
+      "FNCTDTBS": "Ultizar a função de conexão do DB em todo codigo"
     }
   },
   "Front end": {

@@ -1,6 +1,7 @@
-import base64
+from base64 import b64encode
+from io import BytesIO
 import dns.resolver
-import json
+from json import loads, JSONDecodeError
 import logging
 import mysql.connector
 import pandas as pd
@@ -8,7 +9,7 @@ from contextlib import contextmanager
 from decouple import config
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import  JsonResponse
 from django.middleware.csrf import get_token
 from django_ratelimit.decorators import ratelimit
 from django.shortcuts import redirect, render
@@ -17,11 +18,9 @@ from django.views.decorators.csrf import csrf_exempt, requires_csrf_token
 from django.views.decorators.http import require_POST, require_GET
 from io import BytesIO
 from ldap3 import ALL, Connection, Server, SUBTREE
-from mysql.connector import Error
 from re import sub
-import websockets
-import asyncio
 from django.test import Client
+from ast import literal_eval
 
 # Configuração básica de logging
 logging.basicConfig(level=logging.INFO)
@@ -272,13 +271,6 @@ def revert_mac_address(normalized_mac):
 def contains_backslash(s):
     return "\\" in s
 
-
-async def send_json():
-    async with websockets.connect("ws://localhost:3000/home/") as websocket:
-        json_data = {"key": "value", "another_key": "another_value"}
-        await websocket.send(json.dumps(json_data))
-
-
 # Função que recebe os dados do computador
 @csrf_exempt
 @require_POST
@@ -342,7 +334,7 @@ def postMachines(request):
     version = None
     try:
         # Pegando os dados
-        data = json.loads(request.body.decode("utf-8"))
+        data = loads(request.body.decode("utf-8"))
         system = data.get("system")
         name = data.get("name")
         distribution = data.get("distribution")
@@ -668,7 +660,7 @@ def postMachines(request):
 
             return JsonResponse({}, status=200, safe=False)
 
-    except json.JSONDecodeError:
+    except JSONDecodeError:
         logger.error("Erro ao decodificar JSON")
         return JsonResponse({"error": "Invalid JSON"}, status=400, safe=False)
 
@@ -742,7 +734,7 @@ def devices_post(request):
         connection = None
         cursor = None
         try:
-            data = json.loads(request.body)
+            data = loads(request.body)
             equipament = data.get("device")
             model = data.get("model")
             serial_number = data.get("serial_number")
@@ -940,7 +932,7 @@ def addedDevices(request):
         connection = None
         cursor = None
         try:
-            data = json.loads(request.body)
+            data = loads(request.body)
             device = data.get("device")
             computer = data.get("computer")
 
@@ -1023,7 +1015,7 @@ def computersDevices(request, mac_address):
 @never_cache
 def computersModify(request, mac_address):
     # Pegando os dados json
-    data = json.loads(request.body)
+    data = loads(request.body)
     imob = data.get("imob")
     location = data.get("location")
     note = data.get("note")
@@ -1631,7 +1623,7 @@ def getDataVarchar(request, quantity, name):
 def getReportDNS(request):
     if request.method == "POST":
         try:
-            data = json.loads(request.body)
+            data = loads(request.body)
             username = data.get("username")
             pwd = data.get("pwd")
 
@@ -1687,7 +1679,7 @@ def getReportDNS(request):
 
             # Obter o conteúdo do buffer e codificá-lo em base64
             buffer.seek(0)
-            excel_base64 = base64.b64encode(buffer.read()).decode("utf-8")
+            excel_base64 = b64encode(buffer.read()).decode("utf-8")
 
             # Criar a resposta JSON
             response_data = {
@@ -1713,3 +1705,148 @@ def get_ip_from_dns(hostname):
         return ips
     except Exception as e:
         pass
+
+
+@requires_csrf_token
+@require_GET
+@transaction.atomic
+@never_cache
+def getReportXLS(request):
+    selected_values = None
+    selected_values_list = None
+    try:
+        # Captura o valor do header 'Selected-Values'
+        selected_values = request.headers.get("Selected-Values")
+
+        if selected_values:
+            # Converte a string de volta para uma lista
+            selected_values_list = selected_values.split(",")
+            # Faça o processamento necessário com selected_values_list
+            # Itera sobre os valores em selected_values_list
+            results = []
+            for value in selected_values_list:
+                value = normalize_mac_address(value)
+                cursor = None
+                query = None
+                result = None
+                try:
+                    with get_database_connection() as connection:
+                        cursor = connection.cursor()
+
+                        # Monta a query substituindo o placeholder pelo valor
+                        query = "SELECT * FROM machines WHERE mac_address = %s;"
+                        cursor.execute(query, (value,))
+                        result = cursor.fetchone()
+
+                        # Adiciona o resultado ao array de resultados
+                        results.append(result)
+
+                except mysql.connector.Error as e:
+                    logger.error(f"Database query error for system {value}: {e}")
+
+                finally:
+                    if connection.is_connected():
+                        cursor.close()
+                        connection.close()
+                        
+            hostnames = None
+            so = None
+            dis = None
+            version = None
+            manufacturer = None
+            model = None
+            sn = None
+            hd_capacity = None
+            cpu_model = None
+            cpu_manufacturer = None
+            gpu_model = None
+            softwares_list = None
+            software_data = None
+            software_names = None
+            software_names_str = None
+            df = None
+            buffer = None
+            encoded_file =None
+            response_data = None
+            try:
+                # Extraindo apenas a primeira coluna (MAC Address)
+                hostnames = [row[1] for row in results]
+                so = [row[2] for row in results]
+                dis = [row[3] for row in results]
+                version = [row[6] for row in results]
+                manufacturer = [row[9] for row in results]
+                model = [row[10] for row in results]
+                sn = [row[11] for row in results]
+                hd_capacity = [row[16] for row in results]
+                cpu_model = [row[22] for row in results]
+                cpu_manufacturer = [row[21] for row in results]
+                gpu_model = [row[32] for row in results]
+                
+                softwares_list = [row[42] for row in results]
+                software_data = literal_eval(softwares_list[0])
+                # Extraindo apenas os nomes dos programas
+                software_names = [
+                    software["name"] for software in software_data if software["name"]
+                ]
+                # Juntando os nomes separados por vírgula
+                software_names_str = ", ".join(software_names)
+
+                # Criar DataFrame com a coluna desejada
+                df = pd.DataFrame(
+                    {
+                        "HostName": hostnames,
+                        "SO": so,
+                        "Distribuição": dis,
+                        "Versão SO": version,
+                        "Marca": manufacturer,
+                        "Modelo": model,
+                        "SN": sn,
+                        "HD Capacidade": hd_capacity,
+                        "CPU Modelo": cpu_model,
+                        "CPU Fabricante": cpu_manufacturer,
+                        "GPU Modelo": gpu_model,
+                        "Programas Instalados": software_names_str,
+                    }
+                )
+
+                # Salvar o DataFrame em um buffer de memória
+                buffer = BytesIO()
+                with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+                    df.to_excel(writer, index=False, sheet_name="Report")
+
+                buffer.seek(0)
+
+                # Codificar o buffer em base64
+                encoded_file = b64encode(buffer.read()).decode("utf-8")
+
+                # Criar a resposta JSON com o arquivo codificado
+                response_data = {
+                    "file_name": "report.xlsx",
+                    "file_content": encoded_file,
+                }
+
+                return JsonResponse(response_data, status=200, safe=True)
+            except Exception as e:
+                logger.error(e)
+                return JsonResponse({}, status=410, safe=True)
+
+    except Exception as e:
+        logger.error(e)
+
+
+def process_results(results):
+    processed_data = []
+
+    # Supondo que você queira processar os dados da primeira tupla de results
+    if len(results) > 0:
+        for i in range(len(results[0])):
+            value = results[0][i]
+
+            # Exemplo de tratamento: normalizar o endereço MAC se for o primeiro valor
+            if i == 0:
+                value = normalize_mac_address(value)
+
+            # Adicionar o valor processado ao array
+            processed_data.append(value)
+
+    return processed_data

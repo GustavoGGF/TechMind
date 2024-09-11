@@ -341,9 +341,6 @@ export class ComputersDetailsComponent
               .toLowerCase()
               .replace(/\s+/g, '');
 
-            console.log(list);
-            console.log(operationalSystem);
-
             switch (operationalSystem) {
               default:
                 let names = list.split(',');

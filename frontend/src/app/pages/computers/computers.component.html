@@ -52,33 +52,32 @@
       </div>
     </div>
     <div class="filter_back">
-      <div class="form-floating mb-3">
-        <input
-          type="text"
-          class="form-control"
-          id="floatingModel"
-          placeholder="LP00-DTI00"
-          (input)="getName($event)"
-        />
-        <label for="floatingModel">Name</label>
-      </div>
-      <div>
-        <select class="form-select" name="dis">
-          <option value="" disabled selected>distribution</option>
+      <div class="d-flex">
+        <button class="btn" (click)="resetSoft()">
+          <img [src]="reset_filter" alt="reset filter" />
+        </button>
+        <select
+          class="form-select select_width"
+          name="dis"
+          [(ngModel)]="selectedValue"
+        >
+          <option value="None" disabled selected>Softwares</option>
           <option
-            *ngFor="let dis of dis_list; let i = index"
+            *ngFor="let soft of soft_list; let i = index"
             [value]="i"
-            (click)="onRowClickDIS(i)"
+            (click)="generateMachineReport(i)"
           >
-            {{ dis }}
+            {{ soft.name }}
           </option>
-          <option value="" (click)="onRowClickDIS(69)">todos</option>
         </select>
       </div>
       <div>
         <select class="form-select" name="dis">
           <option value="" disabled selected>Relatórios</option>
           <option value="DNS" (click)="reportDNS()">Relatório DNS</option>
+          <option value="reportxls" (click)="exportMachineReport()">
+            Relatório Máquina
+          </option>
         </select>
       </div>
     </div>
@@ -99,11 +98,21 @@
         <th class="thcls text-uppercase">mac_address</th>
         <th class="thcls text-uppercase">
           <div class="w-100 d-flex justify-content-center">
-            <div>name</div>
+            <div class="form-floating mb-3">
+              <input
+                type="text"
+                class="form-control"
+                id="floatingModel"
+                placeholder="LP00-DTI00"
+                (input)="getName($event)"
+              />
+              <label for="floatingModel">Name</label>
+            </div>
             <div class="mleft">
               <img
                 class="img_arrows"
                 [src]="arrow_up"
+                soft_list
                 alt="seta para cima"
                 (click)="sortByName()"
               />
@@ -149,7 +158,19 @@
         </th>
         <th class="thcls text-uppercase">
           <div class="w-100 d-flex justify-content-center">
-            <div>distribution</div>
+            <div>
+              <select class="form-select" name="dis">
+                <option value="" disabled selected>distribution</option>
+                <option
+                  *ngFor="let dis of dis_list; let i = index"
+                  [value]="i"
+                  (click)="onRowClickDIS(i)"
+                >
+                  {{ dis }}
+                </option>
+                <option value="" (click)="onRowClickDIS(69)">todos</option>
+              </select>
+            </div>
             <div class="mleft">
               <img
                 class="img_arrows"
