@@ -210,9 +210,11 @@ export class ComputersDetailsComponent
             case 'windows10':
               this.url_logo = '/static/assets/images/brands/windows10.png';
               break;
-            case 'Microsoft Windows 10 Pro':
+            case 'microsoftwindows10pro':
               this.url_logo = '/static/assets/images/brands/windows10.png';
               break;
+            case 'microsoftwindows11pro':
+              this.url_logo = '/static/assets/images/brands/windows11.jpg';
           }
           this.system_version = this.info_PC[6];
           this.domain = this.info_PC[7];
@@ -258,7 +260,7 @@ export class ComputersDetailsComponent
               this.url_model = '';
               break;
             case 'precisionm4600':
-              this.url_model = '/static/assets/images/models/_OVR.webp';
+              this.url_model = `/static/assets/images/models/${model_string}.png`;
               break;
             case 'vmwarevirtualplatform':
               this.url_model = '/static/assets/images/brands/feature-image.png';
@@ -285,6 +287,21 @@ export class ComputersDetailsComponent
               break;
             case 'vostro3480':
               this.url_model = '/static/assets/images/models/vostro_3480.png';
+              break;
+            case 'hpprodesk600g1sff':
+              this.url_model = `/static/assets/images/models/${model_string}.png`;
+              break;
+            case 'ipmh610g':
+              this.url_model = `/static/assets/images/models/IPMH310G_PRO.png`;
+              break;
+            case 'vostro3400':
+              this.url_model = `/static/assets/images/models/${model_string}.png`;
+              break;
+            case 'vostro153510':
+              this.url_model = `/static/assets/images/models/${model_string}.png`;
+              break;
+            case 'optiplex780':
+              this.url_model = `/static/assets/images/models/${model_string}.png`;
               break;
           }
           this.serial_number = this.info_PC[11];

@@ -1,24 +1,13 @@
 {
-  "ALL": {},
+  "ALL": { "HotFix": { "2": "Logout ta com B.O" } },
   "Home": {},
-  "Computer": {},
+  "Computer": {
+    "HotFix": {
+      "1": "Quando CheckBox Estiver marcado deixar com o efeito do hover"
+    }
+  },
   "Computer Details": {
-    "Upgrade": {
-      "Others": "Aba outros que contera documentos e consigo possibilitar deixar o computador para locar",
-      "ARCHR": "Uma ancora que vai ate os catalogos (palca mae, processador, etc... e que vai ate o topo tambem",
-      "PORTS": "sobre portas tambem, como :80 etc",
-      "PRST": "Portas fisicas tambem",
-      "LcLZC": "Localização Devices",
-      "HKSV": "Verificcar Hard Disk Sata Verion Windows",
-      "GPU": "Verificar Clock GPU e logical Name Windows",
-      "DVCAD": "Audio Device Windows",
-      "BS": "SMBIOS Windows",
-      "LZT": "Localização esta zoado",
-      "SOFT": "Softwares não estão renderizando direito",
-      "UPHT": "Adicionar imagem de modelo de computador HP ProDesk 600 G1 SFF,OptiPlex 7010,  IPMH610G, Vostro 3400,Vostro 15 3510, OptiPlex 780| SO Microsoft Windows 11 Pro",
-      "RDHD": "Exec não sabe lidar com RAID"
-    },
-    "Devices": { "LE": "LE171 sem foto" }
+    "Upgrade": {}
   },
   "Back End": {
     "HotFix": {
@@ -34,6 +23,16 @@
     }
   },
   "Exec's": {
+    "All": {
+      "Upgrade": { "3": "PORTS sobre portas tambem, como :80 etc", "4": "Portas fisicas tambem" },
+      "HotFix": {
+        "5": "Verificcar Hard Disk Sata Verion Windows",
+        "6": "Verificar Clock GPU e logical Name Windows",
+        "7": "Audio Device Windows",
+        "8": "SMBIOS Windows",
+        "9": "Exec não sabe lidar com RAID"
+      }
+    },
     "FreeBSD": "Fazer um personalizado",
     "W2012": "Windows server 2012 não listou softwares",
     "LDS": "Lp00-dcorp3 não funciona o exec",
