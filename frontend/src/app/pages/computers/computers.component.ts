@@ -359,12 +359,10 @@ export class ComputersComponent implements OnInit {
   // Função para redirecionar para a pagina de visualização da maquina
   onRowClick(index: number) {
     const selectedMachine = this.dataMachines[index];
-
-    var mac = selectedMachine[0];
-
+    let mac = selectedMachine[0];
     mac = mac.replace(/:/g, '-');
 
-    return (window.location.href = '/home/computers/view-machine/' + mac);
+    return window.open('/home/computers/view-machine/' + mac, '_blank');
   }
 
   // Função obter o valor do SO que deseja filtrar

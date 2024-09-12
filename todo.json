@@ -1,11 +1,7 @@
 {
   "ALL": {},
   "Home": {},
-  "Computer": {
-    "FLTR": "Filtro nos dispositivos, por software",
-    "FLTVR": "Filtros dentro das colunas",
-    "DA": "Inves de Div usar <a> pras listas"
-  },
+  "Computer": {},
   "Computer Details": {
     "Upgrade": {
       "Others": "Aba outros que contera documentos e consigo possibilitar deixar o computador para locar",
