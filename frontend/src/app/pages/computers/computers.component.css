@@ -113,3 +113,19 @@
 .select_width {
   width: 12em;
 }
+
+.btn_mg {
+  margin: 0.1em;
+}
+
+.img_close {
+  width: 1.6em;
+}
+
+.loadingTotality {
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.4);
+  position: absolute;
+  z-index: 100000 !important;
+}

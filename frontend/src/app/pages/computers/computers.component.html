@@ -1,4 +1,7 @@
 <div class="main">
+  <div class="loadingTotality" *ngIf="canViewCredentialsLoading">
+    <app-loading-perfect-ape />
+  </div>
   <app-navbar
     *ngIf="canView"
     [name]="name"
@@ -72,8 +75,8 @@
         </select>
       </div>
       <div>
-        <select class="form-select" name="dis">
-          <option value="" disabled selected>Relatórios</option>
+        <select class="form-select" name="dis" [(ngModel)]="selectedReports">
+          <option value="None" disabled selected>Relatórios</option>
           <option value="DNS" (click)="reportDNS()">Relatório DNS</option>
           <option value="reportxls" (click)="exportMachineReport()">
             Relatório Máquina
@@ -233,9 +236,12 @@
     *ngIf="canViewCredentials"
     class="dashReport position-fixed top-50 start-50 translate-middle"
   >
-    <div class="position-relative w-100 h-100">
-      <button class="position-absolute top-0 end-0">X</button>
-    </div>
+    <button
+      (click)="closeCredential()"
+      class="position-absolute top-0 end-0 btn_mg btn"
+    >
+      <img [src]="closeBTN" class="img-fluid img_close" alt="Botão de Fechar" />
+    </button>
     <div class="form-floating mb-3">
       <input
         type="text"
@@ -243,6 +249,7 @@
         id="floatingModel"
         placeholder="Username"
         (input)="getUserName($event)"
+        [(ngModel)]="inputUsername"
       />
       <label for="floatingModel">Username</label>
     </div>
@@ -253,6 +260,7 @@
         id="floatingModel"
         placeholder="Password"
         (input)="getPwd($event)"
+        [(ngModel)]="inputPass"
       />
       <label for="floatingModel">Password</label>
     </div>

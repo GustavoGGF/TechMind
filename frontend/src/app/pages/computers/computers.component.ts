@@ -51,6 +51,8 @@ export class ComputersComponent implements OnInit {
   input_name: string = '';
   input_pwd: string = '';
   input_username: string = '';
+  inputUsername: string = '';
+  inputPass: string = '';
   home_class: string = '';
   messageError: string = '';
   one_hundred_quantity: string = '';
@@ -58,10 +60,13 @@ export class ComputersComponent implements OnInit {
   reset_filter: string = '/static/assets/images/filtro.png';
   quantity_filter: string | null = '';
   selectedValue: string = 'None';
+  selectedReports: string = 'None';
+  closeBTN: string = '/static/assets/images/fechar.png';
 
   // Declarando variaveis boolean
   canView: boolean = false;
   canViewCredentials: boolean = false;
+  canViewCredentialsLoading: boolean = false;
   canViewMachines: boolean = false;
   canViewMessage: boolean = false;
   checkedAll: boolean = true;
@@ -732,6 +737,14 @@ export class ComputersComponent implements OnInit {
     this.canViewCredentials = true;
   }
 
+  closeCredential(): void {
+    this.canViewCredentials = false;
+    this.selectedReports = 'None';
+    this.inputUsername = '';
+    this.inputPass = '';
+    this.canViewCredentialsLoading = false;
+  }
+
   exportMachineReport(): void {
     // Seleciona todos os checkboxes com a classe 'ckip'
     const checkboxes = this.el.nativeElement.querySelectorAll('.ckip');
@@ -794,6 +807,7 @@ export class ComputersComponent implements OnInit {
 
   // Envia o usuario e senha para o backend
   submitReportDNS(): void {
+    this.canViewCredentialsLoading = true;
     this.http
       .post(
         '/home/computers/report-dns',
@@ -812,6 +826,9 @@ export class ComputersComponent implements OnInit {
         catchError((error) => {
           this.status = error.status;
 
+          if (this.status !== 200) {
+            this.canViewCredentialsLoading = false;
+          }
           if (this.status === 401) {
             this.errorType = 'Invalid Credentials';
             this.messageError = 'Usuario e/ou Senha Incorreto';
@@ -827,6 +844,7 @@ export class ComputersComponent implements OnInit {
           link.download = data.filename;
           link.click();
           this.canViewCredentials = false;
+          this.canViewCredentialsLoading = false;
         }
       });
   }

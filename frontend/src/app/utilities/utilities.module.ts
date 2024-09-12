@@ -7,6 +7,7 @@ import { LoadingSearchComponent } from './loading-search/loading-search.componen
 import { MessageComponent } from './message/message.component';
 import { NavbarComponent } from './navbar/navbar.component';
 import { ChartSplineLineComponent } from './chart-spline-line/chart-spline-line.component';
+import { LoadingPerfectApeComponent } from './loading-perfect-ape/loading-perfect-ape.component';
 
 // Modulo que gerencia os utilitarios Disponibilizando eles onde o Modulo for importado
 @NgModule({
@@ -17,6 +18,7 @@ import { ChartSplineLineComponent } from './chart-spline-line/chart-spline-line.
     MessageComponent,
     NavbarComponent,
     ChartSplineLineComponent,
+    LoadingPerfectApeComponent,
   ],
   imports: [CommonModule, NgApexchartsModule],
   exports: [
@@ -26,6 +28,7 @@ import { ChartSplineLineComponent } from './chart-spline-line/chart-spline-line.
     MessageComponent,
     NavbarComponent,
     ChartSplineLineComponent,
+    LoadingPerfectApeComponent,
   ],
 })
 export class UtilitiesModule {}
