@@ -314,6 +314,10 @@ export class ComputersDetailsComponent
               this.url_model = `/static/assests/images/models/${model_string}.png`;
               break;
           }
+          console.log(this.model);
+
+          console.log(model_string);
+
           this.serial_number = this.info_PC[11];
           this.max_capacity_memory = this.info_PC[12];
           this.number_of_slot = this.info_PC[13];
