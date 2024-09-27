@@ -86,6 +86,7 @@ export class ComputersDetailsComponent
   macAddress: string = '';
   manufacturer: string = '';
   max_capacity_memory: string = '';
+  menString: string = '';
   model: string = '';
   motherboard_asset_tag: string = '';
   motherboard_manufacturer: string = '';
@@ -124,8 +125,10 @@ export class ComputersDetailsComponent
   modifyOther: boolean = false;
   showBar: boolean = false;
   available: boolean = false;
+  possible_raid: boolean = false;
 
   transformedData: any;
+  raid_disks: any;
 
   // Variaveis Object
   softwareList: { name: string; version: string; vendor: string }[] = [];
@@ -215,6 +218,10 @@ export class ComputersDetailsComponent
               break;
             case 'microsoftwindows11pro':
               this.url_logo = '/static/assets/images/brands/windows11.jpg';
+              break;
+            case 'freebsd':
+              this.url_logo = `/static/assets/images/brands/${operational_System_string}.png`;
+              break;
           }
           this.system_version = this.info_PC[6];
           this.domain = this.info_PC[7];
@@ -303,14 +310,66 @@ export class ComputersDetailsComponent
             case 'optiplex780':
               this.url_model = `/static/assets/images/models/${model_string}.png`;
               break;
+            case 'proliantml110g6':
+              this.url_model = `/static/assests/images/models/${model_string}.png`;
+              break;
           }
           this.serial_number = this.info_PC[11];
           this.max_capacity_memory = this.info_PC[12];
           this.number_of_slot = this.info_PC[13];
           this.hard_disk_model = this.info_PC[14];
+          let modelsArray: any[] = [];
+          if (this.hard_disk_model.includes(',')) {
+            this.possible_raid = true;
+            modelsArray = this.hard_disk_model.split(',').map((disk) => {
+              return { model: disk.trim() };
+            });
+          }
           this.hard_disk_serial_number = this.info_PC[15];
+          let serialsArray: { sn: any }[] = [];
+          if (this.hard_disk_serial_number) {
+            serialsArray = this.hard_disk_serial_number
+              .split(',')
+              .map((disk) => {
+                return { sn: disk.trim() };
+              });
+          }
+
           this.hard_disk_user_capacity = this.info_PC[16];
+          let capacitiesArray: { size: any }[] = [];
+          if (this.hard_disk_user_capacity) {
+            capacitiesArray = this.hard_disk_user_capacity
+              .split(',')
+              .map((capacity) => {
+                const trimmedCapacity = capacity.trim();
+                const parts = trimmedCapacity.split('.');
+                if (parts.length > 1 && parts[1].length > 2) {
+                  return { size: `${parts[0]}.${parts[1].substring(0, 2)}` };
+                } else {
+                  return { size: trimmedCapacity }; // Se não houver ponto ou menos de 2 caracteres após o ponto
+                }
+              });
+          }
+
           this.hard_disk_sata_version = this.info_PC[17];
+          let sataVArray: { satav: any }[] = [];
+          if (this.hard_disk_sata_version) {
+            sataVArray = this.hard_disk_sata_version.split('|').map((disk) => {
+              return { satav: disk.trim() };
+            });
+          }
+
+          this.raid_disks = modelsArray.map((disk, index) => {
+            return {
+              model: disk.model,
+              sn: serialsArray[index] ? serialsArray[index].sn : null,
+              size: capacitiesArray[index] ? capacitiesArray[index].size : null,
+              sata: sataVArray[index] ? sataVArray[index].satav : null,
+            };
+          });
+
+          console.log(this.hard_disk_user_capacity);
+
           this.cpu_architecture = this.info_PC[18];
           this.cpu_operation_mode = this.info_PC[19];
           this.cpus = this.info_PC[20];
@@ -365,11 +424,10 @@ export class ComputersDetailsComponent
                 for (let i = 0; i < names.length; i++) {
                   this.softwares_list.push(names[i]);
                 }
+                this.memory_windows = false;
                 break;
               case 'microsoftwindows10pro':
                 this.softwares_list = this.processSoftwareString(list);
-
-                // Configurando o valor de memory_windows para exibir no template
                 this.memory_windows = true;
                 break;
               case 'microsoftwindowsserver2012datacenter':
@@ -405,6 +463,11 @@ export class ComputersDetailsComponent
             }
           }
         }
+        this.menString = this.info_PC[43];
+        // Substituir aspas simples por aspas duplas
+        const validJsonString = this.menString.replace(/'/g, '"');
+        // Converter para array
+        this.memories = JSON.parse(validJsonString);
 
         this.imob = this.info_PC[44];
         this.location = this.info_PC[45];

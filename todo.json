@@ -10,17 +10,10 @@
     "Upgrade": {}
   },
   "Back End": {
-    "HotFix": {
-      "MDRT": "Moderators de csrf e login_required",
-      "QRIS": "Queries mais performaticas",
-      "FNCTDTBS": "Ultizar a função de conexão do DB em todo codigo"
-    }
+    "HotFix": {}
   },
   "Front end": {
-    "HptFix": {
-      "HDRS": "Adicionar headers",
-      "NVBRLTRS": "Arrumar as letras no navbar, deixar em negrito e ao passar o mouse em cima deixar branco"
-    }
+    "HptFix": {}
   },
   "Exec's": {
     "All": {

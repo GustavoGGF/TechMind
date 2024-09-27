@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from decouple import config
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.http import  JsonResponse
+from django.http import JsonResponse
 from django.middleware.csrf import get_token
 from django_ratelimit.decorators import ratelimit
 from django.shortcuts import redirect, render
@@ -143,10 +143,13 @@ def getInfoSOChart(request):
     except mysql.connector.Error as e:
         logger.error(f"Database query error: {e}")
         return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
-
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
         return JsonResponse({"error": "Erro inesperado"}, status=500)
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
 
     return JsonResponse(results_list, status=200, safe=False)
 
@@ -179,84 +182,72 @@ def getInfoLastUpdate(request):
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
         return JsonResponse({"error": "Erro inesperado"}, status=500)
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
 
     return JsonResponse(results_list, status=200, safe=False)
 
 
 @requires_csrf_token
 @login_required(login_url="/login")
+@require_GET
 def computers(request):
-    if request.method == "POST":
-        return redirect("/home")
-
-    if request.method == "GET":
-        return render(request, "index.html", {})
+    return render(request, "index.html", {})
 
 
-# Request csrf
 @requires_csrf_token
-# Necessita estar logado
 @login_required(login_url="/login")
-# Função que pega os dados dos computadores por quantidade conforme solicitado
+@never_cache
+@transaction.atomic
+@require_GET
 def getDataComputers(request, quantity):
-    if request.method == "POST":
-        return
-    if request.method == "GET":
-        # Iniciando varaiveis
-        connection = None
-        cursor = None
-        query = None
-        results = None
-        MAC_ADDRESS_INDEX = None
-        try:
-            # Conectando no BD
-            connection = mysql.connector.connect(
-                host=config("DB_HOST"),
-                database=config("DB_NAME"),
-                user=config("DB_USER"),
-                password=config("DB_PASSWORD"),
-            )
-            # Verificando a conexão
-            if connection.is_connected():
-                cursor = connection.cursor()
+    # Iniciando varaiveis
+    connection = None
+    cursor = None
+    query = None
+    results = None
+    MAC_ADDRESS_INDEX = None
 
-            # Verificando a quantidade solicitando
-            match quantity:
-                case "10":
-                    query = (
-                        "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 10"
-                    )
-                case "50":
-                    query = (
-                        "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 50"
-                    )
-                case "100":
-                    query = (
-                        "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 100"
-                    )
-                case "all":
-                    query = "SELECT * FROM machines ORDER BY insertion_date DESC"
+    try:
+        # Verificando a quantidade solicitando
+        match quantity:
+            case "10":
+                query = "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 10"
+            case "50":
+                query = "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 50"
+            case "100":
+                query = "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 100"
+            case "all":
+                query = "SELECT * FROM machines ORDER BY insertion_date DESC"
 
-            # Executandoa a busca
+        with get_database_connection() as connection:
+            cursor = connection.cursor()
             cursor.execute(query)
-
-            # Obtendo os resultados como listas
             results = [list(row) for row in cursor.fetchall()]
-            # Fechando a conexão
+
+        # Presumindo que o índice da coluna mac_address é 0 (modifique conforme necessário)
+        MAC_ADDRESS_INDEX = 0
+
+        # Reverter o endereço MAC para cada item nos resultados
+        for row in results:
+            row[MAC_ADDRESS_INDEX] = revert_mac_address(row[MAC_ADDRESS_INDEX])
+
+    except mysql.connector.Error as e:
+        logger.error(f"Database query error: {e}")
+        return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({"error": "Erro inesperado"}, status=500)
+
+    finally:
+        if connection.is_connected():
             cursor.close()
             connection.close()
 
-            # Presumindo que o índice da coluna mac_address é 0 (modifique conforme necessário)
-            MAC_ADDRESS_INDEX = 0
-
-            # Reverter o endereço MAC para cada item nos resultados
-            for row in results:
-                row[MAC_ADDRESS_INDEX] = revert_mac_address(row[MAC_ADDRESS_INDEX])
-
-            return JsonResponse({"machines": results}, status=200, safe=True)
-
-        except Exception as e:
-            print(e)
+    return JsonResponse({"machines": results}, status=200, safe=True)
 
 
 def normalize_mac_address(mac):
@@ -270,6 +261,7 @@ def revert_mac_address(normalized_mac):
 
 def contains_backslash(s):
     return "\\" in s
+
 
 # Função que recebe os dados do computador
 @csrf_exempt
@@ -673,339 +665,289 @@ def postMachines(request):
         return JsonResponse({"error": str(e)}, status=400)
 
 
+@require_GET
 def postMachinesWithMac(request, mac_address):
-    if request.method == "GET":
-        return render(request, "index.html", {})
+    return render(request, "index.html", {})
 
 
+@require_GET
+@never_cache
+@requires_csrf_token
+@login_required(login_url="/login")
 def infoMachine(request, mac_address):
-    if request.method == "GET":
-        connection = None
-        cursor = None
-        select_query = None
-        try:
-            connection = mysql.connector.connect(
-                host=config("DB_HOST"),
-                database=config("DB_NAME"),
-                user=config("DB_USER"),
-                password=config("DB_PASSWORD"),
-            )
-
-            if connection.is_connected():
-                cursor = connection.cursor()
-
-            # Comando SQL para verificar se o endereço MAC existe na tabela
-            select_query = "SELECT * FROM machines WHERE mac_address = %s"
+    connection = None
+    cursor = None
+    query = None
+    try:
+        with get_database_connection() as connection:
+            cursor = connection.cursor()
+            query = "SELECT * FROM machines WHERE mac_address = %s"
             # Normalizando o endereço MAC
             normalized_mac = normalize_mac_address(mac_address)
-
-            cursor.execute(select_query, (normalized_mac,))
-
-            # Obtendo os resultados
+            cursor.execute(query, (normalized_mac,))
             results = cursor.fetchall()
 
-            # Fechando a conexão
+        return JsonResponse({"data": results}, status=200, safe=True)
+    except mysql.connector.Error as e:
+        logger.error(f"Database query error: {e}")
+        return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({"error": "Erro inesperado"}, status=500)
+    finally:
+        if connection.is_connected():
             cursor.close()
             connection.close()
 
-            return JsonResponse({"data": results}, status=200, safe=True)
-        except Exception as e:
-            print(e)
-            return JsonResponse({}, status=403, safe=True)
 
-
+@require_GET
+@requires_csrf_token
+@login_required(login_url="/login")
 def devices(request):
-    if request.method == "GET":
-        return render(request, "index.html", {})
-    if request.method == "POST":
-        return
+    return render(request, "index.html", {})
 
 
 @login_required(login_url="/login")
+@require_POST
+@requires_csrf_token
 def devices_post(request):
-    if request.method == "GET":
-        return redirect("/devices")
-    if request.method == "POST":
-        data = None
-        equipament = ""
-        model = ""
-        serial_number = ""
-        imob = ""
-        connection = None
-        cursor = None
-        try:
-            data = loads(request.body)
-            equipament = data.get("device")
-            model = data.get("model")
-            serial_number = data.get("serial_number")
-            imob = data.get("imob")
-            brand = data.get("brand")
+    data = None
+    equipament = ""
+    model = ""
+    serial_number = ""
+    imob = ""
+    connection = None
+    cursor = None
+    try:
+        data = loads(request.body)
+        equipament = data.get("device")
+        model = data.get("model")
+        serial_number = data.get("serial_number")
+        imob = data.get("imob")
+        brand = data.get("brand")
 
-            logger.info(equipament)
-
-            connection = mysql.connector.connect(
-                host=config("DB_HOST"),
-                database=config("DB_NAME"),
-                user=config("DB_USER"),
-                password=config("DB_PASSWORD"),
-            )
-
-            if connection.is_connected():
-                cursor = connection.cursor()
-
+        with get_database_connection() as connection:
+            cursor = connection.cursor()
             query = """INSERT INTO devices (equipament, model, serial_number, imob, brand) 
                 VALUES (%s, %s, %s, %s, %s)"""
-
             cursor.execute(
                 query,
                 (equipament, model, serial_number, imob, brand),
             )
 
-            # Confirmando a inserção
-            connection.commit()
+        return JsonResponse({}, status=200, safe=True)
 
-            # Fechando a conexão
-            cursor.close()
-            connection.close()
-
-            return JsonResponse({}, status=200, safe=True)
-
-        except mysql.connector.Error as err:
-            if err.errno == 1062:
-                update_query = """UPDATE devices SET equipament = %s, model = %s, 
+    except mysql.connector.Error as err:
+        if err.errno == 1062:
+            with get_database_connection() as connection:
+                cursor = connection.cursor()
+                query = """UPDATE devices SET equipament = %s, model = %s, 
                 imob = %s, brand = %s WHERE serial_number = %s"""
-
-                logger.info(equipament)
-
                 cursor.execute(
-                    update_query, (equipament, model, imob, brand, serial_number)
+                    query,
+                    (equipament, model, serial_number, imob, brand),
                 )
 
-                # Confirmando a inserção
-                connection.commit()
-
-                # Fechando a conexão
-                cursor.close()
-                connection.close()
-
-                return JsonResponse({}, status=200, safe=False)
-            else:
-                logger.error(f"Erro ao inserir dados: {err}")
-                return JsonResponse({"error": "Invalid MYSQL"}, status=400, safe=False)
-
-        except Exception as e:
-            print(e)
-            return JsonResponse({"error": "Invalid MYSQL"}, status=400, safe=False)
-
-
-# Função que pega os dispositivos em quantidade conforme solicitação
-def devices_get(request, quantity):
-    if request.method == "GET":
-        # Declarando algumas variaveis
-        connection = None
-        cursor = None
-        results = None
-        select_query = None
-        results = None
-        try:
-            # Conectando no BD
-            connection = mysql.connector.connect(
-                host=config("DB_HOST"),
-                database=config("DB_NAME"),
-                user=config("DB_USER"),
-                password=config("DB_PASSWORD"),
-            )
-            # Confirmando conexão
-            if connection.is_connected():
-                cursor = connection.cursor()
-            # Verificando quantidade selecionada
-            match quantity:
-                case "10":
-                    select_query = "SELECT * FROM devices LIMIT 10;"
-                case "50":
-                    select_query = "SELECT * FROM devices LIMIT 50;"
-                case "100":
-                    select_query = "SELECT * FROM devices LIMIT 100;"
-                case "all":
-                    select_query = "SELECT * FROM devices;"
-
-            cursor.execute(select_query)
-            # Obtendo os resultados como listas
-            results = [list(row) for row in cursor.fetchall()]
-            # Fechando a conexão
-            cursor.close()
-            connection.close()
-
-            return JsonResponse({"devices": results}, status=200, safe=True)
-        except Exception as e:
-            logger.info(e)
-
-
-def devices_details(request, sn):
-    if request.method == "GET":
-        return render(request, "index.html", {})
-
-
-def infoDevice(request, sn):
-    if request.method == "GET":
-        connection = None
-        cursor = None
-        select_query = None
-        try:
-            connection = mysql.connector.connect(
-                host=config("DB_HOST"),
-                database=config("DB_NAME"),
-                user=config("DB_USER"),
-                password=config("DB_PASSWORD"),
-            )
-
-            if connection.is_connected():
-                cursor = connection.cursor()
-
-            # Comando SQL para verificar se o endereço MAC existe na tabela
-            select_query = "SELECT * FROM devices WHERE serial_number = %s"
-
-            cursor.execute(select_query, (sn,))
-
-            # Obtendo os resultados
-            results = cursor.fetchall()
-
-            # Fechando a conexão
-            cursor.close()
-            connection.close()
-
-            return JsonResponse({"data": results}, status=200, safe=True)
-        except Exception as e:
-            print(e)
-            return JsonResponse({}, status=403, safe=True)
-
-
-def lastMachines(request):
-    if request.method == "GET":
-        connection = None
-        cursor = None
-        query = None
-        results = None
-        try:
-            connection = mysql.connector.connect(
-                host=config("DB_HOST"),
-                database=config("DB_NAME"),
-                user=config("DB_USER"),
-                password=config("DB_PASSWORD"),
-            )
-
-            if connection.is_connected():
-                cursor = connection.cursor()
-
-            # Consulta SQL para contar os itens na coluna 'windows' da tabela 'machines'
-            query = "SELECT * FROM machines ORDER BY insertion_date DESC"
-            cursor.execute(query)
-
-            # Obtendo os resultados como listas
-            results = [list(row) for row in cursor.fetchall()]
-            # Fechando a conexão
-            cursor.close()
-            connection.close()
-
-            # Presumindo que o índice da coluna mac_address é 0 (modifique conforme necessário)
-            MAC_ADDRESS_INDEX = 0
-
-            # Reverter o endereço MAC para cada item nos resultados
-            for row in results:
-                row[MAC_ADDRESS_INDEX] = revert_mac_address(row[MAC_ADDRESS_INDEX])
-
-            return JsonResponse({"machines": results}, status=200, safe=True)
-
-        except Exception as e:
-            print(e)
-    if request.method == "POST":
-        return
-
-
-def addedDevices(request):
-    if request.method == "GET":
-        return
-    if request.method == "POST":
-        device = None
-        data = None
-        computer = None
-        connection = None
-        cursor = None
-        try:
-            data = loads(request.body)
-            device = data.get("device")
-            computer = data.get("computer")
-
-            connection = mysql.connector.connect(
-                host=config("DB_HOST"),
-                database=config("DB_NAME"),
-                user=config("DB_USER"),
-                password=config("DB_PASSWORD"),
-            )
-
-            if connection.is_connected():
-                cursor = connection.cursor()
-
-            select_query = (
-                "UPDATE devices SET linked_computer = %s WHERE serial_number = %s"
-            )
-
-            cursor.execute(select_query, (computer, device))
-
-            # Confirmando a inserção
-            connection.commit()
-            # Fechando a conexão
-            cursor.close()
-            connection.close()
-
-            return JsonResponse({}, status=200, safe=True)
-
-        except mysql.connector.Error as err:
+            return JsonResponse({}, status=200, safe=False)
+        else:
             logger.error(f"Erro ao inserir dados: {err}")
             return JsonResponse({"error": "Invalid MYSQL"}, status=400, safe=False)
 
-        except Exception as e:
-            logger.error(e)
-            return JsonResponse({}, status=410, safe=True)
+    except Exception as e:
+        print(e)
+        return JsonResponse({"error": "Invalid MYSQL"}, status=400, safe=False)
 
-
-def computersDevices(request, mac_address):
-    if request.method == "GET":
-        connection = None
-        cursor = None
-        query = None
-        results = None
-        mac = None
-        try:
-            connection = mysql.connector.connect(
-                host=config("DB_HOST"),
-                database=config("DB_NAME"),
-                user=config("DB_USER"),
-                password=config("DB_PASSWORD"),
-            )
-
-            if connection.is_connected():
-                cursor = connection.cursor()
-
-            # Consulta SQL para contar os itens na coluna 'windows' da tabela 'machines'
-            query = "SELECT * FROM devices WHERE linked_computer =%s LIMIT 10"
-
-            mac = revert_mac_address(mac_address)
-            logger.info("revert_mac_address:", mac)
-
-            cursor.execute(query, (mac,))
-
-            # Obtendo os resultados como listas
-            results = [list(row) for row in cursor.fetchall()]
-            # Fechando a conexão
+    finally:
+        if connection.is_connected():
             cursor.close()
             connection.close()
 
-            return JsonResponse({"data": results}, status=200, safe=True)
-        except Exception as e:
-            logger.info(e)
-    if request.method == "POST":
-        return
+
+# Função que pega os dispositivos em quantidade conforme solicitação
+@require_GET
+@requires_csrf_token
+@login_required(login_url="/login")
+def devices_get(request, quantity):
+    # Declarando algumas variaveis
+    connection = None
+    cursor = None
+    results = None
+    query = None
+    results = None
+    try:
+        # Verificando quantidade selecionada
+        match quantity:
+            case "10":
+                query = "SELECT * FROM devices LIMIT 10;"
+            case "50":
+                query = "SELECT * FROM devices LIMIT 50;"
+            case "100":
+                query = "SELECT * FROM devices LIMIT 100;"
+            case "all":
+                query = "SELECT * FROM devices;"
+
+        with get_database_connection() as connection:
+            cursor = connection.cursor()
+            cursor.execute(query)
+            results = [list(row) for row in cursor.fetchall()]
+
+        return JsonResponse({"devices": results}, status=200, safe=True)
+
+    except mysql.connector.Error as e:
+        logger.error(f"Database query error: {e}")
+        return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({"error": "Erro inesperado"}, status=500)
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+
+@require_GET
+@login_required(login_url="/login")
+@requires_csrf_token
+def devices_details(request, sn):
+    return render(request, "index.html", {})
+
+
+@require_GET
+@login_required(login_url="/login")
+@requires_csrf_token
+def infoDevice(request, sn):
+    connection = None
+    cursor = None
+    query = None
+    try:
+        with get_database_connection() as connection:
+            cursor = connection.cursor()
+            query = "SELECT * FROM devices WHERE serial_number = %s"
+            # Normalizando o endereço MAC
+            cursor.execute(query, (sn,))
+            results = cursor.fetchall()
+
+        return JsonResponse({"data": results}, status=200, safe=True)
+
+    except mysql.connector.Error as e:
+        logger.error(f"Database query error: {e}")
+        return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
+    except Exception as e:
+        print(e)
+        return JsonResponse({}, status=403, safe=True)
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+
+@require_GET
+@login_required(login_url="/login")
+@requires_csrf_token
+@never_cache
+def lastMachines(request):
+    connection = None
+    cursor = None
+    query = None
+    results = None
+    try:
+        with get_database_connection() as connection:
+            cursor = connection.cursor()
+            query = "SELECT * FROM machines ORDER BY insertion_date DESC"
+            cursor.execute(query)
+            results = [list(row) for row in cursor.fetchall()]
+
+        # Presumindo que o índice da coluna mac_address é 0 (modifique conforme necessário)
+        MAC_ADDRESS_INDEX = 0
+
+        # Reverter o endereço MAC para cada item nos resultados
+        for row in results:
+            row[MAC_ADDRESS_INDEX] = revert_mac_address(row[MAC_ADDRESS_INDEX])
+
+        return JsonResponse({"machines": results}, status=200, safe=True)
+
+    except mysql.connector.Error as e:
+        logger.error(f"Database query error: {e}")
+        return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({"error": "Erro inesperado"}, status=500)
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+
+@require_GET
+def addedDevices(request):
+    device = None
+    data = None
+    computer = None
+    connection = None
+    cursor = None
+    try:
+        data = loads(request.body)
+        device = data.get("device")
+        computer = data.get("computer")
+
+        with get_database_connection() as connection:
+            cursor = connection.cursor()
+            query = "UPDATE devices SET linked_computer = %s WHERE serial_number = %s"
+            cursor.execute(
+                query,
+                (
+                    computer,
+                    device,
+                ),
+            )
+
+        return JsonResponse({}, status=200, safe=True)
+
+    except mysql.connector.Error as err:
+        logger.error(f"Erro ao inserir dados: {err}")
+        return JsonResponse({"error": "Invalid MYSQL"}, status=400, safe=False)
+    except Exception as e:
+        logger.error(e)
+        return JsonResponse({}, status=410, safe=True)
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+
+@require_GET
+@login_required(login_url="/login")
+@requires_csrf_token
+@never_cache
+def computersDevices(request, mac_address):
+    connection = None
+    cursor = None
+    query = None
+    results = None
+    mac = None
+    try:
+        with get_database_connection() as connection:
+            cursor = connection.cursor()
+            query = "SELECT * FROM devices WHERE linked_computer =%s LIMIT 10"
+            mac = revert_mac_address(mac_address)
+            cursor.execute(query, (mac,))
+            results = [list(row) for row in cursor.fetchall()]
+
+        return JsonResponse({"data": results}, status=200, safe=True)
+    except mysql.connector.Error as e:
+        logger.error(f"Database query error: {e}")
+        return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({"error": "Erro inesperado"}, status=500)
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
 
 
 # Função que salva os dados da aba outros
@@ -1172,454 +1114,355 @@ def computersModify(request, mac_address):
 
 
 # Função que libera o token CSRF
+@require_GET
 def getToken(request):
-    if request.method == "GET":
-        csrf = get_token(request)
-        return JsonResponse({"token": csrf}, status=200, safe=True)
+    csrf = get_token(request)
+    return JsonResponse({"token": csrf}, status=200, safe=True)
 
 
 # Requer que esteja logado
 @login_required(login_url="/login")
+@require_GET
+@never_cache
+@requires_csrf_token
 # Função que retorna as máquinas conforme quantidade solicitada
 def getQuantity(request, quantity):
-    if request.method == "GET":
-        # Inicia uma variavel e prepara a query conforme quantidade solicitada
-        query = None
-        match quantity:
-            case "10":
-                query = "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 10"
-            case "50":
-                query = "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 50"
-            case "100":
-                query = "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 100"
-            case "all":
-                query = "SELECT * FROM machines ORDER BY insertion_date DESC"
+    # Inicia uma variavel e prepara a query conforme quantidade solicitada
+    query = None
+    match quantity:
+        case "10":
+            query = "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 10"
+        case "50":
+            query = "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 50"
+        case "100":
+            query = "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 100"
+        case "all":
+            query = "SELECT * FROM machines ORDER BY insertion_date DESC"
 
-        # Iniciando demais varaiveis
-        connection = None
-        cursor = None
-        results = None
-        try:
-            # Conectando ao banco
-            connection = mysql.connector.connect(
-                host=config("DB_HOST"),
-                database=config("DB_NAME"),
-                user=config("DB_USER"),
-                password=config("DB_PASSWORD"),
-            )
-
-            # Verificando conexão
-            if connection.is_connected():
-                cursor = connection.cursor()
-
-            # Executando a query
+    # Iniciando demais varaiveis
+    connection = None
+    cursor = None
+    results = None
+    try:
+        with get_database_connection() as connection:
+            cursor = connection.cursor()
             cursor.execute(query, ())
-
-            # Obtendo o resultado
             results = [list(row) for row in cursor.fetchall()]
 
-            # Fechando a conexão
+        return JsonResponse({"machines": results}, status=200, safe=True)
+    except mysql.connector.Error as e:
+        logger.error(f"Database query error: {e}")
+        return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({"error": "Erro inesperado"}, status=500)
+    finally:
+        if connection.is_connected():
             cursor.close()
             connection.close()
-
-            return JsonResponse({"machines": results}, status=200, safe=True)
-        except Exception as e:
-            logger.error(e)
-            return JsonResponse({}, status=420)
-
-    if request.method == "POST":
-        return
 
 
 # Obtem os computadores para o filtro SO
+@require_GET
+@never_cache
 def getDataSO(request):
-    if request.method == "GET":
-        # Declarando algumas variaveis
-        connection = None
-        cursor = None
-        query = None
-        results = None
-        try:
-            # Conectando ao banco
-            connection = mysql.connector.connect(
-                host=config("DB_HOST"),
-                database=config("DB_NAME"),
-                user=config("DB_USER"),
-                password=config("DB_PASSWORD"),
-            )
-
-            # Verificando conexão
-            if connection.is_connected():
-                cursor = connection.cursor()
-
-            # Query SQL buscando todos os SO diferentes
+    # Declarando algumas variaveis
+    connection = None
+    cursor = None
+    query = None
+    results = None
+    try:
+        with get_database_connection() as connection:
+            cursor = connection.cursor()
             query = "SELECT DISTINCT system_name FROM machines;"
-
-            # Executando a query
-            cursor.execute(query, ())
-
-            # Obtendo o resultado
+            cursor.execute(query)
             results = [list(row) for row in cursor.fetchall()]
 
-            # Fechando a conexão
+        return JsonResponse({"SO": results}, status=200, safe=True)
+
+    except mysql.connector.Error as e:
+        logger.error(f"Database query error: {e}")
+        return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({"error": "Erro inesperado"}, status=500)
+    finally:
+        if connection.is_connected():
             cursor.close()
             connection.close()
-
-            return JsonResponse({"SO": results}, status=200, safe=True)
-
-        except Exception as e:
-            logger.info(e)
-            return JsonResponse({}, status=314)
-    if request.method == "POST":
-        return
 
 
 # Obtem os computadores para o filtro de distribution
+@require_GET
+@never_cache
 def getDataDIS(request):
-    if request.method == "GET":
-        connection = None
-        cursor = None
-        query = None
-        results = None
-        try:
-            # Conectando ao banco
-            connection = mysql.connector.connect(
-                host=config("DB_HOST"),
-                database=config("DB_NAME"),
-                user=config("DB_USER"),
-                password=config("DB_PASSWORD"),
-            )
-
-            # Verificando conexão
-            if connection.is_connected():
-                cursor = connection.cursor()
-
-            # Query SQL buscando todos os SO diferentes
+    connection = None
+    cursor = None
+    query = None
+    results = None
+    try:
+        with get_database_connection() as connection:
+            cursor = connection.cursor()
             query = "SELECT DISTINCT distribution FROM machines;"
-
-            # Executando a query
             cursor.execute(query, ())
-
-            # Obtendo o resultado
             results = [list(row) for row in cursor.fetchall()]
 
-            # Fechando a conexão
+        return JsonResponse({"DIS": results}, status=200, safe=True)
+
+    except mysql.connector.Error as e:
+        logger.error(f"Database query error: {e}")
+        return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({"error": "Erro inesperado"}, status=500)
+    finally:
+        if connection.is_connected():
             cursor.close()
             connection.close()
 
-            return JsonResponse({"DIS": results}, status=200, safe=True)
-
-        except Exception as e:
-            logger.info(e)
-            return JsonResponse({}, status=314)
-    if request.method == "POST":
-        return
-
 
 # Função executada ao selecionar o SO no filtro
+@require_GET
+@never_cache
 def getDataSoFilter(request, quantity, so):
-    if request.method == "GET":
-        # Declarando algumas variaveis
-        query = None
-        connection = None
-        cursor = None
-        results = None
-        try:
-            # Caso a opção escolhida de Distribution seja para mostrar todos
-            if so == "all":
-                # Então so organiza pela quantidade que deseja ser exibida
-                match quantity:
-                    case "10":
-                        query = """SELECT * 
+    # Declarando algumas variaveis
+    query = None
+    connection = None
+    cursor = None
+    results = None
+    try:
+        # Caso a opção escolhida de Distribution seja para mostrar todos
+        if so == "all":
+            # Então so organiza pela quantidade que deseja ser exibida
+            match quantity:
+                case "10":
+                    query = """SELECT * 
                                     FROM machines 
                                     ORDER BY insertion_date DESC 
                                     LIMIT 10;
                                     """
-                    case "50":
-                        query = """SELECT *
+                case "50":
+                    query = """SELECT *
                                     FROM machines 
                                     ORDER BY insertion_date DESC 
                                     LIMIT 50;
                                     """
-                    case "100":
-                        query = """SELECT *
+                case "100":
+                    query = """SELECT *
                                     FROM machines 
                                     ORDER BY insertion_date DESC 
                                     LIMIT 100;
                                     """
-                    case "all":
-                        query = """SELECT *
+                case "all":
+                    query = """SELECT *
                                     FROM machines 
                                     ORDER BY insertion_date DESC;
                                     """
 
-                # Conectando ao banco
-                connection = mysql.connector.connect(
-                    host=config("DB_HOST"),
-                    database=config("DB_NAME"),
-                    user=config("DB_USER"),
-                    password=config("DB_PASSWORD"),
-                )
-
-                # Verificando conexão
-                if connection.is_connected():
-                    cursor = connection.cursor()
-
-                # Executando a query
+            with get_database_connection() as connection:
+                cursor = connection.cursor()
                 cursor.execute(query, ())
-
                 # Obtendo o resultado
                 results = [list(row) for row in cursor.fetchall()]
 
-                # Fechando a conexão
-                cursor.close()
-                connection.close()
-
-                return JsonResponse({"machines": results}, status=200, safe=True)
-            # Caso o SO seja algum especifico então ele busca pelo SO e pela quantidade
-            else:
-                match quantity:
-                    case "10":
-                        query = """SELECT * 
+            return JsonResponse({"machines": results}, status=200, safe=True)
+        # Caso o SO seja algum especifico então ele busca pelo SO e pela quantidade
+        else:
+            match quantity:
+                case "10":
+                    query = """SELECT * 
                                     FROM machines 
                                     WHERE system_name = %s 
                                     ORDER BY insertion_date DESC 
                                     LIMIT 10;
                                     """
-                    case "50":
-                        query = """SELECT * 
+                case "50":
+                    query = """SELECT * 
                                     FROM machines 
                                     WHERE system_name = %s 
                                     ORDER BY insertion_date DESC 
                                     LIMIT 50;
                                     """
-                    case "100":
-                        query = """SELECT * 
+                case "100":
+                    query = """SELECT * 
                                     FROM machines 
                                     WHERE system_name = %s 
                                     ORDER BY insertion_date DESC 
                                     LIMIT 100;
                                     """
-                    case "all":
-                        query = """SELECT * 
+                case "all":
+                    query = """SELECT * 
                                 FROM machines 
                                 WHERE system_name = %s 
                                 ORDER BY insertion_date DESC;
                                 """
 
-                # Conectando ao banco
-                connection = mysql.connector.connect(
-                    host=config("DB_HOST"),
-                    database=config("DB_NAME"),
-                    user=config("DB_USER"),
-                    password=config("DB_PASSWORD"),
-                )
-
-                # Verificando conexão
-                if connection.is_connected():
-                    cursor = connection.cursor()
-
-                # Executando a query
+            with get_database_connection() as connection:
+                cursor = connection.cursor()
                 cursor.execute(query, (so,))
-
-                # Obtendo o resultado
                 results = [list(row) for row in cursor.fetchall()]
 
-                # Fechando a conexão
-                cursor.close()
-                connection.close()
+            return JsonResponse({"machines": results}, status=200, safe=True)
 
-                return JsonResponse({"machines": results}, status=200, safe=True)
+    except mysql.connector.Error as e:
+        logger.error(f"Database query error: {e}")
+        return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({"error": "Erro inesperado"}, status=500)
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
 
-        except Exception as e:
-            logger.error(e)
-            return JsonResponse({}, status=420)
-    if request.method == "POST":
-        return
 
-
+@require_GET
+@never_cache
 def getDataDisFilter(request, quantity, dis):
-    if request.method == "GET":
-        # Declarando algumas variaveis
-        query = None
-        connection = None
-        cursor = None
-        results = None
-        try:
-            # Caso a opção escolhida de distribution seja para mostrar todos
-            if dis == "all":
-                # Então so organiza pela quantidade que deseja ser exibida
-                match quantity:
-                    case "10":
-                        query = """SELECT * 
+    # Declarando algumas variaveis
+    query = None
+    connection = None
+    cursor = None
+    results = None
+    try:
+        # Caso a opção escolhida de distribution seja para mostrar todos
+        if dis == "all":
+            # Então so organiza pela quantidade que deseja ser exibida
+            match quantity:
+                case "10":
+                    query = """SELECT * 
                                     FROM machines 
                                     ORDER BY insertion_date DESC 
                                     LIMIT 10;
                                     """
-                    case "50":
-                        query = """SELECT *
+                case "50":
+                    query = """SELECT *
                                     FROM machines 
                                     ORDER BY insertion_date DESC 
                                     LIMIT 50;
                                     """
-                    case "100":
-                        query = """SELECT *
+                case "100":
+                    query = """SELECT *
                                     FROM machines 
                                     ORDER BY insertion_date DESC 
                                     LIMIT 100;
                                     """
-                    case "all":
-                        query = """SELECT *
+                case "all":
+                    query = """SELECT *
                                     FROM machines 
                                     ORDER BY insertion_date DESC;
                                     """
 
-                # Conectando ao banco
-                connection = mysql.connector.connect(
-                    host=config("DB_HOST"),
-                    database=config("DB_NAME"),
-                    user=config("DB_USER"),
-                    password=config("DB_PASSWORD"),
-                )
-
-                # Verificando conexão
-                if connection.is_connected():
-                    cursor = connection.cursor()
-
-                # Executando a query
+            with get_database_connection() as connection:
+                cursor = connection.cursor()
                 cursor.execute(query, ())
-
-                # Obtendo o resultado
                 results = [list(row) for row in cursor.fetchall()]
 
-                # Fechando a conexão
-                cursor.close()
-                connection.close()
-
-                return JsonResponse({"machines": results}, status=200, safe=True)
-            # Caso o SO seja algum especifico então ele busca pelo distribution e pela quantidade
-            else:
-                match quantity:
-                    case "10":
-                        query = """SELECT * 
+            return JsonResponse({"machines": results}, status=200, safe=True)
+        # Caso o SO seja algum especifico então ele busca pelo distribution e pela quantidade
+        else:
+            match quantity:
+                case "10":
+                    query = """SELECT * 
                                     FROM machines 
                                     WHERE distribution = %s 
                                     ORDER BY insertion_date DESC 
                                     LIMIT 10;
                                     """
-                    case "50":
-                        query = """SELECT * 
+                case "50":
+                    query = """SELECT * 
                                     FROM machines 
                                     WHERE distribution = %s 
                                     ORDER BY insertion_date DESC 
                                     LIMIT 50;
                                     """
-                    case "100":
-                        query = """SELECT * 
+                case "100":
+                    query = """SELECT * 
                                     FROM machines 
                                     WHERE distribution = %s 
                                     ORDER BY insertion_date DESC 
                                     LIMIT 100;
                                     """
-                    case "all":
-                        query = """SELECT * 
+                case "all":
+                    query = """SELECT * 
                                 FROM machines 
                                 WHERE distribution = %s 
                                 ORDER BY insertion_date DESC;
                                 """
 
-                # Conectando ao banco
-                connection = mysql.connector.connect(
-                    host=config("DB_HOST"),
-                    database=config("DB_NAME"),
-                    user=config("DB_USER"),
-                    password=config("DB_PASSWORD"),
-                )
-
-                # Verificando conexão
-                if connection.is_connected():
-                    cursor = connection.cursor()
-
-                # Executando a query
-                cursor.execute(query, (dis,))
-
-                # Obtendo o resultado
-                results = [list(row) for row in cursor.fetchall()]
-
-                # Fechando a conexão
-                cursor.close()
-                connection.close()
-
-                return JsonResponse({"machines": results}, status=200, safe=True)
-        except Exception as e:
-            logger.error(e)
-            return JsonResponse({}, status=320)
-    if request.method == "POST":
-        return
-
-
-# Função que busca o nome de computar que equivale ao que o usuario esta escrevendo
-def getDataVarchar(request, quantity, name):
-    if request.method == "GET":
-        query = None
-        connection = None
-        cursor = None
-        results = None
-        try:
-            match quantity:
-                case "10":
-                    query = """SELECT *
-                                FROM machines
-                                WHERE name LIKE %s LIMIT 10;
-                                """
-                case "50":
-                    query = """SELECT *
-                                FROM machines
-                                WHERE name LIKE %s LIMIT 50;
-                                """
-                case "100":
-                    query = """SELECT *
-                                FROM machines
-                                WHERE name LIKE %s LIMIT 100;
-                                """
-                case "all":
-                    query = """SELECT *
-                                FROM machines
-                                WHERE name LIKE %s;
-                                """
-            # Conectando ao banco
-            connection = mysql.connector.connect(
-                host=config("DB_HOST"),
-                database=config("DB_NAME"),
-                user=config("DB_USER"),
-                password=config("DB_PASSWORD"),
-            )
-
-            # Verificando conexão
-            if connection.is_connected():
+            with get_database_connection() as connection:
                 cursor = connection.cursor()
-
-            # Executando a query
-            cursor.execute(query, (f"{name}%",))
-
-            # Obtendo o resultado
-            results = [list(row) for row in cursor.fetchall()]
-
-            # Fechando a conexão
-            cursor.close()
-            connection.close()
+                cursor.execute(query, (dis,))
+                results = [list(row) for row in cursor.fetchall()]
 
             return JsonResponse({"machines": results}, status=200, safe=True)
 
-        except Exception as e:
-            logger.error(e)
-            return JsonResponse({}, status=420)
+    except mysql.connector.Error as e:
+        logger.error(f"Database query error: {e}")
+        return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({"error": "Erro inesperado"}, status=500)
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
 
-    if request.method == "POST":
-        return
+
+# Função que busca o nome de computar que equivale ao que o usuario esta escrevendo
+@require_GET
+@never_cache
+def getDataVarchar(request, quantity, name):
+    query = None
+    connection = None
+    cursor = None
+    results = None
+    try:
+        match quantity:
+            case "10":
+                query = """SELECT *
+                                FROM machines
+                                WHERE name LIKE %s LIMIT 10;
+                                """
+            case "50":
+                query = """SELECT *
+                                FROM machines
+                                WHERE name LIKE %s LIMIT 50;
+                                """
+            case "100":
+                query = """SELECT *
+                                FROM machines
+                                WHERE name LIKE %s LIMIT 100;
+                                """
+            case "all":
+                query = """SELECT *
+                                FROM machines
+                                WHERE name LIKE %s;
+                                """
+
+        with get_database_connection() as connection:
+            cursor = connection.cursor()
+            cursor.execute(query, (f"{name}%",))
+            results = [list(row) for row in cursor.fetchall()]
+
+        return JsonResponse({"machines": results}, status=200, safe=True)
+
+    except mysql.connector.Error as e:
+        logger.error(f"Database query error: {e}")
+        return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({"error": "Erro inesperado"}, status=500)
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
 
 
 # Função que gera relatorio DNS mostrando ip Identicos
+@require_POST
+@never_cache
 def getReportDNS(request):
     if request.method == "POST":
         try:
@@ -1692,8 +1535,6 @@ def getReportDNS(request):
         except Exception as e:
             logger.error(f"An error occurred: {e}")
             return JsonResponse({}, status=420)
-    elif request.method == "GET":
-        return
 
 
 # Função que gera os ip's do DNS
@@ -1748,7 +1589,7 @@ def getReportXLS(request):
                     if connection.is_connected():
                         cursor.close()
                         connection.close()
-                        
+
             hostnames = None
             so = None
             dis = None
@@ -1766,7 +1607,7 @@ def getReportXLS(request):
             software_names_str = None
             df = None
             buffer = None
-            encoded_file =None
+            encoded_file = None
             response_data = None
             try:
                 # Extraindo apenas a primeira coluna (MAC Address)
@@ -1781,7 +1622,7 @@ def getReportXLS(request):
                 cpu_model = [row[22] for row in results]
                 cpu_manufacturer = [row[21] for row in results]
                 gpu_model = [row[32] for row in results]
-                
+
                 softwares_list = [row[42] for row in results]
                 software_data = literal_eval(softwares_list[0])
                 # Extraindo apenas os nomes dos programas

@@ -10,92 +10,90 @@ from dotenv import load_dotenv
 from ldap3 import ALL_ATTRIBUTES, SAFE_SYNC, Connection
 from os import getenv
 import json
+from django.views.decorators.http import require_POST
 
 
 @csrf_exempt
+@require_POST
 def credential(request):
-    if request.method == "POST":
-        username = None
-        password = None
-        data = None
-        domain = None
-        domain = None
-        server = None
-        server = None
-        conn = None
-        base_ldap = None
-        response = None
-        try:
-            data = json.loads(request.body)
-            username = data.get("username")
-            password = data.get("password")
+    username = None
+    password = None
+    data = None
+    domain = None
+    domain = None
+    server = None
+    server = None
+    conn = None
+    base_ldap = None
+    response = None
+    try:
+        data = json.loads(request.body)
+        username = data.get("username")
+        password = data.get("password")
 
-            load_dotenv()
+        load_dotenv()
 
-            domain = getenv("DOMAIN_NAME")
+        domain = getenv("DOMAIN_NAME")
 
-            server = getenv("SERVER1")
+        server = getenv("SERVER1")
 
-            conn = Connection(
-                server,
-                f"{domain}\{username}",
-                password,
-                auto_bind=True,
-                client_strategy=SAFE_SYNC,
+        conn = Connection(
+            server,
+            f"{domain}\{username}",
+            password,
+            auto_bind=True,
+            client_strategy=SAFE_SYNC,
+        )
+
+        base_ldap = getenv("LDAP_BASE")
+
+        if conn.bind():
+            conn.read_only = True
+            search_filter = f"(sAMAccountName={username})"
+            ldap_base_dn = base_ldap
+            response = conn.search(
+                ldap_base_dn,
+                search_filter,
+                attributes=ALL_ATTRIBUTES,
+                search_scope="SUBTREE",
+                types_only=False,
             )
 
-            base_ldap = getenv("LDAP_BASE")
+    except Exception as e:
+        print(e)
+        return JsonResponse({"status": "invalid access"}, status=401, safe=True)
 
-            if conn.bind():
-                conn.read_only = True
-                search_filter = f"(sAMAccountName={username})"
-                ldap_base_dn = base_ldap
-                response = conn.search(
-                    ldap_base_dn,
-                    search_filter,
-                    attributes=ALL_ATTRIBUTES,
-                    search_scope="SUBTREE",
-                    types_only=False,
-                )
+    extractor = None
+    information = None
+    name = None
+    acess_user = None
+    try:
+        extractor = response[2][0]
+        information = extractor.get("attributes")
 
-        except Exception as e:
-            print(e)
-            return JsonResponse({"status": "invalid access"}, status=401, safe=True)
+        groups = information.get("memberOf", [])
 
-        extractor = None
-        information = None
-        name = None
-        acess_user = None
-        try:
-            extractor = response[2][0]
-            information = extractor.get("attributes")
+        if "displayName" in information:
+            name = information["displayName"]
 
-            groups = information.get("memberOf", [])
+        acess_user = getenv("ACESS_USER")
 
-            if "displayName" in information:
-                name = information["displayName"]
+        for item in groups:
+            if acess_user in item:
+                acess = "User"
+                break  # Se encontrou, não precisa continuar procurandoç
 
-            acess_user = getenv("ACESS_USER")
+        if acess:
+            user, created = User.objects.get_or_create(username=username)
 
-            for item in groups:
-                if acess_user in item:
-                    acess = "User"
-                    break  # Se encontrou, não precisa continuar procurandoç
+            # Autentica o usuário (mesmo sem senha, para fins de exemplo).
+            user.backend = "django.contrib.auth.backends.ModelBackend"  # Define o backend de autenticação.
+            login(request, user)  # Loga o usuário.
+        return JsonResponse({"name": name}, status=200, safe=True)
 
-            if acess:
-                user, created = User.objects.get_or_create(username=username)
-
-                # Autentica o usuário (mesmo sem senha, para fins de exemplo).
-                user.backend = "django.contrib.auth.backends.ModelBackend"  # Define o backend de autenticação.
-                login(request, user)  # Loga o usuário.
-            return JsonResponse({"name": name}, status=200, safe=True)
-
-        except Exception as e:
-            print(e)
-            return JsonResponse({"status": "invalid access"}, status=401, safe=True)
-
-    if request.method == "GET":
-        return redirect("login")
+    except Exception as e:
+        print(e)
+        return JsonResponse({"status": "invalid access"}, status=401, safe=True)
 
 
 # Função que realiza logout
