@@ -281,10 +281,8 @@ def postMachines(request):
     cpu_min_mhz = None
     cpu_model_name = None
     cpu_operation_mode = None
-    cpu_socket = None
     cpu_thread = None
     cpu_vendor_id = None
-    cpus = None
     currentUser = None
     cursor = None
     data = None
@@ -362,12 +360,10 @@ def postMachines(request):
         hard_disk_sata_version = data.get("hardDiskSataVersion")
         cpu_architecture = data.get("cpuArchitecture")
         cpu_operation_mode = data.get("cpuOperationMode")
-        cpus = data.get("cpus")
         cpu_vendor_id = data.get("cpuVendorID")
         cpu_model_name = data.get("cpuModelName")
         cpu_thread = data.get("cpuThread")
         cpu_core = data.get("cpuCore")
-        cpu_socket = data.get("cpuSocket")
         cpu_max_mhz = data.get("cpuMaxMHz")
         cpu_min_mhz = data.get("cpuMinMHz")
         gpu_product = data.get("gpuProduct")
@@ -453,11 +449,11 @@ def postMachines(request):
                 domain = %s, ip = %s, manufacturer= %s, model = %s,
                 serial_number = %s, max_capacity_memory = %s, number_of_slots = %s,  
                 hard_disk_model = %s, hard_disk_serial_number = %s, hard_disk_user_capacity = %s,
-                hard_disk_sata_version = %s, cpu_architecture = %s, cpu_operation_mode = %s, cpus = %s,
-                cpu_vendor_id = %s, cpu_model_name = %s, cpu_thread = %s, cpu_core = %s, cpu_socket = %s,
+                hard_disk_sata_version = %s, cpu_architecture = %s, cpu_operation_mode = %s,
+                cpu_vendor_id = %s, cpu_model_name = %s, cpu_thread = %s, cpu_core = %s,
                 cpu_max_mhz = %s, cpu_min_mhz = %s, gpu_product = %s, gpu_vendor_id = %s, 
-                gpu_bus_info = %s, gpu_logical_name = %s, gpu_clock = %s, gpu_configuration =%s 
-                , audio_device_product = %s, audio_device_model = %s, bios_version = %s, 
+                gpu_bus_info = %s, gpu_logical_name = %s, gpu_clock = %s, gpu_configuration =%s ,
+                audio_device_product = %s, audio_device_model = %s, bios_version = %s, 
                 motherboard_manufacturer = %s, motherboard_product_name = %s,
                 motherboard_version = %s, motherboard_serial_name = %s,
                 motherboard_asset_tag = %s, softwares = %s, memories = %s, license = %s 
@@ -485,12 +481,10 @@ def postMachines(request):
                     hard_disk_sata_version,
                     cpu_architecture,
                     cpu_operation_mode,
-                    cpus,
                     cpu_vendor_id,
                     cpu_model_name,
                     cpu_thread,
                     cpu_core,
-                    cpu_socket,
                     cpu_max_mhz,
                     cpu_min_mhz,
                     gpu_product,
@@ -527,12 +521,11 @@ def postMachines(request):
                 insertion_date, logged_user, version, domain, ip, manufacturer, model, serial_number,
                 max_capacity_memory, number_of_slots, hard_disk_model, hard_disk_serial_number, 
                 hard_disk_user_capacity, hard_disk_sata_version, cpu_architecture, cpu_operation_mode, 
-                cpus, cpu_vendor_id, cpu_model_name, cpu_thread, cpu_core, cpu_socket, cpu_max_mhz, 
-                cpu_min_mhz, gpu_product, gpu_vendor_id, gpu_bus_info, gpu_logical_name, gpu_clock,
-                gpu_configuration, audio_device_product, audio_device_model, bios_version, motherboard_manufacturer,
-                motherboard_product_name, motherboard_version, motherboard_serial_name, motherboard_asset_tag,
-                softwares, memories, license) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                cpu_vendor_id, cpu_model_name, cpu_thread, cpu_core, cpu_max_mhz, cpu_min_mhz, gpu_product, 
+                gpu_vendor_id, gpu_bus_info, gpu_logical_name, gpu_clock, gpu_configuration, audio_device_product, 
+                audio_device_model, bios_version, motherboard_manufacturer, motherboard_product_name, motherboard_version, 
+                motherboard_serial_name, motherboard_asset_tag, softwares, memories, license) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                 %s , %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                 %s)"""
 
@@ -559,12 +552,10 @@ def postMachines(request):
                     hard_disk_sata_version,
                     cpu_architecture,
                     cpu_operation_mode,
-                    cpus,
                     cpu_vendor_id,
                     cpu_model_name,
                     cpu_thread,
                     cpu_core,
-                    cpu_socket,
                     cpu_max_mhz,
                     cpu_min_mhz,
                     gpu_product,

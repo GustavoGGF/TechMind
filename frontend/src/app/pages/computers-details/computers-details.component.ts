@@ -57,9 +57,7 @@ export class ComputersDetailsComponent
   cpu_model_name: string = '';
   cpu_operation_mode: string = '';
   cpu_thread: string = '';
-  cpu_socket: string = '';
   cpu_vendor_id: string = '';
-  cpus: string = '';
   currentUser: string = '';
   computers_class: string = 'active';
   device_class: string = '';
@@ -311,12 +309,9 @@ export class ComputersDetailsComponent
               this.url_model = `/static/assets/images/models/${model_string}.png`;
               break;
             case 'proliantml110g6':
-              this.url_model = `/static/assests/images/models/${model_string}.png`;
+              this.url_model = `/static/assets/images/models/${model_string}.png`;
               break;
           }
-          console.log(this.model);
-
-          console.log(model_string);
 
           this.serial_number = this.info_PC[11];
           this.max_capacity_memory = this.info_PC[12];
@@ -372,28 +367,24 @@ export class ComputersDetailsComponent
             };
           });
 
-          console.log(this.hard_disk_user_capacity);
-
           this.cpu_architecture = this.info_PC[18];
           this.cpu_operation_mode = this.info_PC[19];
-          this.cpus = this.info_PC[20];
-          this.cpu_vendor_id = this.info_PC[21];
-          this.cpu_model_name = this.info_PC[22];
-          this.cpu_thread = this.info_PC[23];
-          this.cpu_socket = this.info_PC[24];
-          this.cpu_max_mhz = this.info_PC[25];
-          this.cpu_min_mhz = this.info_PC[26];
-          this.cpu_core = this.info_PC[27];
-          this.gpu_product = this.info_PC[28];
-          this.gpu_vendor_id = this.info_PC[29];
-          this.gpu_bus_info = this.info_PC[30];
-          this.gpu_logical_name = this.info_PC[31];
-          this.gpu_clock = this.info_PC[32];
-          this.gpu_configuration = this.info_PC[33];
-          this.audio_device_product = this.info_PC[34];
-          this.audio_device_model = this.info_PC[35];
+          this.cpu_vendor_id = this.info_PC[20];
+          this.cpu_model_name = this.info_PC[21];
+          this.cpu_thread = this.info_PC[22];
+          this.cpu_max_mhz = this.info_PC[23];
+          this.cpu_min_mhz = this.info_PC[24];
+          this.cpu_core = this.info_PC[25];
+          this.gpu_product = this.info_PC[26];
+          this.gpu_vendor_id = this.info_PC[27];
+          this.gpu_bus_info = this.info_PC[28];
+          this.gpu_logical_name = this.info_PC[29];
+          this.gpu_clock = this.info_PC[30];
+          this.gpu_configuration = this.info_PC[31];
+          this.audio_device_product = this.info_PC[32];
+          this.audio_device_model = this.info_PC[33];
           // Verificando se o SMBIOS está presente
-          if (this.info_PC[36].includes('present')) {
+          if (this.info_PC[34].includes('present')) {
             this.present = 'Present';
           } else {
             this.present = 'Not found';
@@ -408,14 +399,14 @@ export class ComputersDetailsComponent
             this.bios_version = part_1 + '.' + part_2;
           }
 
-          this.motherboard_manufacturer = this.info_PC[37];
-          this.motherboard_product_name = this.info_PC[38];
-          this.motherboard_version = this.info_PC[39];
-          this.motherboard_serial_name = this.info_PC[40];
-          this.motherboard_asset_tag = this.info_PC[41];
+          this.motherboard_manufacturer = this.info_PC[35];
+          this.motherboard_product_name = this.info_PC[36];
+          this.motherboard_version = this.info_PC[37];
+          this.motherboard_serial_name = this.info_PC[38];
+          this.motherboard_asset_tag = this.info_PC[39];
 
           // Ajustando a lsita de softwares
-          let list = this.info_PC[42];
+          let list = this.info_PC[40];
           if (list) {
             let operationalSystem = this.operational_System
               .toLowerCase()
@@ -467,17 +458,17 @@ export class ComputersDetailsComponent
             }
           }
         }
-        this.menString = this.info_PC[43];
+        this.menString = this.info_PC[441];
         // Substituir aspas simples por aspas duplas
         const validJsonString = this.menString.replace(/'/g, '"');
         // Converter para array
         this.memories = JSON.parse(validJsonString);
 
-        this.imob = this.info_PC[44];
-        this.location = this.info_PC[45];
-        this.note = this.info_PC[46];
-        this.license = this.info_PC[47];
-        const disp = this.info_PC[48];
+        this.imob = this.info_PC[42];
+        this.location = this.info_PC[43];
+        this.note = this.info_PC[44];
+        this.license = this.info_PC[45];
+        const disp = this.info_PC[46];
         if (disp == 1) {
           this.available = false;
         } else {

@@ -7,12 +7,15 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 
+	"techmind/linux/cpuinformation"
 	"techmind/linux/generalinformation"
 	"techmind/linux/hdinformation"
 	"techmind/linux/internetinformation"
+	"techmind/linux/mbinformation"
 	"techmind/linux/motherboardinformation"
 )
 
@@ -54,14 +57,12 @@ type Data struct {
 	HardDiskSataVersion   string   `json:"hardDiskSataVersion"`
 	CPUArchitecture       string   `json:"cpuArchitecture"`
 	CPUOperationMode      string   `json:"cpuOperationMode"`
-	CPUS                  string   `json:"cpus"`
 	CPUVendorID           string   `json:"cpuVendorID"`
 	CPUModelName          string   `json:"cpuModelName"`
-	CPUThread             string   `json:"cpuThread"`
-	CPUCore               string   `json:"cpuCore"`
-	CPUSocket             string   `json:"cpuSocket"`
-	CPUMaxMHz             string   `json:"cpuMaxMHz"`
-	CPUMinMHz             string   `json:"cpuMinMHz"`
+	CPUThread             int   `json:"cpuThread"`
+	CPUCore               int   `json:"cpuCore"`
+	CPUMaxMHz             int   `json:"cpuMaxMHz"`
+	CPUMinMHz             int   `json:"cpuMinMHz"`
 	GPUProduct            string   `json:"gpuProduct"`
 	GPUVendorID           string   `json:"gpuVendorID"`
 	GPUBusInfo            string   `json:"gpuBusInfo"`
@@ -280,7 +281,61 @@ func main() {
 		}
 	}
 
-	logToFile(fmt.Sprintln(sata_versions))
+	// Obtém a arquitetura do CPU
+	arch := runtime.GOARCH
+
+	var cpu_operation_mode string
+
+	if arch == "amd64" || arch == "arm64" {
+		cpu_operation_mode = "64 bits"
+	}
+
+	numCPUs := runtime.NumCPU()
+
+	cpu_model_name, err := cpuinformation.GetCPUInfo()
+	if err != nil {
+		fmt.Sprintln("Erro:", err)
+	}
+
+	cpu_thread, err := cpuinformation.GetThread()
+	if err != nil {
+		fmt.Sprintln(err)
+	}
+
+	cpu_max_mhz, err := cpuinformation.GetMaxMHz()
+	if err != nil {
+		fmt.Sprintln(err)
+	}
+
+	cpu_min_mhz, err := cpuinformation.GetCPUMinMHz()
+	if err != nil {
+		fmt.Sprintln(err)
+	}
+
+	motherboard_manufacturer, err := mbinformation.GetMotherboardManufacturer()
+	if err !=nil{
+		fmt.Sprintln(err)
+	}
+
+	motherboard_pd, err := mbinformation.GetMotherboardPD()
+	if err !=nil{
+		fmt.Sprintln(err)
+	}
+
+	motherboard_version,err := mbinformation.GetMotherboardVersion()
+	if err !=nil{
+		fmt.Sprintln(err)
+	}
+
+	motherboard_sn, err := mbinformation.GetMotherSN()
+	if err !=nil{
+		fmt.Sprintln(err)
+	}
+
+	motherboard_asset_tag, err := mbinformation.GetMotherboardAssetTag()
+	if err !=nil{
+		fmt.Sprintln(err)
+	}
 
     jsonData := Data{
 		System: sys, 
@@ -302,6 +357,18 @@ func main() {
 		HardDiskSerialNumber: strings.Join(hard_disk_serial_numbers, ", "),
 		HardDiskUserCapacity: strings.Join(hard_disk_sizes, ", "),
 		HardDiskSataVersion: strings.Join(sata_versions, " | "),
+		CPUArchitecture: arch, 
+		CPUOperationMode:cpu_operation_mode, 
+		CPUModelName: cpu_model_name, 
+		CPUThread:cpu_thread,
+		CPUCore: numCPUs,
+		CPUMaxMHz:cpu_max_mhz,
+		CPUMinMHz: cpu_min_mhz,
+		MotherboardManufacturer:motherboard_manufacturer,
+		MotherboardProductName: motherboard_pd,
+		MotherboardVersion:motherboard_version ,
+		MotherbaoardSerialName: motherboard_sn,
+		MotherboardAssetTag: motherboard_asset_tag,
 	}
 
     requestBody, err := json.Marshal(jsonData)
