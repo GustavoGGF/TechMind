@@ -1,0 +1,13 @@
+Port 22
+Protocol 2
+Subsystem sftp internal-sftp
+UseDNS no
+AddressFamily any
+ListenAddress 0.0.0.0 
+ListenAddress :: 
+Ciphers aes128-ctr,aes192-ctr,aes256-ctr
+MaxSessions 5
+MaxStartups 10
+PermitRootLogin no
+AllowUsers Admin administrator
+PasswordAuthentication yes
