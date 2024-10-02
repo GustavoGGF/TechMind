@@ -5,12 +5,11 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 from dotenv import load_dotenv
 from ldap3 import ALL_ATTRIBUTES, SAFE_SYNC, Connection
 from os import getenv
 import json
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 
 
 @csrf_exempt
@@ -98,8 +97,10 @@ def credential(request):
 
 # Função que realiza logout
 @login_required
-@csrf_exempt
-@require_http_methods(["GET"])
+@require_GET
 def logoutFunc(request):
-    logout(request)
-    return redirect("/login")
+    try:
+        logout(request)
+        return JsonResponse({}, status=200)
+    except Exception as e:
+        print(e)

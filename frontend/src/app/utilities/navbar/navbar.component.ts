@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, Input } from '@angular/core';
-import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 
 @Component({
@@ -15,7 +14,7 @@ export class NavbarComponent {
   @Input() computers_class: string = '';
   @Input() device_class: string = '';
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient) {}
 
   logoTechMind: string = '/static/assets/images/Logo_TechMind.png';
   logoutIMG: string = '/static/assets/images/logout.png';
@@ -24,16 +23,21 @@ export class NavbarComponent {
 
   logoutApp(): void {
     // Função para realizar o logout do usuário
-    this.http.get('/logout', {}).pipe(
-      catchError((error) => {
-        this.status = error.status;
-
-        if (this.status === 200) {
-          this.router.navigate(['/login']);
-        }
-
-        return throwError(error);
-      })
-    );
+    this.http
+      .get('/logout/', {})
+      .pipe(
+        catchError((error) => {
+          return throwError(error);
+        })
+      )
+      .subscribe({
+        next: () => {
+          // Sucesso no logout, você pode redirecionar ou fazer outra ação
+          return (window.location.href = '/login');
+        },
+        error: (error) => {
+          console.error('Erro ao realizar logout', error);
+        },
+      });
   }
 }

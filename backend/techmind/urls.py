@@ -11,7 +11,7 @@ urlpatterns = [
     path("credential/", views.credential, name="central-credential"),
     path("home/", include("infoapp.urls")),
     # URL para fazer logout
-    path("logout", views.logoutFunc, name="central-logout"),
+    path("logout/", views.logoutFunc, name="central-logout"),
 ]
 
 urlpatterns += staticfiles_urlpatterns()
