@@ -1,0 +1,16 @@
+Django==5.0.3
+django-clearcache==1.2.1
+mysql-connector-python==8.4.0
+mysqlclient==2.2.4
+python-decouple==3.8
+python-dotenv==1.0.0
+ldap3==2.9.1
+dnspython==2.6.1 
+openpyxl==3.1.5
+pandas==2.2.2
+django_ratelimit==4.1.0
+gunicorn==22.0.0
+websockets==13.0
+channels==4.1.0
+daphne==4.1.2
+django-cors-headers==4.4.0
