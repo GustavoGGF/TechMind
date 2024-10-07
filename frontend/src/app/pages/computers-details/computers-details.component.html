@@ -1,0 +1,430 @@
+<div #main class="main">
+  <app-navbar
+    *ngIf="canView"
+    [name]="name"
+    [home_class]="home_class"
+    [computers_class]="computers_class"
+    [device_class]="device_class"
+  />
+  <div class="board">
+    <h3 class="name_machine">{{ name_pc }}</h3>
+    <div class="d-flex flex-column position-absolute top-0 end-0">
+      <img
+        [src]="url_logo"
+        alt="logo do sistema operacional"
+        class="img-fluid img_logo"
+      />
+      <img
+        [src]="url_manufacturer"
+        alt="logo da marca"
+        class="img-fluid img_logo"
+      />
+    </div>
+    <div>
+      <div>
+        <img
+          class="img-fluid imgResize animate__animated animate__heartBeat"
+          [src]="urlResize"
+          alt="expandir"
+          (click)="resizeBar()"
+          id="resize"
+        />
+      </div>
+      <div *ngIf="showBar" id="nvbar" class="nvbar animate__animated">
+        <div class="barbtn" (click)="showDataAdmin()">
+          <span>Dados Administrativos</span>
+        </div>
+        <div class="barbtn" (click)="showHardware()">
+          <span>HardWare</span>
+        </div>
+        <div class="barbtn" (click)="showSoftWare()">
+          <span>SoftWare</span>
+        </div>
+        <div class="barbtn" (click)="showDevices()">
+          <span>Dispositivos</span>
+        </div>
+        <div class="barbtn" (click)="showOthers()">
+          <span>Outros</span>
+        </div>
+      </div>
+    </div>
+    <div class="info" *ngIf="canViewDataAdmin">
+      <div class="d-flex flex-column">
+        <h6 class="title">SISTEMA</h6>
+        <span><b class="b_margin">Usuário:</b>{{ currentUser }}</span>
+        <span
+          ><b class="b_margin">Sistema Operacional:</b
+          >{{ operational_System }} </span
+        ><span><b class="b_margin">Versão do SO:</b>{{ system_version }}</span>
+      </div>
+      <div class="d-flex flex-column">
+        <h6 class="title">REDE</h6>
+        <span><b class="b_margin">Domínio:</b>{{ domain }}</span>
+        <span><b class="b_margin">IP:</b>{{ ip }}</span>
+      </div>
+    </div>
+    <div class="contains d-flex flex-column" *ngIf="canViewDataAdmin">
+      <img [src]="url_model" alt="Foto do Equipamento" class="img_model" />
+      <span><b class="b_margin">Marca:</b>{{ manufacturer }}</span
+      ><span><b class="b_margin">Modelo:</b>{{ model }}</span>
+    </div>
+    <div *ngIf="canViewHardWare" class="d-flex flex-column">
+      <div class="d-flex justify-content-around">
+        <div>
+          <span><b class="b_margin">Serial Number:</b>{{ serial_number }}</span>
+        </div>
+        <div>
+          <span><b class="b_margin">Marca:</b>{{ manufacturer }}</span>
+        </div>
+        <div>
+          <span><b class="b_margin">Modelo:</b>{{ model }}</span>
+        </div>
+      </div>
+      <div class="mt-3">
+        <span class="mb-2"><b>Memória Ram</b></span>
+        <div class="dash_memory">
+          <div>
+            <span
+              ><b class="b_margin">Capacidade Máxima:</b
+              >{{ max_capacity_memory }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">Quantidade de Slot:</b
+              >{{ number_of_slot }}</span
+            >
+          </div>
+          <div>
+            <table class="table">
+              <thead>
+                <th class="txt_left">Name</th>
+                <th class="txt_left">Size</th>
+                <th class="txt_left">Type</th>
+                <th class="txt_left">Serial Number</th>
+                <th class="txt_left">Speed</th>
+                <th class="txt_left">Type Details</th>
+              </thead>
+              <tbody>
+                <tr *ngFor="let memory of memories">
+                  <td class="txt_left">{{ memory.BankLabel }}</td>
+                  <td class="txt_left" *ngIf="memory_windows">
+                    {{ convertBytesToGB(memory.Capacity) + " GB" }}
+                  </td>
+                  <td class="txt_left" *ngIf="!memory_windows">
+                    {{ convertBytesToGB2(memory.Capacity) + " GB" }}
+                  </td>
+                  <td class="txt_left">{{ memory.MemoryType }}</td>
+                  <td class="txt_left">{{ memory.SerialNumber }}</td>
+                  <td class="txt_left">{{ memory.Speed }}</td>
+                  <td class="txt_left">{{ memory.TypeDetail }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <span><b>Disco Rígido</b></span>
+        <div *ngIf="!possible_raid" class="dash_memory">
+          <div>
+            <span
+              ><b class="b_margin">HardDisk Model:</b
+              >{{ hard_disk_model }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">HardDisk Serial Number:</b
+              >{{ hard_disk_serial_number }}</span
+            >
+          </div>
+          <div>
+            <span *ngIf="memory_windows"
+              ><b class="b_margin">HardDisk User Capacity:</b
+              >{{ hard_disk_user_capacity + " GB" }}</span
+            >
+            <span *ngIf="!memory_windows"
+              ><b class="b_margin">HardDisk User Capacity:</b
+              >{{ hard_disk_user_capacity }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">HardDisk Sata Version:</b
+              >{{ hard_disk_sata_version }}</span
+            >
+          </div>
+        </div>
+        <div *ngIf="possible_raid">
+          <table class="table">
+            <thead>
+              <th class="txt_left">Hard Disk Model</th>
+              <th class="txt_left">Hard Disk SN</th>
+              <th class="txt_left">Hard Disk Size</th>
+              <th class="txt_left">Hard Disk Sata Version</th>
+              <th class="txt_left"></th>
+            </thead>
+            <tbody>
+              <tr *ngFor="let raid of raid_disks">
+                <td class="txt_left">{{ raid.model }}</td>
+                <td class="txt_left">{{ raid.sn }}</td>
+                <td class="txt_left">{{ raid.size }} GB</td>
+                <td class="txt_left">{{ raid.sata }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="mt-3">
+        <span><b>Processador</b></span>
+        <div class="dash_memory">
+          <div>
+            <span
+              ><b class="b_margin">CPU Architecture:</b
+              >{{ cpu_architecture }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">CPU Operation Mode:</b
+              >{{ cpu_operation_mode }}
+            </span>
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">CPU Vendor ID:</b>{{ cpu_vendor_id }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">CPU Model Name:</b>{{ cpu_model_name }}</span
+            >
+          </div>
+          <div>
+            <span><b class="b_margin">CPU Thread's:</b>{{ cpu_thread }}</span>
+          </div>
+          <div>
+            <span><b class="b_margin">CPU Core's:</b>{{ cpu_core }}</span>
+          </div>
+          <div>
+            <span><b class="b_margin">CPU Max MHz:</b></span
+            >{{ cpu_max_mhz }}
+          </div>
+          <div>
+            <span><b class="b_margin">CPU Min MHz:</b>{{ cpu_min_mhz }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <span><b>Placa de Vídeo</b></span>
+        <div class="dash_memory">
+          <div>
+            <span><b class="b_margin">GPU Product:</b>{{ gpu_product }}</span>
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">GPU Vendor ID:</b>{{ gpu_vendor_id }}</span
+            >
+          </div>
+          <div>
+            <span><b class="b_margin">GPU Bus Info:</b>{{ gpu_bus_info }}</span>
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">GPU Logical Name:</b
+              >{{ gpu_logical_name }}</span
+            >
+          </div>
+          <div>
+            <span><b class="b_margin">GPU Clock:</b>{{ gpu_clock }}</span>
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">GPU Configuration:</b
+              >{{ gpu_configuration }}</span
+            >
+          </div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <span><b>Som</b></span>
+        <div class="dash_memory">
+          <div>
+            <span
+              ><b class="b_margin">Audio Device Product:</b
+              >{{ audio_device_product }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">Audio Device Model:</b
+              >{{ audio_device_model }}</span
+            >
+          </div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <span><b>Placa Mãe</b></span>
+        <div class="dash_memory">
+          <div>
+            <span><b>SMBIOS:</b>{{ present }}</span>
+          </div>
+          <div>
+            <span><b>SMBIOS Version:</b>{{ bios_version }}</span>
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">MotherBoard Manufacturer:</b
+              >{{ motherboard_manufacturer }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">MotherBoard Product Name:</b
+              >{{ motherboard_product_name }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">MotherBoard Version:</b
+              >{{ motherboard_version }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">MotherBoard Serial Name:</b
+              >{{ motherboard_serial_name }}</span
+            >
+          </div>
+          <div>
+            <span
+              ><b class="b_margin">MotherBoard Asset Tag:</b
+              >{{ motherboard_asset_tag }}</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+    <div *ngIf="canViewSoftWare">
+      <span><b>SoftWares</b></span>
+      <div class="dash_memory" *ngIf="!memory_windows">
+        <div *ngFor="let software of softwares_list">{{ software }}</div>
+      </div>
+      <div class="dash_memory" *ngIf="memory_windows">
+        <ul>
+          <li *ngFor="let software of softwares_list">
+            <strong>{{ software.name }}</strong
+            ><br />
+            Version: {{ software.version }}<br />
+            Vendor: {{ software.vendor }}
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div *ngIf="canViewDevices">
+      <span
+        ><b>Dispositivos</b>
+        <div class="dash_memory">
+          <table class="tb">
+            <thead>
+              <tr>
+                <th class="thcls text-uppercase">Equipamento</th>
+                <th class="thcls text-uppercase">Serial Number</th>
+                <th class="thcls text-uppercase">Modelo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                class="trcls"
+                *ngFor="let device of devices; let i = index"
+                (click)="onRowClick(i)"
+              >
+                <td class="tdsadj">{{ device[0] }}</td>
+                <td class="tdsadj">{{ device[2] }}</td>
+                <td class="tdsadj">{{ device[1] }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div></span
+      >
+    </div>
+    <div *ngIf="canViewOthers">
+      <span><b>Outros</b></span>
+      <div class="dash_memory">
+        <div class="w-100 position-relative">
+          <img
+            class="img-fluid img_config"
+            [src]="img_config"
+            alt="configuração"
+            (click)="modifyDevice()"
+          />
+        </div>
+        <div class="dashOthers" *ngIf="!modifyOther">
+          <span><b class="b_margin">Plaqueta Imob:</b>{{ imob }}</span>
+          <span><b class="b_margin">Localização:</b>{{ location }}</span>
+          <textarea class="txt" disabled>{{ note }}</textarea>
+          <span><b class="b_margin">Licença:</b>{{ license }}</span>
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              value=""
+              id="flexCheckChecked"
+              disabled
+              [checked]="available"
+            />
+            <label class="form-check-label" for="flexCheckChecked">
+              Disponível para locação
+            </label>
+          </div>
+        </div>
+        <div *ngIf="modifyOther">
+          <div class="w-100 mb-3 d-flex">
+            <div class="w-100 d-flex text-center justify-content-center">
+              <span><b>Modificação</b></span>
+            </div>
+          </div>
+          <div class="form-floating mb-3">
+            <input
+              type="text"
+              class="form-control"
+              id="floatingBrand"
+              [placeholder]="imob"
+              (input)="getImob($event)"
+            />
+            <label for="floatingBrand">Plaqueta Imob: {{ imob }}</label>
+          </div>
+          <select class="form-select mb-3" (change)="device_select($event)">
+            <option *ngIf="location" [value]="location" selected disabled>
+              {{ location }}
+            </option>
+            <option *ngIf="!location" value="" selected disabled>
+              Escolha uma Unidade
+            </option>
+            <option value="CSC">CSC</option>
+          </select>
+          <textarea (input)="getNote($event)" class="txt">{{ note }}</textarea>
+          <div class="form-check divinput">
+            <input
+              class="form-check-input inputcheck"
+              type="checkbox"
+              value=""
+              id="flexCheckChecked"
+              (change)="onCheckboxChange($event)"
+              [checked]="available"
+            />
+            <label class="form-check-label" for="flexCheckChecked">
+              Disponível para locação
+            </label>
+          </div>
+          <div class="d-flex justify-content-center">
+            <button class="btn btn-success" (click)="submitOthers()">
+              Salvar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

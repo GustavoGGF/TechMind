@@ -1,0 +1,68 @@
+.main {
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #14213d;
+}
+
+.img1 {
+  margin: 10px;
+  width: 100px;
+}
+
+.letter {
+  color: transparent;
+  font-size: 3em;
+  opacity: 0;
+  position: relative;
+  margin-top: 25px;
+  background-image: linear-gradient(
+    164deg,
+    rgba(232, 17, 104, 1) 19%,
+    rgba(16, 155, 227, 1) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  left: 0;
+  user-select: none;
+}
+
+.animate1 {
+  animation: slideIn 1.3s forwards;
+}
+
+@keyframes slideIn {
+  to {
+    left: 80px;
+    opacity: 1;
+  }
+}
+
+.letter1 {
+  animation-delay: 0.1s; /* ajuste conforme necessário */
+}
+.letter2 {
+  animation-delay: 0.4s; /* ajuste conforme necessário */
+}
+.letter3 {
+  animation-delay: 0.6s; /* ajuste conforme necessário */
+}
+.letter4 {
+  animation-delay: 0.8s; /* ajuste conforme necessário */
+}
+.letter5 {
+  animation-delay: 1s; /* ajuste conforme necessário */
+}
+.letter6 {
+  animation-delay: 1.2s; /* ajuste conforme necessário */
+}
+.letter7 {
+  animation-delay: 1.4s; /* ajuste conforme necessário */
+}
+
+.font {
+  font-family: "Protest Strike", sans-serif;
+  src: url(../../../assets/fonts/ProtestStrike-Regular.ttf)
+    format("Protest Strike");
+}

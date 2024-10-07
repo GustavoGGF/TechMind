@@ -1,0 +1,23 @@
+body,
+html {
+  background-color: #14213d;
+}
+
+:root {
+  --red: #ef233c;
+  --blueLight: #00b4d8;
+  --black: #14213d;
+  --white: #fefae0;
+  --gray: #91979d;
+  --isabelline: #f2e9e4;
+  --Piction-Blue: #00a6fb;
+  --pure-white: #ffffff;
+}
+
+.bg-red {
+  background-color: var(--red) !important;
+}
+
+.bg-blueL {
+  background-color: var(--blueLight) !important;
+}
