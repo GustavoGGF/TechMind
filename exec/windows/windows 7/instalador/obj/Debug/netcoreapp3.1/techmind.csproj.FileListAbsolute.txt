@@ -1,0 +1,14 @@
+C:\Users\adm.gfreitas\Desktop\techmind\tm\techmind\bin\Debug\netcoreapp3.1\assets\logo.png
+C:\Users\adm.gfreitas\Desktop\techmind\tm\techmind\bin\Debug\netcoreapp3.1\techmind.exe
+C:\Users\adm.gfreitas\Desktop\techmind\tm\techmind\bin\Debug\netcoreapp3.1\techmind.deps.json
+C:\Users\adm.gfreitas\Desktop\techmind\tm\techmind\bin\Debug\netcoreapp3.1\techmind.runtimeconfig.json
+C:\Users\adm.gfreitas\Desktop\techmind\tm\techmind\bin\Debug\netcoreapp3.1\techmind.runtimeconfig.dev.json
+C:\Users\adm.gfreitas\Desktop\techmind\tm\techmind\bin\Debug\netcoreapp3.1\techmind.dll
+C:\Users\adm.gfreitas\Desktop\techmind\tm\techmind\bin\Debug\netcoreapp3.1\techmind.pdb
+C:\Users\adm.gfreitas\Desktop\techmind\tm\techmind\obj\Debug\netcoreapp3.1\techmind.csprojAssemblyReference.cache
+C:\Users\adm.gfreitas\Desktop\techmind\tm\techmind\obj\Debug\netcoreapp3.1\techmind.AssemblyInfoInputs.cache
+C:\Users\adm.gfreitas\Desktop\techmind\tm\techmind\obj\Debug\netcoreapp3.1\techmind.AssemblyInfo.cs
+C:\Users\adm.gfreitas\Desktop\techmind\tm\techmind\obj\Debug\netcoreapp3.1\techmind.csproj.CoreCompileInputs.cache
+C:\Users\adm.gfreitas\Desktop\techmind\tm\techmind\obj\Debug\netcoreapp3.1\techmind.dll
+C:\Users\adm.gfreitas\Desktop\techmind\tm\techmind\obj\Debug\netcoreapp3.1\techmind.pdb
+C:\Users\adm.gfreitas\Desktop\techmind\tm\techmind\obj\Debug\netcoreapp3.1\techmind.genruntimeconfig.cache

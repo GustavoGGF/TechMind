@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "dgSpecHash": "FbcoBiY5Pj/EypXpd+RUIENy+GeAmhh3Et2AP8p+HDOnBZxez1fa30d9hpb+yWutnXpoP4+zyjv5Z8qT7yorpg==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\adm.gfreitas\\Desktop\\techmind\\techmind.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\adm.gfreitas\\.nuget\\packages\\microsoft.netcore.platforms\\3.1.0\\microsoft.netcore.platforms.3.1.0.nupkg.sha512",
+    "C:\\Users\\adm.gfreitas\\.nuget\\packages\\microsoft.win32.registry\\4.7.0\\microsoft.win32.registry.4.7.0.nupkg.sha512",
+    "C:\\Users\\adm.gfreitas\\.nuget\\packages\\system.diagnostics.eventlog\\4.7.0\\system.diagnostics.eventlog.4.7.0.nupkg.sha512",
+    "C:\\Users\\adm.gfreitas\\.nuget\\packages\\system.security.accesscontrol\\4.7.0\\system.security.accesscontrol.4.7.0.nupkg.sha512",
+    "C:\\Users\\adm.gfreitas\\.nuget\\packages\\system.security.principal.windows\\4.7.0\\system.security.principal.windows.4.7.0.nupkg.sha512",
+    "C:\\Users\\adm.gfreitas\\.nuget\\packages\\system.serviceprocess.servicecontroller\\4.7.0\\system.serviceprocess.servicecontroller.4.7.0.nupkg.sha512",
+    "C:\\Users\\adm.gfreitas\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\3.1.32\\microsoft.netcore.app.runtime.win-x64.3.1.32.nupkg.sha512",
+    "C:\\Users\\adm.gfreitas\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\3.1.32\\microsoft.windowsdesktop.app.runtime.win-x64.3.1.32.nupkg.sha512",
+    "C:\\Users\\adm.gfreitas\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\3.1.32\\microsoft.aspnetcore.app.runtime.win-x64.3.1.32.nupkg.sha512"
+  ],
+  "logs": []
+}
