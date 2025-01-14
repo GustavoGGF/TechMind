@@ -12,6 +12,7 @@ urlpatterns = [
     path("home/", include("infoapp.urls")),
     # URL para fazer logout
     path("logout/", views.logoutFunc, name="central-logout"),
+    path('donwload-files/', views.donwloadFiles, name='central-donwload-files')
 ]
 
 urlpatterns += staticfiles_urlpatterns()

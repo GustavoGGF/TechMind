@@ -1,13 +1,19 @@
 {
-  "ALL": { "HotFix": { "2": "Logout ta com B.O" } },
+  "ALL": {
+    "Instaler Windows 10": {
+      "Linguagens": "Frontend: Electron (para a interface gráfica)  Backend: .NET (C#)   Instalação: Inno Setup ou WiX Toolset"
+    },
+    "HotFix": {},
+    "Upgrade": { "CLKT": "Bloqueio do html e complicar leitura de codigo" }
+  },
   "Home": {},
   "Computer": {
-    "HotFix": {
-      "1": "Quando CheckBox Estiver marcado deixar com o efeito do hover"
-    }
+    "HotFix": {}
   },
   "Computer Details": {
-    "Upgrade": {}
+    "Upgrade": {
+      "RPTCP": "Report de computadores, Foto do OptiPlex 755 (00-1E-C9-1C-61-77)"
+    }
   },
   "Back End": {
     "HotFix": {}
@@ -17,13 +23,17 @@
   },
   "Exec's": {
     "All": {
-      "Upgrade": { "3": "PORTS sobre portas tambem, como :80 etc", "4": "Portas fisicas tambem" },
+      "Upgrade": {
+        "3": "PORTS sobre portas tambem, como :80 etc",
+        "4": "Portas fisicas tambem"
+      },
       "HotFix": {
         "5": "Verificcar Hard Disk Sata Verion Windows",
         "6": "Verificar Clock GPU e logical Name Windows",
         "7": "Audio Device Windows",
         "8": "SMBIOS Windows",
-        "9": "Exec não sabe lidar com RAID"
+        "9": "Exec não sabe lidar com RAID",
+        "TKN": "Exigir Token para baixar os programas"
       }
     },
     "FreeBSD": "falta algumas coisas",

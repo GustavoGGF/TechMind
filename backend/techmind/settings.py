@@ -113,9 +113,9 @@ LOGGING = {
 }
 
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = 'pt-br'
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Brazil/East"
 
 USE_I18N = True
 
