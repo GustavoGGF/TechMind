@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "aTvpxFdZeYM=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\adm.gfreitas\\Desktop\\TechMindInstallerW10\\TechMindInstallerW10.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\adm.gfreitas\\.nuget\\packages\\costura.fody\\6.0.0\\costura.fody.6.0.0.nupkg.sha512",
+    "C:\\Users\\adm.gfreitas\\.nuget\\packages\\fody\\6.8.2\\fody.6.8.2.nupkg.sha512",
+    "C:\\Users\\adm.gfreitas\\.nuget\\packages\\ilmerge\\3.0.41\\ilmerge.3.0.41.nupkg.sha512"
+  ],
+  "logs": []
+}
