@@ -1,0 +1,14 @@
+# Ignorar a pasta node_modules
+node_modules/
+
+# Ignorar arquivos compilados
+*.class
+*.o
+*.exe
+
+# Ignorar arquivos de log
+logs/
+*.log
+
+# Ignorar arquivos de configuração específicos
+.env
