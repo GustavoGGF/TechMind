@@ -1,0 +1,41 @@
+<div class="main">
+  <app-navbar
+    *ngIf="canView"
+    [name]="name"
+    [home_class]="home_class"
+    [computers_class]="computers_class"
+    [device_class]="device_class"
+  />
+  <app-loading *ngIf="!canView" />
+  <app-message
+    [errorType]="errorType"
+    [messageError]="messageError"
+    (click)="hideMessage()"
+    *ngIf="showMessage"
+  />
+  <div *ngIf="canView">
+    <div class="maindash">
+      <div class="containers">
+        <app-loading *ngIf="notData" />
+        <span *ngIf="!notData">{{ totalMachines }}</span>
+        <span *ngIf="!notData">Máquinas</span>
+      </div>
+      <div class="containers">
+        <app-loading *ngIf="notData" /><span *ngIf="!notData">{{
+          totalWindows
+        }}</span
+        ><span *ngIf="!notData">Windows</span>
+      </div>
+      <div class="containers">
+        <app-loading *ngIf="notData" /><span *ngIf="!notData">{{
+          totalUnix
+        }}</span
+        ><span *ngIf="!notData">Unix</span>
+      </div>
+    </div>
+    <div>
+      <app-chart-pie />
+    </div>
+    <div><app-chart-spline-line /></div>
+  </div>
+</div>

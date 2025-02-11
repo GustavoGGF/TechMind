@@ -1,0 +1,246 @@
+<div class="main">
+  <app-navbar
+    *ngIf="canView"
+    [name]="name"
+    [home_class]="home_class"
+    [computers_class]="computers_class"
+    [device_class]="device_class"
+  />
+  <div class="w-100">
+    <div class="w-100 justify-content-start d-flex div_quantity">
+      <div>
+        <div class="margin_quantity mb-2">
+          <span
+            class="buton_quantity"
+            [ngClass]="ten_quantity"
+            (click)="getTen()"
+            ><b>10</b></span
+          >
+        </div>
+        <div class="margin_quantity">
+          <span
+            class="buton_quantity"
+            [ngClass]="fifty_quantity"
+            (click)="getFifty()"
+            ><b>50</b></span
+          >
+        </div>
+      </div>
+      <div>
+        <div class="margin_quantity mb-2">
+          <span
+            class="buton_quantity"
+            [ngClass]="one_hundred_quantity"
+            (click)="getOneHundred()"
+            ><b>100</b></span
+          >
+        </div>
+        <div class="margin_quantity">
+          <span
+            class="buton_quantity"
+            [ngClass]="all_quantity"
+            (click)="getAll()"
+            ><b>All</b></span
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dash mt-3">
+    <div class="img_device position-relative w-100 h-100">
+      <img
+        (click)="addDevices()"
+        class="img-fluid img_close mx-arround position-absolute top-0 start-0"
+        [src]="imageDevices"
+        alt="adicionar novo dispositivo"
+      />
+    </div>
+    <div class="w-100 d-flex text-center justify-content-center flex-column">
+      <span><b>Dispositivos</b></span>
+      <table class="tb mt-3">
+        <thead>
+          <tr>
+            <th class="thcls text-uppercase">
+              <div class="w-100 d-flex justify-content-center">
+                <div>Equipamento</div>
+                <div class="mleft">
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_up"
+                    alt="seta para cima"
+                    (click)="sortByEquip()"
+                  />
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_down"
+                    alt="seta para baixo"
+                    (click)="sortDataByEquipDescending()"
+                  />
+                </div>
+              </div>
+            </th>
+            <th class="thcls text-uppercase">
+              <div class="w-100 d-flex justify-content-center">
+                <div>Marca</div>
+                <div class="mleft">
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_up"
+                    alt="seta para cima"
+                    (click)="sortByBrand()"
+                  />
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_down"
+                    alt="seta para baixo"
+                    (click)="sortDataByBrandDescending()"
+                  />
+                </div>
+              </div>
+            </th>
+            <th class="thcls text-uppercase">
+              <div class="w-100 d-flex justify-content-center">
+                <div>Modelo</div>
+                <div class="mleft">
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_up"
+                    alt="seta para cima"
+                    (click)="sortByModel()"
+                  />
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_down"
+                    alt="seta para baixo"
+                    (click)="sortDataByModelDescending()"
+                  />
+                </div>
+              </div>
+            </th>
+            <th class="thcls text-uppercase">
+              <div class="w-100 d-flex justify-content-center">
+                <div>SN</div>
+                <div class="mleft">
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_up"
+                    alt="seta para cima"
+                    (click)="sortBySN()"
+                  />
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_down"
+                    alt="seta para baixo"
+                    (click)="sortDataBySNDescending()"
+                  />
+                </div>
+              </div>
+            </th>
+            <th class="thcls text-uppercase">
+              <div class="w-100 d-flex justify-content-center">
+                <div>Imob</div>
+                <div class="mleft">
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_up"
+                    alt="seta para cima"
+                    (click)="sortByImob()"
+                  />
+                  <img
+                    class="img_arrows"
+                    [src]="arrow_down"
+                    alt="seta para baixo"
+                    (click)="sortDataByImobDescending()"
+                  />
+                </div>
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody *ngIf="canViewDevices">
+          <tr
+            class="trcls"
+            *ngFor="let device of devices; let i = index"
+            (click)="onRowClick(i)"
+          >
+            <td class="tdsadj">{{ device[0] }}</td>
+            <td class="tdsadj">{{ device[4] }}</td>
+            <td class="tdsadj">{{ device[1] }}</td>
+            <td class="tdsadj">{{ device[2] }}</td>
+            <td class="tdsadj">{{ device[3] }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div
+      class="board_new_devices position-absolute top-50 start-50 translate-middle"
+      *ngIf="canViewNewDevices"
+    >
+      <div class="w-100 d-flex">
+        <span class="w-100 text-center"><b>Novo dispositivo</b></span>
+        <div>
+          <img
+            [src]="close_button"
+            alt="Fechar"
+            class="img_close_button img-fluid mx-arround"
+            (click)="closeNewDevices()"
+          />
+        </div>
+      </div>
+      <div class="d-flex flex-column">
+        <select class="form-select mb-3" (change)="device_select($event)">
+          <option value="None" selected disabled>
+            Selecione Tipo De Equipamento
+          </option>
+          <option value="Monitor">Monitor</option>
+          <option value="Telefone">Telefone</option>
+          <option value="Nas">Nas</option>
+          <option value="Switch">Switch</option>
+        </select>
+        <div class="form-floating mb-3">
+          <input
+            type="text"
+            class="form-control"
+            id="floatingBrand"
+            placeholder="Dell"
+            (input)="getBrand($event)"
+          />
+          <label for="floatingBrand">Marca</label>
+        </div>
+        <div class="form-floating mb-3">
+          <input
+            type="text"
+            class="form-control"
+            id="floatingModel"
+            placeholder="Dell Precision"
+            (input)="getModel($event)"
+          />
+          <label for="floatingModel">Modelo</label>
+        </div>
+        <div class="form-floating mb-3">
+          <input
+            type="text"
+            class="form-control"
+            id="floatingSN"
+            placeholder="SD1234DDF23"
+            (input)="getSerialNumber($event)"
+          />
+          <label for="floatingSN">Serial Number</label>
+        </div>
+        <div class="form-floating mb-3">
+          <input
+            type="text"
+            class="form-control"
+            id="floatingImob"
+            placeholder="CSC 020073673"
+            (input)="getImob($event)"
+          />
+          <label for="floatingImob">Imobilizado</label>
+        </div>
+      </div>
+      <button class="btn btn-success" (click)="sumbitNewDevice()">
+        Enviar
+      </button>
+    </div>
+  </div>
+</div>

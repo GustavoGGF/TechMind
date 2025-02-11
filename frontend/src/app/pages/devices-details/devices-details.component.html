@@ -1,0 +1,105 @@
+<div class="main">
+  <app-navbar
+    *ngIf="canView"
+    [name]="name"
+    [home_class]="home_class"
+    [computers_class]="computers_class"
+    [device_class]="device_class"
+  />
+  <div>
+    <div class="w-100 d-flex">
+      <img
+        class="img-fluid img_config"
+        [src]="img_config"
+        alt="configuração"
+        (click)="modifyDevice()"
+      />
+      <h3 class="fw-bold text-white text-center mt-3 mb-3 w-100">{{ sn }}</h3>
+    </div>
+    <div class="d-flex justify-content-center" *ngIf="canViewDetails">
+      <div class="dash d-flex justify-content-evenly flex-column">
+        <div class="b_margin">
+          <span><b class="b_margin">Equipamento:</b>{{ equip }}</span>
+        </div>
+        <div>
+          <span><b class="b_margin">Marca:</b>{{ brand }}</span>
+        </div>
+        <div>
+          <span><b class="b_margin">Modelo:</b>{{ model_device }}</span>
+        </div>
+        <div>
+          <span><b class="b_margin">Serial Number:</b>{{ sn }}</span>
+        </div>
+        <div>
+          <span><b class="b_margin">Imob:</b>{{ imob }}</span>
+        </div>
+        <div>
+          <span
+            ><b class="b_margin">Status:</b>
+            <a [href]="url_linked_device">{{ linked }}</a></span
+          >
+        </div>
+      </div>
+      <div><img [src]="img_url" alt="Foto do Equipamento" /></div>
+    </div>
+  </div>
+  <div class="d-flex justify-content-center" *ngIf="canViewModify">
+    <div class="dash d-flex justify-content-evenly flex-column">
+      <div class="position-relative w-100">
+        <img
+          [src]="img_close"
+          alt="botão de fechar"
+          class="img-fluid img_close_modify"
+          (click)="closeModify()"
+        />
+      </div>
+      <div class="b_margin mb-3">
+        <span><b class="b_margin">Equipamento:</b>{{ equip }}</span>
+      </div>
+      <div class="form-floating mb-3">
+        <input
+          type="text"
+          class="form-control"
+          id="floatingBrand"
+          [placeholder]="brand"
+          (input)="getBrand($event)"
+        />
+        <label for="floatingBrand">Marca</label>
+      </div>
+      <div class="form-floating mb-3">
+        <input
+          type="text"
+          class="form-control"
+          id="floatingModel"
+          [placeholder]="model_device"
+          (input)="getModel($event)"
+        />
+        <label for="floatingModel">Modelo</label>
+      </div>
+      <div class="mb-3">
+        <span><b class="b_margin">Serial Number:</b>{{ sn }}</span>
+      </div>
+      <div class="mb-3">
+        <span><b class="b_margin">Imob:</b>{{ imob }}</span>
+      </div>
+      <div class="d-flex flex-column mb-3">
+        <span><b>Status:</b></span
+        ><select class="form-select" (change)="getStatus($event)">
+          <option value="None" selected disabled>Alterar</option>
+          <option value="InUse">Em uso</option>
+        </select>
+      </div>
+      <div *ngIf="canViewStatus">
+        <select class="form-select">
+          <option
+            *ngFor="let names of machines_Names; let i = index"
+            [value]="i"
+            (click)="onRowClick(i)"
+          >
+            {{ names }}
+          </option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>

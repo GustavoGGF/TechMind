@@ -1,0 +1,280 @@
+<div class="main">
+  <div class="loadingTotality" *ngIf="canViewCredentialsLoading">
+    <app-loading-perfect-ape />
+  </div>
+  <app-navbar
+    *ngIf="canView"
+    [name]="name"
+    [home_class]="home_class"
+    [computers_class]="computers_class"
+    [device_class]="device_class"
+  />
+  <app-message
+    [errorType]="errorType"
+    [messageError]="messageError"
+    *ngIf="canViewMessage"
+    (click)="closeMessage()"
+  />
+  <app-loading *ngIf="!canView" />
+  <div class="w-100 d-flex justify-content-around">
+    <div class="justify-content-start d-flex div_quantity">
+      <div>
+        <div class="margin_quantity mb-2">
+          <span
+            class="buton_quantity"
+            [ngClass]="ten_quantity"
+            (click)="getTen()"
+            ><b>10</b></span
+          >
+        </div>
+        <div class="margin_quantity">
+          <span
+            class="buton_quantity"
+            [ngClass]="fifty_quantity"
+            (click)="getFifty()"
+            ><b>50</b></span
+          >
+        </div>
+      </div>
+      <div>
+        <div class="margin_quantity mb-2">
+          <span
+            class="buton_quantity"
+            [ngClass]="one_hundred_quantity"
+            (click)="getOneHundred()"
+            ><b>100</b></span
+          >
+        </div>
+        <div class="margin_quantity">
+          <span
+            class="buton_quantity"
+            [ngClass]="all_quantity"
+            (click)="getAll()"
+            ><b>All</b></span
+          >
+        </div>
+      </div>
+    </div>
+    <div class="filter_back">
+      <div class="d-flex">
+        <button class="btn" (click)="resetSoft()">
+          <img [src]="reset_filter" alt="reset filter" />
+        </button>
+        <select
+          class="form-select select_width"
+          name="dis"
+          [(ngModel)]="selectedValue"
+        >
+          <option value="None" disabled selected>Softwares</option>
+          <option
+            *ngFor="let soft of soft_list; let i = index"
+            [value]="i"
+            (click)="generateMachineReport(i)"
+          >
+            {{ soft.name }}
+          </option>
+        </select>
+      </div>
+      <div>
+        <select
+          class="form-select"
+          name="dis"
+          [(ngModel)]="selectedReports"
+          (ngModelChange)="onReportChange($event)"
+          id="selectElement"
+        >
+          <option value="None" disabled>Relatórios</option>
+          <option value="DNS">Relatório DNS</option>
+          <option value="reportxls" id="reportMachine">
+            Relatório Máquina
+          </option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <table class="tb">
+    <thead>
+      <tr>
+        <th class="thcls">
+          <div class="form-check d-flex justify-content-center">
+            <input
+              class="ckipf form-check-input"
+              type="checkbox"
+              value=""
+              (change)="selectAll()"
+            />
+          </div>
+        </th>
+        <th class="thcls text-uppercase">mac_address</th>
+        <th class="thcls text-uppercase">
+          <div class="w-100 d-flex justify-content-center">
+            <div class="form-floating mb-3">
+              <input
+                type="text"
+                class="form-control"
+                id="floatingModel"
+                placeholder="LP00-DTI00"
+                (input)="getName($event)"
+              />
+              <label for="floatingModel">Name</label>
+            </div>
+            <div class="mleft">
+              <img
+                class="img_arrows"
+                [src]="arrow_up"
+                soft_list
+                alt="seta para cima"
+                (click)="sortByName()"
+              />
+              <img
+                class="img_arrows"
+                [src]="arrow_down"
+                alt="seta para baixo"
+                (click)="sortDataByNameDescending()"
+              />
+            </div>
+          </div>
+        </th>
+        <th class="thcls text-uppercase">
+          <div class="w-100 d-flex justify-content-center">
+            <div>
+              <select class="form-select" name="selectSO">
+                <option value="None" disabled selected>SO</option>
+                <option
+                  *ngFor="let so of so_list; let i = index"
+                  [value]="i"
+                  (click)="onRowClickSO(i)"
+                >
+                  {{ so }}
+                </option>
+                <option value="69" (click)="onRowClickSO(69)">todos</option>
+              </select>
+            </div>
+            <div class="mleft">
+              <img
+                class="img_arrows"
+                [src]="arrow_up"
+                alt="seta para cima"
+                (click)="sortByNameSO()"
+              />
+              <img
+                class="img_arrows"
+                [src]="arrow_down"
+                alt="seta para baixo"
+                (click)="sortDataByNameDescendingSO()"
+              />
+            </div>
+          </div>
+        </th>
+        <th class="thcls text-uppercase">
+          <div class="w-100 d-flex justify-content-center">
+            <div>
+              <select class="form-select" name="dis">
+                <option value="" disabled selected>distribution</option>
+                <option
+                  *ngFor="let dis of dis_list; let i = index"
+                  [value]="i"
+                  (click)="onRowClickDIS(i)"
+                >
+                  {{ dis }}
+                </option>
+                <option value="" (click)="onRowClickDIS(69)">todos</option>
+              </select>
+            </div>
+            <div class="mleft">
+              <img
+                class="img_arrows"
+                [src]="arrow_up"
+                alt="seta para cima"
+                (click)="sortByNameDis()"
+              />
+              <img
+                class="img_arrows"
+                [src]="arrow_down"
+                alt="seta para baixo"
+                (click)="sortDataByNameDescendingDis()"
+              />
+            </div>
+          </div>
+        </th>
+        <th class="thcls text-uppercase">
+          <div class="w-100 d-flex justify-content-center">
+            <div>last update</div>
+            <div class="mleft">
+              <img
+                class="img_arrows"
+                [src]="arrow_up"
+                alt="seta para cima"
+                (click)="sortByDateDesc()"
+              />
+              <img
+                class="img_arrows"
+                [src]="arrow_down"
+                alt="seta para baixo"
+                (click)="sortByDateASC()"
+              />
+            </div>
+          </div>
+        </th>
+      </tr>
+    </thead>
+    <tbody *ngIf="canViewMachines">
+      <tr class="trcls" *ngFor="let machine of dataMachines; let i = index">
+        <td class="tdsadj">
+          <div class="form-check d-flex justify-content-center">
+            <input
+              class="ckip form-check-input"
+              type="checkbox"
+              [value]="machine[0]"
+            />
+          </div>
+        </td>
+        <td class="tdsadj" (click)="onRowClick(i)">{{ machine[0] }}</td>
+        <td class="tdsadj" (click)="onRowClick(i)">{{ machine[1] }}</td>
+        <td class="tdsadj" (click)="onRowClick(i)">{{ machine[2] }}</td>
+        <td class="tdsadj" (click)="onRowClick(i)">{{ machine[3] }}</td>
+        <td class="tdsadj" (click)="onRowClick(i)">
+          {{ formatDate(machine[4]) }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <div
+    *ngIf="canViewCredentials"
+    class="dashReport position-fixed top-50 start-50 translate-middle"
+  >
+    <button
+      (click)="closeCredential()"
+      class="position-absolute top-0 end-0 btn_mg btn"
+    >
+      <img [src]="closeBTN" class="img-fluid img_close" alt="Botão de Fechar" />
+    </button>
+    <div class="form-floating mb-3">
+      <input
+        type="text"
+        class="form-control"
+        id="floatingModel"
+        placeholder="Username"
+        (input)="getUserName($event)"
+        [(ngModel)]="inputUsername"
+      />
+      <label for="floatingModel">Username</label>
+    </div>
+    <div class="form-floating mb-3">
+      <input
+        type="password"
+        class="form-control"
+        id="floatingModel"
+        placeholder="Password"
+        (input)="getPwd($event)"
+        [(ngModel)]="inputPass"
+      />
+      <label for="floatingModel">Password</label>
+    </div>
+    <div>
+      <button class="btn btn-success" (click)="submitReportDNS()">
+        Gerar Relatório
+      </button>
+    </div>
+  </div>
+</div>

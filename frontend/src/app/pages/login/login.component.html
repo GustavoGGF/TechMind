@@ -1,0 +1,54 @@
+<div class="main">
+  <app-message
+    *ngIf="canShowMessage"
+    [errorType]="typError"
+    (click)="closeMessage()"
+    [messageError]="messageError"
+  ></app-message>
+  <img
+    class="img1 position-absolute top-0 start-0 animate__animated animate__zoomInUp animate__slow"
+    src=""
+    alt="Logo TechMind"
+    #logo
+    [src]="urlImage"
+  />
+  <div class="font position-absolute top-0 start-0 d-flex">
+    <p class="letter letter1">e</p>
+    <p class="letter letter2">c</p>
+    <p class="letter letter3">h</p>
+    <p class="letter letter4">M</p>
+    <p class="letter letter5">i</p>
+    <p class="letter letter6">n</p>
+    <p class="letter letter7">d</p>
+  </div>
+  <div
+    *ngIf="!canShow"
+    class="d-flex flex-column justify-content-center position-absolute top-50 start-50 translate-middle"
+  >
+    <div class="form-floating mb-3">
+      <input
+        type="text"
+        class="form-control"
+        id="floatingInput"
+        placeholder="User"
+        (keyup)="getUser($event)"
+      />
+      <label for="floatingInput">UserName</label>
+    </div>
+    <div class="form-floating">
+      <input
+        type="password"
+        class="form-control"
+        id="floatingPassword"
+        placeholder="Password"
+        (keyup)="getPass($event)"
+      />
+      <label for="floatingPassword">Password</label>
+    </div>
+    <button class="mt-3 btn btn-success" (click)="loginSubmit()">Entrar</button>
+  </div>
+  <app-loading
+    *ngIf="canShow"
+    class="position-absolute top-50 start-50 translate-middle"
+  ></app-loading>
+</div>

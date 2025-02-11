@@ -1,0 +1,27 @@
+.main {
+  background-color: var(--black);
+}
+
+.b_margin {
+  margin-right: 1em;
+}
+
+.dash {
+  background-color: #f4f4f4;
+  padding: 1em;
+  border-radius: 1em;
+}
+
+.img_config {
+  width: 5em;
+  margin: 2em;
+  cursor: pointer;
+  position: absolute;
+}
+
+.img_close_modify {
+  position: absolute;
+  top: 0;
+  right: 0;
+  cursor: pointer;
+}

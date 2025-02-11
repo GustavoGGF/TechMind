@@ -1,0 +1,27 @@
+#chart {
+  max-width: 380px;
+  margin: 35px auto;
+  padding: 0;
+}
+
+.chart {
+  width: 35em;
+  height: auto;
+  display: block;
+}
+
+:host ::ng-deep .apexcharts-datalabels text {
+  fill: #fee440 !important;
+}
+
+.apexcharts-datalabels text {
+  fill: #fee440 !important;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.apexcharts-legend-text {
+  fill: #fee440 !important;
+  font-size: 14px;
+  font-weight: bold;
+}
