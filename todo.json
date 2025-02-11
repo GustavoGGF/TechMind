@@ -4,11 +4,14 @@
   },
   "Home": {},
   "Computer": {
-    "HotFix": { "RPTCP": "Relatorio de computador não funciona no EDGE", "SFT": "A lista de softwares não esta funcionando" }
+    "HotFix": {}
   },
   "Computer Details": {
+    "HotFix": {
+      "SFTLST 28": "Lista de softwares, dar opção de escrever, quando clicar em um deixar marcado qual esta marcado, seleção multipla"
+    },
     "Upgrade": {
-      "RPTCP": "Foto do OptiPlex 755 (00-1E-C9-1C-61-77)"
+      "RPTCP 1": "Foto do OptiPlex 755 (00-1E-C9-1C-61-77)"
     }
   },
   "Back End": {
@@ -20,37 +23,37 @@
   "Exec's": {
     "All": {
       "Upgrade": {
-        "3": "PORTS sobre portas tambem, como :80 etc",
-        "4": "Portas fisicas tambem"
+        "3 2": "PORTS sobre portas tambem, como :80 etc",
+        "4 3": "Portas fisicas tambem"
       },
       "HotFix": {
-        "5": "Verificcar Hard Disk Sata Verion Windows",
-        "6": "Verificar Clock GPU e logical Name Windows",
-        "7": "Audio Device Windows",
-        "8": "SMBIOS Windows",
-        "9": "Exec não sabe lidar com RAID",
-        "TKN": "Exigir Token para baixar os programas"
+        "5 4": "Verificcar Hard Disk Sata Verion Windows",
+        "6 5": "Verificar Clock GPU e logical Name Windows",
+        "7 6": "Audio Device Windows",
+        "8 7": "SMBIOS Windows",
+        "9 8": "Exec não sabe lidar com RAID",
+        "TKN 9": "Exigir Token para baixar os programas"
       },
       "Installer": {
-        "MDFRNIS": "Modificar o running e o installer, o serviço deve ficar no installador, o mesmo deve poder criar e remover.",
-        "OTOP": "Adicionar um botão na primeira tela de Outra opções, onde podera escolher entre reparar ou desistalar",
-        "LDRLT": "Dar uma imerssão ao loader, deixar uma barra branca passar para dar impressão de carregamento",
-        "ICLSFNL": " apos a conclusão se for fechado o programa, marcar reinicialização para 30 minutos",
-        "INSTICN": "adicionar icone",
-        "RPDS": "no modo --silent, caso esteja instalado, e seja constado que já foi instalador, dar opção de reparar",
-        "DSL": "Desinstalação"
+        "MDFRNIS 10": "Modificar o running e o installer, o serviço deve ficar no installador, o mesmo deve poder criar e remover.",
+        "OTOP 11": "Adicionar um botão na primeira tela de Outra opções, onde podera escolher entre reparar ou desistalar",
+        "LDRLT 12": "Dar uma imerssão ao loader, deixar uma barra branca passar para dar impressão de carregamento",
+        "ICLSFNL 13": " apos a conclusão se for fechado o programa, marcar reinicialização para 30 minutos",
+        "INSTICN 14": "adicionar icone",
+        "RPDS 15": "no modo --silent, caso esteja instalado, e seja constado que já foi instalador, dar opção de reparar",
+        "DSL 16": "Desinstalação"
       }
     },
-    "FreeBSD": "falta algumas coisas",
-    "W2012": "Windows server 2012 não listou softwares",
-    "LDS": "Lp00-dcorp3 não funciona o exec",
-    "LP@": "lp00-dfiscal05 nem conecta",
-    "LpD": "LP00-DFISCAL06 sem foto",
-    "LP!)": "LP00-DFISCAL10 não roda, SWSUS01",
-    "SPC": "sacpdl01 não mostra o SO",
-    "SENG": "SENG04 voce nao pode se conectar ou compartlhiar arquivoes, pois ele nao é seguro, requeer SMB1 | 10.3.1.63 sem SO",
-    "USER": "Mudar Metodologia de pegar usuario ativo",
-    "SVSD": "Serviço que se comunica com o servidor quando quer",
-    "ERS": "Esta versão de c:\techmind.exe não é compatível com a versão do Windows sendo executada. Verifique, nas informações do sistema do seu computador, se você precisa de uma versão x86 (32 bits) ou x64 (64 bits) do programa e contacte o fornecedor do software."
+    "FreeBSD 17": "falta algumas coisas",
+    "W2012 18": "Windows server 2012 não listou softwares",
+    "LDS 19": "Lp00-dcorp3 não funciona o exec",
+    "LP@ 20": "lp00-dfiscal05 nem conecta",
+    "LpD 21": "LP00-DFISCAL06 sem foto",
+    "LP!) 22": "LP00-DFISCAL10 não roda, SWSUS01",
+    "SPC 23": "sacpdl01 não mostra o SO",
+    "SENG 24": "SENG04 voce nao pode se conectar ou compartlhiar arquivoes, pois ele nao é seguro, requeer SMB1 | 10.3.1.63 sem SO",
+    "USER 25": "Mudar Metodologia de pegar usuario ativo",
+    "SVSD 26": "Serviço que se comunica com o servidor quando quer",
+    "ERS 27": "Esta versão de c:\techmind.exe não é compatível com a versão do Windows sendo executada. Verifique, nas informações do sistema do seu computador, se você precisa de uma versão x86 (32 bits) ou x64 (64 bits) do programa e contacte o fornecedor do software."
   }
 }

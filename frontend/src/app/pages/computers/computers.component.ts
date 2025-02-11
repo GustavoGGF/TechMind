@@ -1,20 +1,10 @@
-import {
-  Component,
-  ElementRef,
-  OnInit,
-  Renderer2,
-  ViewChild,
-} from '@angular/core';
-import { UtilitiesModule } from '../../utilities/utilities.module';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import {
-  HttpClient,
-  HttpClientModule,
-  HttpHeaders,
-} from '@angular/common/http';
-import { catchError, throwError } from 'rxjs';
-import { saveAs } from 'file-saver';
+import { Component, ElementRef, OnInit, Renderer2, ViewChild } from "@angular/core";
+import { UtilitiesModule } from "../../utilities/utilities.module";
+import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { HttpClient, HttpClientModule, HttpHeaders } from "@angular/common/http";
+import { catchError, throwError } from "rxjs";
+import { saveAs } from "file-saver";
 // import { ChangeDetectorRef } from '@angular/core';
 // import { saveAs } from 'file-saver';
 
@@ -30,11 +20,11 @@ export interface ReportResponse {
 }
 
 @Component({
-  selector: 'app-computers',
+  selector: "app-computers",
   standalone: true,
   imports: [UtilitiesModule, CommonModule, HttpClientModule, FormsModule],
-  templateUrl: './computers.component.html',
-  styleUrl: './computers.component.css',
+  templateUrl: "./computers.component.html",
+  styleUrl: "./computers.component.css",
 })
 export class ComputersComponent implements OnInit {
   constructor(
@@ -43,7 +33,7 @@ export class ComputersComponent implements OnInit {
     private el: ElementRef // private cdRef: ChangeDetectorRef
   ) {}
   // Declarando variaveis any
-  @ViewChild('selectElement') selectElement!: ElementRef<HTMLSelectElement>;
+  @ViewChild("selectElement") selectElement!: ElementRef<HTMLSelectElement>;
 
   dataMachines: any;
   name: any;
@@ -51,27 +41,27 @@ export class ComputersComponent implements OnInit {
   token: any;
 
   // Declarando variaveis string
-  all_quantity: string = '';
-  arrow_up: string = '/static/assets/images/seta2.png';
-  arrow_down: string = '/static/assets/images/seta.png';
-  computers_class: string = 'active';
-  device_class: string = '';
-  errorType: string = '';
-  fifty_quantity: string = '';
-  input_name: string = '';
-  input_pwd: string = '';
-  input_username: string = '';
-  inputUsername: string = '';
-  inputPass: string = '';
-  home_class: string = '';
-  messageError: string = '';
-  one_hundred_quantity: string = '';
-  ten_quantity: string = '';
-  reset_filter: string = '/static/assets/images/filtro.png';
-  quantity_filter: string | null = '';
-  selectedValue: string = 'None';
-  selectedReports: string = 'None';
-  closeBTN: string = '/static/assets/images/fechar.png';
+  all_quantity: string = "";
+  arrow_up: string = "/static/assets/images/seta2.png";
+  arrow_down: string = "/static/assets/images/seta.png";
+  computers_class: string = "active";
+  device_class: string = "";
+  errorType: string = "";
+  fifty_quantity: string = "";
+  input_name: string = "";
+  input_pwd: string = "";
+  input_username: string = "";
+  inputUsername: string = "";
+  inputPass: string = "";
+  home_class: string = "";
+  messageError: string = "";
+  one_hundred_quantity: string = "";
+  ten_quantity: string = "";
+  reset_filter: string = "/static/assets/images/filtro.png";
+  quantity_filter: string | null = "";
+  selectedValue: string = "None";
+  selectedReports: string = "None";
+  closeBTN: string = "/static/assets/images/fechar.png";
 
   // Declarando variaveis boolean
   canView: boolean = false;
@@ -92,20 +82,19 @@ export class ComputersComponent implements OnInit {
   // Função iniciada ao carregar a pagina
   ngOnInit(): void {
     // Pegando valores do usuario
-    this.name = localStorage.getItem('name');
+    this.name = localStorage.getItem("name");
 
     // Pegando valor de quantitade do filtro
-    this.quantity_filter = localStorage.getItem('quantity');
+    this.quantity_filter = localStorage.getItem("quantity");
     if (this.quantity_filter == null) {
-      localStorage.setItem('quantity', '10');
-      this.quantity_filter = '10';
+      localStorage.setItem("quantity", "10");
+      this.quantity_filter = "10";
     }
 
     // Verificando se os dados existem
     if (this.name.length == 0 || this.name == null) {
-      this.errorType = 'Falta de Dados';
-      this.messageError =
-        'Ouve um erro ao acessar dados do LDAP, contatar a TI';
+      this.errorType = "Falta de Dados";
+      this.messageError = "Ouve um erro ao acessar dados do LDAP, contatar a TI";
       this.showMessage = true;
     } else {
       this.canView = true;
@@ -123,7 +112,7 @@ export class ComputersComponent implements OnInit {
   // Função que obtem o token CSRF
   getToken(): void {
     this.http
-      .get('/home/get-token', {})
+      .get("/home/get-token", {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -144,7 +133,7 @@ export class ComputersComponent implements OnInit {
   // Buscando as maquinas disponiveis
   getData(): void {
     this.http
-      .get('/home/computers/get-data/' + this.quantity_filter, {})
+      .get("/home/computers/get-data/" + this.quantity_filter, {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -159,29 +148,29 @@ export class ComputersComponent implements OnInit {
           switch (this.quantity_filter) {
             default:
               break;
-            case '10':
-              this.ten_quantity = 'active_filter';
-              this.fifty_quantity = '';
-              this.one_hundred_quantity = '';
-              this.all_quantity = '';
+            case "10":
+              this.ten_quantity = "active_filter";
+              this.fifty_quantity = "";
+              this.one_hundred_quantity = "";
+              this.all_quantity = "";
               break;
-            case '50':
-              this.ten_quantity = '';
-              this.fifty_quantity = 'active_filter';
-              this.one_hundred_quantity = '';
-              this.all_quantity = '';
+            case "50":
+              this.ten_quantity = "";
+              this.fifty_quantity = "active_filter";
+              this.one_hundred_quantity = "";
+              this.all_quantity = "";
               break;
-            case '100':
-              this.ten_quantity = '';
-              this.fifty_quantity = '';
-              this.one_hundred_quantity = 'active_filter';
-              this.all_quantity = '';
+            case "100":
+              this.ten_quantity = "";
+              this.fifty_quantity = "";
+              this.one_hundred_quantity = "active_filter";
+              this.all_quantity = "";
               break;
-            case 'all':
-              this.ten_quantity = '';
-              this.fifty_quantity = '';
-              this.one_hundred_quantity = '';
-              this.all_quantity = 'active_filter';
+            case "all":
+              this.ten_quantity = "";
+              this.fifty_quantity = "";
+              this.one_hundred_quantity = "";
+              this.all_quantity = "active_filter";
           }
 
           this.canViewMachines = true;
@@ -192,16 +181,13 @@ export class ComputersComponent implements OnInit {
   }
 
   mountSoftwares(): void {
-    const machineNames = this.dataMachines.map((machine: any[]) => machine[42]);
+    const machineNames = this.dataMachines.map((machine: any[]) => machine[40]);
+
     const so = this.dataMachines.map((machine: any[]) => machine[3]);
     const ids = this.dataMachines.map((machine: any[]) => machine[0]);
 
     // Encontrar todos os índices onde o valor de `so` é "Microsoft Windows 10 Pro"
-    const windows10ProIndexes = so
-      .map((value: string, index: number) =>
-        value === 'Microsoft Windows 10 Pro' ? index : -1
-      )
-      .filter((index: number) => index !== -1);
+    const windows10ProIndexes = so.map((value: string, index: number) => (value === "Microsoft Windows 10 Pro" ? index : -1)).filter((index: number) => index !== -1);
 
     // Usar esses índices para pegar os valores correspondentes de `machineNames` e `ids`
     const result = windows10ProIndexes.map((index: number) => ({
@@ -219,36 +205,33 @@ export class ComputersComponent implements OnInit {
   stringToSortedArray(array: string): string[] {
     if (!array || array.trim().length <= 1) {
       // Se a string estiver vazia ou muito curta, retornar o erro
-      console.error('Formato de string inválido.');
+      console.error("Formato de string inválido.");
       return [];
     }
     try {
       let soft_list: any[] = [];
       const trimmedData = array.trim();
       // Verifica se a string é um array válido
-      if (trimmedData.startsWith('[') && trimmedData.endsWith(']')) {
+      if (trimmedData.startsWith("[") && trimmedData.endsWith("]")) {
         soft_list = JSON.parse(trimmedData.replace(/'/g, '"'));
       }
 
       // Verifica se a string é um objeto único
-      else if (trimmedData.startsWith('{') && trimmedData.endsWith('}')) {
+      else if (trimmedData.startsWith("{") && trimmedData.endsWith("}")) {
         // Adiciona colchetes para transformar em um array com um único item
         const arrayString = `[${trimmedData}]`;
         soft_list = JSON.parse(arrayString.replace(/'/g, '"'));
       }
       // Verifica se soft_list é um array de objetos
-      if (
-        Array.isArray(soft_list) &&
-        soft_list.every((item) => typeof item === 'object' && item !== null)
-      ) {
+      if (Array.isArray(soft_list) && soft_list.every((item) => typeof item === "object" && item !== null)) {
         // Extrai o valor da propriedade `name` de cada objeto
         return soft_list.map((item) => item.name);
       } else {
-        console.error('A string não contém um array de objetos válidos.');
+        console.error("A string não contém um array de objetos válidos.");
         return [];
       }
     } catch (error) {
-      console.error('Erro ao converter a string para JSON:', error);
+      console.error("Erro ao converter a string para JSON:", error);
       return [];
     }
   }
@@ -256,9 +239,7 @@ export class ComputersComponent implements OnInit {
   updateSoftwareList(names: string[], id: string): void {
     names.forEach((name: string) => {
       // Verifica se já existe um objeto com o mesmo nome em soft_list
-      const software = this.soft_list.find(
-        (software) => software.name === name
-      );
+      const software = this.soft_list.find((software) => software.name === name);
 
       if (software) {
         // Adiciona o ID ao array de IDs se ainda não estiver presente
@@ -268,6 +249,7 @@ export class ComputersComponent implements OnInit {
       } else {
         // Adiciona um novo objeto com o nome e o ID
         this.soft_list.push({ name, ids: [id] });
+        this.soft_list.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
       }
     });
   }
@@ -286,10 +268,10 @@ export class ComputersComponent implements OnInit {
   }
 
   resetSoft(): void {
-    this.selectedValue = 'None';
+    this.selectedValue = "None";
 
     this.http
-      .get('/home/computers/get-data/' + this.quantity_filter, {})
+      .get("/home/computers/get-data/" + this.quantity_filter, {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -304,29 +286,29 @@ export class ComputersComponent implements OnInit {
           switch (this.quantity_filter) {
             default:
               break;
-            case '10':
-              this.ten_quantity = 'active_filter';
-              this.fifty_quantity = '';
-              this.one_hundred_quantity = '';
-              this.all_quantity = '';
+            case "10":
+              this.ten_quantity = "active_filter";
+              this.fifty_quantity = "";
+              this.one_hundred_quantity = "";
+              this.all_quantity = "";
               break;
-            case '50':
-              this.ten_quantity = '';
-              this.fifty_quantity = 'active_filter';
-              this.one_hundred_quantity = '';
-              this.all_quantity = '';
+            case "50":
+              this.ten_quantity = "";
+              this.fifty_quantity = "active_filter";
+              this.one_hundred_quantity = "";
+              this.all_quantity = "";
               break;
-            case '100':
-              this.ten_quantity = '';
-              this.fifty_quantity = '';
-              this.one_hundred_quantity = 'active_filter';
-              this.all_quantity = '';
+            case "100":
+              this.ten_quantity = "";
+              this.fifty_quantity = "";
+              this.one_hundred_quantity = "active_filter";
+              this.all_quantity = "";
               break;
-            case 'all':
-              this.ten_quantity = '';
-              this.fifty_quantity = '';
-              this.one_hundred_quantity = '';
-              this.all_quantity = 'active_filter';
+            case "all":
+              this.ten_quantity = "";
+              this.fifty_quantity = "";
+              this.one_hundred_quantity = "";
+              this.all_quantity = "active_filter";
           }
           this.canViewMachines = true;
         }
@@ -336,7 +318,7 @@ export class ComputersComponent implements OnInit {
   // Função para pegar os valores do filto de SO
   getDistribution(): void {
     this.http
-      .get('/home/computers/get-data-DIS', {})
+      .get("/home/computers/get-data-DIS", {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -354,7 +336,7 @@ export class ComputersComponent implements OnInit {
   // Função para pegar os valores do filto de Distribuição
   getSO(): string[] | any {
     this.http
-      .get('/home/computers/get-data-SO', {})
+      .get("/home/computers/get-data-SO", {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -374,9 +356,9 @@ export class ComputersComponent implements OnInit {
   onRowClick(index: number) {
     const selectedMachine = this.dataMachines[index];
     let mac = selectedMachine[0];
-    mac = mac.replace(/:/g, '-');
+    mac = mac.replace(/:/g, "-");
 
-    return window.open('/home/computers/view-machine/' + mac, '_blank');
+    return window.open("/home/computers/view-machine/" + mac, "_blank");
   }
 
   // Função obter o valor do SO que deseja filtrar
@@ -388,7 +370,7 @@ export class ComputersComponent implements OnInit {
     let so;
 
     if (index == 69) {
-      so = 'all';
+      so = "all";
     } else {
       const selectedSO = this.so_list[index];
 
@@ -396,10 +378,7 @@ export class ComputersComponent implements OnInit {
     }
 
     this.http
-      .get(
-        '/home/computers/get-data-SO-filter/' + this.quantity_filter + '/' + so,
-        {}
-      )
+      .get("/home/computers/get-data-SO-filter/" + this.quantity_filter + "/" + so, {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -425,7 +404,7 @@ export class ComputersComponent implements OnInit {
     let so;
 
     if (index == 69) {
-      so = 'all';
+      so = "all";
     } else {
       const selectedDis = this.dis_list[index];
 
@@ -433,13 +412,7 @@ export class ComputersComponent implements OnInit {
     }
 
     this.http
-      .get(
-        '/home/computers/get-data-DIS-filter/' +
-          this.quantity_filter +
-          '/' +
-          so,
-        {}
-      )
+      .get("/home/computers/get-data-DIS-filter/" + this.quantity_filter + "/" + so, {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -458,20 +431,20 @@ export class ComputersComponent implements OnInit {
 
   // Seta quantidade de maquinas a serem exibidas para 10
   getTen(): void {
-    localStorage.setItem('quantity', '10');
+    localStorage.setItem("quantity", "10");
 
-    this.quantity_filter = '10';
+    this.quantity_filter = "10";
 
-    this.ten_quantity = 'active_filter';
-    this.fifty_quantity = '';
-    this.one_hundred_quantity = '';
-    this.all_quantity = '';
+    this.ten_quantity = "active_filter";
+    this.fifty_quantity = "";
+    this.one_hundred_quantity = "";
+    this.all_quantity = "";
 
     this.canViewMachines = false;
     this.dataMachines = null;
 
     this.http
-      .get('/home/computers/get-quantity/10', {})
+      .get("/home/computers/get-quantity/10", {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -490,18 +463,18 @@ export class ComputersComponent implements OnInit {
 
   // Seta quantidade de maquinas a serem exibidas para 50
   getFifty(): void {
-    localStorage.setItem('quantity', '50');
+    localStorage.setItem("quantity", "50");
 
-    this.ten_quantity = '';
-    this.fifty_quantity = 'active_filter';
-    this.one_hundred_quantity = '';
-    this.all_quantity = '';
+    this.ten_quantity = "";
+    this.fifty_quantity = "active_filter";
+    this.one_hundred_quantity = "";
+    this.all_quantity = "";
 
     this.canViewMachines = false;
     this.dataMachines = null;
 
     this.http
-      .get('/home/computers/get-quantity/50', {})
+      .get("/home/computers/get-quantity/50", {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -520,18 +493,18 @@ export class ComputersComponent implements OnInit {
 
   // Seta a quantidade de maquinas a serem exibidas para 100
   getOneHundred(): void {
-    localStorage.setItem('quantity', '100');
+    localStorage.setItem("quantity", "100");
 
-    this.ten_quantity = '';
-    this.fifty_quantity = '';
-    this.one_hundred_quantity = 'active_filter';
-    this.all_quantity = '';
+    this.ten_quantity = "";
+    this.fifty_quantity = "";
+    this.one_hundred_quantity = "active_filter";
+    this.all_quantity = "";
 
     this.canViewMachines = false;
     this.dataMachines = null;
 
     this.http
-      .get('/home/computers/get-quantity/100', {})
+      .get("/home/computers/get-quantity/100", {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -550,18 +523,18 @@ export class ComputersComponent implements OnInit {
 
   // Seta a quantidade de maquinas a serem exibidas para todas
   getAll(): void {
-    localStorage.setItem('quantity', 'all');
+    localStorage.setItem("quantity", "all");
 
-    this.ten_quantity = '';
-    this.fifty_quantity = '';
-    this.one_hundred_quantity = '';
-    this.all_quantity = 'active_filter';
+    this.ten_quantity = "";
+    this.fifty_quantity = "";
+    this.one_hundred_quantity = "";
+    this.all_quantity = "active_filter";
 
     this.canViewMachines = false;
     this.dataMachines = null;
 
     this.http
-      .get('/home/computers/get-quantity/all', {})
+      .get("/home/computers/get-quantity/all", {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -581,8 +554,8 @@ export class ComputersComponent implements OnInit {
   // Função que formata as datas que aparecem na tabela dos computadores
   formatDate(date: string): string {
     const parsedDate = new Date(date);
-    const day = String(parsedDate.getDate()).padStart(2, '0');
-    const month = String(parsedDate.getMonth() + 1).padStart(2, '0'); // Meses são baseados em 0 (Janeiro é 0)
+    const day = String(parsedDate.getDate()).padStart(2, "0");
+    const month = String(parsedDate.getMonth() + 1).padStart(2, "0"); // Meses são baseados em 0 (Janeiro é 0)
     const year = parsedDate.getFullYear();
 
     return `${day}/${month}/${year}`;
@@ -711,13 +684,7 @@ export class ComputersComponent implements OnInit {
     }
 
     this.http
-      .get(
-        '/home/computers/get-machine-varchar/' +
-          this.quantity_filter +
-          '/' +
-          this.input_name,
-        {}
-      )
+      .get("/home/computers/get-machine-varchar/" + this.quantity_filter + "/" + this.input_name, {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -745,9 +712,9 @@ export class ComputersComponent implements OnInit {
   }
 
   onReportChange(value: string): void {
-    if (value === 'DNS') {
+    if (value === "DNS") {
       this.reportDNS();
-    } else if (value === 'reportxls') {
+    } else if (value === "reportxls") {
       this.exportMachineReport();
     }
   }
@@ -758,15 +725,15 @@ export class ComputersComponent implements OnInit {
 
   closeCredential(): void {
     this.canViewCredentials = false;
-    this.selectedReports = 'None';
-    this.inputUsername = '';
-    this.inputPass = '';
+    this.selectedReports = "None";
+    this.inputUsername = "";
+    this.inputPass = "";
     this.canViewCredentialsLoading = false;
   }
 
   exportMachineReport(): void {
     // Seleciona todos os checkboxes com a classe 'ckip'
-    const checkboxes = this.el.nativeElement.querySelectorAll('.ckip');
+    const checkboxes = this.el.nativeElement.querySelectorAll(".ckip");
 
     // Array para armazenar os valores dos checkboxes marcados
     const selectedValues: string[] = [];
@@ -780,28 +747,26 @@ export class ComputersComponent implements OnInit {
     });
 
     if (selectedValues.length == 0) {
-      const selectT = document.getElementById(
-        'selectElement'
-      ) as HTMLSelectElement;
-      selectT.value = 'None';
-      this.errorType = 'Falta de Dados';
-      this.messageError = 'Necessário selecionar ao menos um computador';
+      const selectT = document.getElementById("selectElement") as HTMLSelectElement;
+      selectT.value = "None";
+      this.errorType = "Falta de Dados";
+      this.messageError = "Necessário selecionar ao menos um computador";
       this.canViewMessage = true;
       return;
     }
 
     // Converte o array em uma string separada por vírgulas
-    const selectedValuesString = selectedValues.join(',');
+    const selectedValuesString = selectedValues.join(",");
 
     this.http
       .post<ReportResponse>(
-        '/home/computers/get-report/xls/',
+        "/home/computers/get-report/xls/",
         {
           selectedValues: selectedValuesString,
         },
         {
           headers: new HttpHeaders({
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           }),
         }
       )
@@ -813,7 +778,7 @@ export class ComputersComponent implements OnInit {
         })
       )
       .subscribe((response) => {
-        const fileName = response.file_name || 'report.xlsx';
+        const fileName = response.file_name || "report.xlsx";
         const fileContent = response.file_content;
 
         // Converte a string base64 em um Blob
@@ -825,14 +790,14 @@ export class ComputersComponent implements OnInit {
 
         const byteArray = new Uint8Array(byteNumbers);
         const blob = new Blob([byteArray], {
-          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         });
 
         // Usa a biblioteca file-saver para salvar o arquivo
         saveAs(blob, fileName);
       }),
       (error: any) => {
-        console.error('Download error:', error);
+        console.error("Download error:", error);
       };
   }
 
@@ -841,15 +806,15 @@ export class ComputersComponent implements OnInit {
     this.canViewCredentialsLoading = true;
     this.http
       .post(
-        '/home/computers/report-dns',
+        "/home/computers/report-dns",
         {
           username: this.input_username,
           pwd: this.input_pwd,
         },
         {
           headers: new HttpHeaders({
-            'X-CSRFToken': this.token,
-            'Content-Type': 'application/json',
+            "X-CSRFToken": this.token,
+            "Content-Type": "application/json",
           }),
         }
       )
@@ -861,8 +826,8 @@ export class ComputersComponent implements OnInit {
             this.canViewCredentialsLoading = false;
           }
           if (this.status === 401) {
-            this.errorType = 'Invalid Credentials';
-            this.messageError = 'Usuario e/ou Senha Incorreto';
+            this.errorType = "Invalid Credentials";
+            this.messageError = "Usuario e/ou Senha Incorreto";
             this.canViewMessage = true;
           }
           return throwError(error);
@@ -870,7 +835,7 @@ export class ComputersComponent implements OnInit {
       )
       .subscribe((data: any) => {
         if (data) {
-          const link = document.createElement('a');
+          const link = document.createElement("a");
           link.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${data.filedata}`;
           link.download = data.filename;
           link.click();
@@ -881,12 +846,12 @@ export class ComputersComponent implements OnInit {
   }
 
   selectAll(): void {
-    const checkboxes = this.el.nativeElement.querySelectorAll('.ckip');
+    const checkboxes = this.el.nativeElement.querySelectorAll(".ckip");
     checkboxes.forEach((checkbox: HTMLInputElement) => {
       if (this.checkedAll) {
-        this.renderer.setProperty(checkbox, 'checked', true);
+        this.renderer.setProperty(checkbox, "checked", true);
       } else {
-        this.renderer.setProperty(checkbox, 'checked', false);
+        this.renderer.setProperty(checkbox, "checked", false);
       }
     });
     if (this.checkedAll) {
