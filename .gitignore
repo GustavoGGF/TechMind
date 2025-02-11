@@ -10,5 +10,8 @@ node_modules/
 logs/
 *.log
 
+#arquivos angular
+.angular
+
 # Ignorar arquivos de configuração específicos
 .env
