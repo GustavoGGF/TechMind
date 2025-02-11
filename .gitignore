@@ -11,10 +11,13 @@ logs/
 *.log
 
 #arquivos angular
-.angular
+.angular/
 
 # Ignorar arquivos de configuração específicos
 .env
 
 #arquivos cache python
 __pycache__/
+
+#pasta static onde é gerado do build
+static/
