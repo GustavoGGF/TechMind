@@ -1,8 +1,18 @@
-import { Component, ElementRef, OnInit, Renderer2, ViewChild } from "@angular/core";
+import {
+  Component,
+  ElementRef,
+  OnInit,
+  Renderer2,
+  ViewChild,
+} from "@angular/core";
 import { UtilitiesModule } from "../../utilities/utilities.module";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { HttpClient, HttpClientModule, HttpHeaders } from "@angular/common/http";
+import {
+  HttpClient,
+  HttpClientModule,
+  HttpHeaders,
+} from "@angular/common/http";
 import { catchError, throwError } from "rxjs";
 import { saveAs } from "file-saver";
 // import { ChangeDetectorRef } from '@angular/core';
@@ -94,7 +104,8 @@ export class ComputersComponent implements OnInit {
     // Verificando se os dados existem
     if (this.name.length == 0 || this.name == null) {
       this.errorType = "Falta de Dados";
-      this.messageError = "Ouve um erro ao acessar dados do LDAP, contatar a TI";
+      this.messageError =
+        "Ouve um erro ao acessar dados do LDAP, contatar a TI";
       this.showMessage = true;
     } else {
       this.canView = true;
@@ -111,6 +122,8 @@ export class ComputersComponent implements OnInit {
 
   // Função que obtem o token CSRF
   getToken(): void {
+    console.log("pegou token");
+
     this.http
       .get("/home/get-token", {})
       .pipe(
@@ -187,7 +200,11 @@ export class ComputersComponent implements OnInit {
     const ids = this.dataMachines.map((machine: any[]) => machine[0]);
 
     // Encontrar todos os índices onde o valor de `so` é "Microsoft Windows 10 Pro"
-    const windows10ProIndexes = so.map((value: string, index: number) => (value === "Microsoft Windows 10 Pro" ? index : -1)).filter((index: number) => index !== -1);
+    const windows10ProIndexes = so
+      .map((value: string, index: number) =>
+        value === "Microsoft Windows 10 Pro" ? index : -1
+      )
+      .filter((index: number) => index !== -1);
 
     // Usar esses índices para pegar os valores correspondentes de `machineNames` e `ids`
     const result = windows10ProIndexes.map((index: number) => ({
@@ -223,7 +240,10 @@ export class ComputersComponent implements OnInit {
         soft_list = JSON.parse(arrayString.replace(/'/g, '"'));
       }
       // Verifica se soft_list é um array de objetos
-      if (Array.isArray(soft_list) && soft_list.every((item) => typeof item === "object" && item !== null)) {
+      if (
+        Array.isArray(soft_list) &&
+        soft_list.every((item) => typeof item === "object" && item !== null)
+      ) {
         // Extrai o valor da propriedade `name` de cada objeto
         return soft_list.map((item) => item.name);
       } else {
@@ -239,7 +259,9 @@ export class ComputersComponent implements OnInit {
   updateSoftwareList(names: string[], id: string): void {
     names.forEach((name: string) => {
       // Verifica se já existe um objeto com o mesmo nome em soft_list
-      const software = this.soft_list.find((software) => software.name === name);
+      const software = this.soft_list.find(
+        (software) => software.name === name
+      );
 
       if (software) {
         // Adiciona o ID ao array de IDs se ainda não estiver presente
@@ -249,7 +271,9 @@ export class ComputersComponent implements OnInit {
       } else {
         // Adiciona um novo objeto com o nome e o ID
         this.soft_list.push({ name, ids: [id] });
-        this.soft_list.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+        this.soft_list.sort((a, b) =>
+          a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+        );
       }
     });
   }
@@ -378,7 +402,10 @@ export class ComputersComponent implements OnInit {
     }
 
     this.http
-      .get("/home/computers/get-data-SO-filter/" + this.quantity_filter + "/" + so, {})
+      .get(
+        "/home/computers/get-data-SO-filter/" + this.quantity_filter + "/" + so,
+        {}
+      )
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -412,7 +439,13 @@ export class ComputersComponent implements OnInit {
     }
 
     this.http
-      .get("/home/computers/get-data-DIS-filter/" + this.quantity_filter + "/" + so, {})
+      .get(
+        "/home/computers/get-data-DIS-filter/" +
+          this.quantity_filter +
+          "/" +
+          so,
+        {}
+      )
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -465,6 +498,7 @@ export class ComputersComponent implements OnInit {
   getFifty(): void {
     localStorage.setItem("quantity", "50");
 
+    this.quantity_filter = "50";
     this.ten_quantity = "";
     this.fifty_quantity = "active_filter";
     this.one_hundred_quantity = "";
@@ -494,7 +528,7 @@ export class ComputersComponent implements OnInit {
   // Seta a quantidade de maquinas a serem exibidas para 100
   getOneHundred(): void {
     localStorage.setItem("quantity", "100");
-
+    this.quantity_filter = "100";
     this.ten_quantity = "";
     this.fifty_quantity = "";
     this.one_hundred_quantity = "active_filter";
@@ -524,7 +558,7 @@ export class ComputersComponent implements OnInit {
   // Seta a quantidade de maquinas a serem exibidas para todas
   getAll(): void {
     localStorage.setItem("quantity", "all");
-
+    this.quantity_filter = "all";
     this.ten_quantity = "";
     this.fifty_quantity = "";
     this.one_hundred_quantity = "";
@@ -684,7 +718,13 @@ export class ComputersComponent implements OnInit {
     }
 
     this.http
-      .get("/home/computers/get-machine-varchar/" + this.quantity_filter + "/" + this.input_name, {})
+      .get(
+        "/home/computers/get-machine-varchar/" +
+          this.quantity_filter +
+          "/" +
+          this.input_name,
+        {}
+      )
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -747,7 +787,9 @@ export class ComputersComponent implements OnInit {
     });
 
     if (selectedValues.length == 0) {
-      const selectT = document.getElementById("selectElement") as HTMLSelectElement;
+      const selectT = document.getElementById(
+        "selectElement"
+      ) as HTMLSelectElement;
       selectT.value = "None";
       this.errorType = "Falta de Dados";
       this.messageError = "Necessário selecionar ao menos um computador";

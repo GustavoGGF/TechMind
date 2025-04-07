@@ -1,19 +1,18 @@
 from base64 import b64encode
 from io import BytesIO
-import io
-import dns.resolver
+from dns.resolver import resolve
 from json import loads, JSONDecodeError
-import logging
-import mysql.connector
-import pandas as pd
+from logging import basicConfig, WARNING, getLogger
+from mysql import connector
+from pandas import DataFrame, ExcelWriter
 from contextlib import contextmanager
 from decouple import config
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse
 from django.middleware.csrf import get_token
 from django_ratelimit.decorators import ratelimit
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt, requires_csrf_token
 from django.views.decorators.http import require_POST, require_GET
@@ -22,12 +21,12 @@ from ldap3 import ALL, Connection, Server, SUBTREE
 from re import sub
 from django.test import Client
 from ast import literal_eval
-import json
-import openpyxl
+from json import loads
+from os import path
 
 # Configuração básica de logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+basicConfig(level=WARNING)
+logger = getLogger(__name__)
 
 
 @contextmanager
@@ -35,14 +34,14 @@ def get_database_connection():
     """Context manager for managing database connections."""
     connection = None
     try:
-        connection = mysql.connector.connect(
+        connection = connector.connect(
             host=config("DB_HOST"),
             database=config("DB_NAME"),
             user=config("DB_USER"),
             password=config("DB_PASSWORD"),
         )
         yield connection
-    except mysql.connector.Error as err:
+    except connector.Error as err:
         logger.error(f"Database connection error: {err}")
         raise
     finally:
@@ -61,7 +60,7 @@ def home(request):
 @requires_csrf_token
 @login_required(login_url="/login")
 @require_GET
-def getInfoMainPanel(request):
+def getInfo_main_panel(request):
     connection = None
     cursor = None
     query = None
@@ -79,7 +78,7 @@ def getInfoMainPanel(request):
             # Converta os resultados para uma lista de dicionários
             totalWindows = result[0]
 
-    except mysql.connector.Error as e:
+    except connector.Error as e:
         logger.error(f"Database query error: {e}")
 
     try:
@@ -92,7 +91,7 @@ def getInfoMainPanel(request):
             # Converta os resultados para uma lista de dicionários
             totalMachines = result[0]
 
-    except mysql.connector.Error as e:
+    except connector.Error as e:
         logger.error(f"Database query error: {e}")
 
     try:
@@ -108,7 +107,7 @@ def getInfoMainPanel(request):
             # Converta os resultados para uma lista de dicionários
             totalUnix = result[0]
 
-    except mysql.connector.Error as e:
+    except connector.Error as e:
         logger.error(f"Database query error: {e}")
 
     finally:
@@ -126,7 +125,7 @@ def getInfoMainPanel(request):
 @csrf_exempt
 @require_GET
 @login_required(login_url="/login")
-def getInfoSOChart(request):
+def getInfo_so_chart(request):
     cursor = None
     query = ""
     results = None
@@ -143,7 +142,7 @@ def getInfoSOChart(request):
             # Converta os resultados para uma lista de dicionários
             results_list = [{"system_name": row[0], "count": row[1]} for row in results]
 
-    except mysql.connector.Error as e:
+    except connector.Error as e:
         logger.error(f"Database query error: {e}")
         return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
     except Exception as e:
@@ -160,9 +159,8 @@ def getInfoSOChart(request):
 @csrf_exempt
 @require_GET
 @login_required(login_url="/login")
-def getInfoLastUpdate(request):
+def getInfo_last_update(request):
     cursor = None
-    query = ""
     results = None
     results_list = None
     try:
@@ -178,7 +176,7 @@ def getInfoLastUpdate(request):
             # Converta os resultados para uma lista de dicionários
             results_list = [{"date": row[0], "count": row[1]} for row in results]
 
-    except mysql.connector.Error as e:
+    except connector.Error as e:
         logger.error(f"Database query error: {e}")
         return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
 
@@ -205,26 +203,20 @@ def computers(request):
 @never_cache
 @transaction.atomic
 @require_GET
-def getDataComputers(request, quantity):
+def get_data_computers(request, quantity):
     # Iniciando varaiveis
     connection = None
-    cursor = None
-    query = None
-    results = None
-    MAC_ADDRESS_INDEX = None
-
+    query = ""
     try:
         # Verificando a quantidade solicitando
-        match quantity:
-            case "10":
-                query = "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 10"
-            case "50":
-                query = "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 50"
-            case "100":
-                query = "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 100"
-            case "all":
-                query = "SELECT * FROM machines ORDER BY insertion_date DESC"
-
+        if quantity == "10":
+            query = "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 10"
+        elif quantity == "50":
+            query = "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 50"
+        elif quantity == "100":
+            query = "SELECT * FROM machines ORDER BY insertion_date DESC LIMIT 100"
+        elif quantity == "all":
+            query = "SELECT * FROM machines ORDER BY insertion_date DESC"
         with get_database_connection() as connection:
             cursor = connection.cursor()
             cursor.execute(query)
@@ -237,7 +229,7 @@ def getDataComputers(request, quantity):
         for row in results:
             row[MAC_ADDRESS_INDEX] = revert_mac_address(row[MAC_ADDRESS_INDEX])
 
-    except mysql.connector.Error as e:
+    except connector.Error as e:
         logger.error(f"Database query error: {e}")
         return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
 
@@ -272,59 +264,8 @@ def contains_backslash(s):
 @transaction.atomic
 @ratelimit(key="ip", rate="200/d", method="POST", block=True)
 @never_cache
-def postMachines(request):
+def post_machines(request):
     # Declarando varaiveis
-    audio_device_model = None
-    audio_device_product = None
-    bios_version = None
-    connection = None
-    cpu_architecture = None
-    cpu_core = None
-    cpu_max_mhz = None
-    cpu_min_mhz = None
-    cpu_model_name = None
-    cpu_operation_mode = None
-    cpu_thread = None
-    cpu_vendor_id = None
-    currentUser = None
-    cursor = None
-    data = None
-    distribution = None
-    domain = None
-    gpu_bus_info = None
-    gpu_clock = None
-    gpu_configuration = None
-    gpu_logical_name = None
-    gpu_product = None
-    gpu_vendor_id = None
-    hard_disk_model = None
-    hard_disk_sata_version = None
-    hard_disk_serial_number = None
-    hard_disk_user_capacity = None
-    insertionDate = None
-    ip = None
-    license = None
-    macAddress = None
-    max_capacity_memory = None
-    memories = None
-    model = None
-    motherboard_asset_tag = None
-    motherboard_manufacturer = None
-    motherboard_product_name = None
-    motherboard_serial_name = None
-    motherboard_version = None
-    name = None
-    number_of_slots = None
-    results = None
-    select_query = None
-    serial_number = None
-    softwares = None
-    softwares_list = None
-    system = None
-    totalWindows = None
-    update_query = None
-    user = None
-    version = None
     try:
         # Pegando os dados
         data = loads(request.body.decode("utf-8"))
@@ -349,8 +290,10 @@ def postMachines(request):
 
         domain = data.get("domain")
         ip = data.get("ip")
-        logger.info(ip)
         manufacturer = data.get("manufacturer")
+        if len(manufacturer) > 20:
+            logger.error("Manufacturer: ", manufacturer)
+            logger.error("Lenv Manufacturer: ", len(manufacturer))
         model = data.get("model")
         serial_number = data.get("serialNumber")
         max_capacity_memory = data.get("maxCapacityMemory")
@@ -370,26 +313,14 @@ def postMachines(request):
         cpu_max_mhz = data.get("cpuMaxMHz")
         cpu_min_mhz = data.get("cpuMinMHz")
         gpu_product = data.get("gpuProduct")
-
-        logger.info(gpu_product)
-
         gpu_vendor_id = data.get("gpuVendorID")
         gpu_bus_info = data.get("gpuBusInfo")
         gpu_logical_name = data.get("gpuLogicalName")
-
-        logger.info(gpu_logical_name)
-
         gpu_clock = data.get("gpuClock")
         gpu_configuration = data.get("gpuConfiguration")
         audio_device_product = data.get("audioDeviceProduct")
-
-        logger.info(audio_device_product)
-
         audio_device_model = data.get("audioDeviceModel")
         bios_version = data.get("biosVersion").strip()
-
-        logger.info(bios_version)
-
         motherboard_manufacturer = data.get("motherboardManufacturer")
         motherboard_product_name = data.get("motherboardProductName")
         motherboard_version = data.get("motherboardVersion")
@@ -398,7 +329,6 @@ def postMachines(request):
         # Ajustando a lista de softwares
         softwares_list = data.get("installedPackages")
         softwares = None
-        logger.info(distribution)
         try:
             if softwares_list != None:
                 if (
@@ -426,7 +356,7 @@ def postMachines(request):
             )
 
         # Conectando no banco de dados
-        connection = mysql.connector.connect(
+        connection = connector.connect(
             host=config("DB_HOST"),
             database=config("DB_NAME"),
             user=config("DB_USER"),
@@ -600,7 +530,7 @@ def postMachines(request):
                         # Converta os resultados para uma lista de dicionários
                         totalWindows = result[0]
 
-                except mysql.connector.Error as e:
+                except connector.Error as e:
                     logger.error(f"Database query error: {e}")
 
                 try:
@@ -613,7 +543,7 @@ def postMachines(request):
                         # Converta os resultados para uma lista de dicionários
                         totalMachines = result[0]
 
-                except mysql.connector.Error as e:
+                except connector.Error as e:
                     logger.error(f"Database query error: {e}")
 
                 try:
@@ -629,7 +559,7 @@ def postMachines(request):
                         # Converta os resultados para uma lista de dicionários
                         totalUnix = result[0]
 
-                except mysql.connector.Error as e:
+                except connector.Error as e:
                     logger.error(f"Database query error: {e}")
 
                 finally:
@@ -650,7 +580,7 @@ def postMachines(request):
         logger.error("Erro ao decodificar JSON")
         return JsonResponse({"error": "Invalid JSON"}, status=400, safe=False)
 
-    except mysql.connector.Error as err:
+    except connector.Error as err:
         logger.error(f"Erro ao inserir dados: {err}")
         return JsonResponse({"error": "Invalid MYSQL"}, status=400, safe=False)
 
@@ -660,7 +590,7 @@ def postMachines(request):
 
 
 @require_GET
-def postMachinesWithMac(request, mac_address):
+def post_machines_with_mac(request, mac_address):
     return render(request, "index.html", {})
 
 
@@ -668,7 +598,7 @@ def postMachinesWithMac(request, mac_address):
 @never_cache
 @requires_csrf_token
 @login_required(login_url="/login")
-def infoMachine(request, mac_address):
+def info_machine(request, mac_address):
     connection = None
     cursor = None
     query = None
@@ -682,7 +612,7 @@ def infoMachine(request, mac_address):
             results = cursor.fetchall()
 
         return JsonResponse({"data": results}, status=200, safe=True)
-    except mysql.connector.Error as e:
+    except connector.Error as e:
         logger.error(f"Database query error: {e}")
         return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
 
@@ -732,7 +662,7 @@ def devices_post(request):
 
         return JsonResponse({}, status=200, safe=True)
 
-    except mysql.connector.Error as err:
+    except connector.Error as err:
         if err.errno == 1062:
             with get_database_connection() as connection:
                 cursor = connection.cursor()
@@ -788,7 +718,7 @@ def devices_get(request, quantity):
 
         return JsonResponse({"devices": results}, status=200, safe=True)
 
-    except mysql.connector.Error as e:
+    except connector.Error as e:
         logger.error(f"Database query error: {e}")
         return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
 
@@ -811,7 +741,7 @@ def devices_details(request, sn):
 @require_GET
 @login_required(login_url="/login")
 @requires_csrf_token
-def infoDevice(request, sn):
+def info_device(request, sn):
     connection = None
     cursor = None
     query = None
@@ -825,7 +755,7 @@ def infoDevice(request, sn):
 
         return JsonResponse({"data": results}, status=200, safe=True)
 
-    except mysql.connector.Error as e:
+    except connector.Error as e:
         logger.error(f"Database query error: {e}")
         return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
     except Exception as e:
@@ -841,7 +771,7 @@ def infoDevice(request, sn):
 @login_required(login_url="/login")
 @requires_csrf_token
 @never_cache
-def lastMachines(request):
+def last_machines(request):
     connection = None
     cursor = None
     query = None
@@ -862,7 +792,7 @@ def lastMachines(request):
 
         return JsonResponse({"machines": results}, status=200, safe=True)
 
-    except mysql.connector.Error as e:
+    except connector.Error as e:
         logger.error(f"Database query error: {e}")
         return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
 
@@ -876,7 +806,7 @@ def lastMachines(request):
 
 
 @require_GET
-def addedDevices(request):
+def added_devices(request):
     device = None
     data = None
     computer = None
@@ -900,7 +830,7 @@ def addedDevices(request):
 
         return JsonResponse({}, status=200, safe=True)
 
-    except mysql.connector.Error as err:
+    except connector.Error as err:
         logger.error(f"Erro ao inserir dados: {err}")
         return JsonResponse({"error": "Invalid MYSQL"}, status=400, safe=False)
     except Exception as e:
@@ -916,7 +846,7 @@ def addedDevices(request):
 @login_required(login_url="/login")
 @requires_csrf_token
 @never_cache
-def computersDevices(request, mac_address):
+def computers_devices(request, mac_address):
     connection = None
     cursor = None
     query = None
@@ -931,7 +861,7 @@ def computersDevices(request, mac_address):
             results = [list(row) for row in cursor.fetchall()]
 
         return JsonResponse({"data": results}, status=200, safe=True)
-    except mysql.connector.Error as e:
+    except connector.Error as e:
         logger.error(f"Database query error: {e}")
         return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
 
@@ -949,7 +879,7 @@ def computersDevices(request, mac_address):
 @require_POST
 @transaction.atomic
 @never_cache
-def computersModify(request, mac_address):
+def computers_modify(request, mac_address):
     # Pegando os dados json
     data = loads(request.body)
     imob = data.get("imob")
@@ -970,7 +900,7 @@ def computersModify(request, mac_address):
 
                 connection.commit()
 
-        except mysql.connector.Error as e:
+        except connector.Error as e:
             logger.error(f"Database query error: {e}")
             return
         finally:
@@ -986,7 +916,7 @@ def computersModify(request, mac_address):
                 cursor.execute(query, (mac_address,))
                 new_imob = cursor.fetchone()
 
-        except mysql.connector.Error as e:
+        except connector.Error as e:
             logger.error(f"Database query error: {e}")
             return
         finally:
@@ -1004,7 +934,7 @@ def computersModify(request, mac_address):
 
                 connection.commit()
 
-        except mysql.connector.Error as e:
+        except connector.Error as e:
             logger.error(f"Database query error: {e}")
             return
         finally:
@@ -1020,7 +950,7 @@ def computersModify(request, mac_address):
                 cursor.execute(query, (mac_address,))
                 new_location = cursor.fetchone()
 
-        except mysql.connector.Error as e:
+        except connector.Error as e:
             logger.error(f"Database query error: {e}")
             return
         finally:
@@ -1038,7 +968,7 @@ def computersModify(request, mac_address):
 
                 connection.commit()
 
-        except mysql.connector.Error as e:
+        except connector.Error as e:
             logger.error(f"Database query error: {e}")
             return
         finally:
@@ -1054,7 +984,7 @@ def computersModify(request, mac_address):
                 cursor.execute(query, (mac_address,))
                 new_note = cursor.fetchone()
 
-        except mysql.connector.Error as e:
+        except connector.Error as e:
             logger.error(f"Database query error: {e}")
             return
         finally:
@@ -1071,7 +1001,7 @@ def computersModify(request, mac_address):
 
                 connection.commit()
 
-        except mysql.connector.Error as e:
+        except connector.Error as e:
             logger.error(f"Database query error: {e}")
             return
         finally:
@@ -1087,7 +1017,7 @@ def computersModify(request, mac_address):
                 cursor.execute(query, (mac_address,))
                 new_alocate = cursor.fetchone()
 
-        except mysql.connector.Error as e:
+        except connector.Error as e:
             logger.error(f"Database query error: {e}")
             return
         finally:
@@ -1109,7 +1039,7 @@ def computersModify(request, mac_address):
 
 # Função que libera o token CSRF
 @require_GET
-def getToken(request):
+def get_new_token(request):
     csrf = get_token(request)
     return JsonResponse({"token": csrf}, status=200, safe=True)
 
@@ -1120,7 +1050,7 @@ def getToken(request):
 @never_cache
 @requires_csrf_token
 # Função que retorna as máquinas conforme quantidade solicitada
-def getQuantity(request, quantity):
+def get_quantity(request, quantity):
     # Inicia uma variavel e prepara a query conforme quantidade solicitada
     query = None
     match quantity:
@@ -1144,7 +1074,7 @@ def getQuantity(request, quantity):
             results = [list(row) for row in cursor.fetchall()]
 
         return JsonResponse({"machines": results}, status=200, safe=True)
-    except mysql.connector.Error as e:
+    except connector.Error as e:
         logger.error(f"Database query error: {e}")
         return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
     except Exception as e:
@@ -1159,7 +1089,7 @@ def getQuantity(request, quantity):
 # Obtem os computadores para o filtro SO
 @require_GET
 @never_cache
-def getDataSO(request):
+def get_data_so(request):
     # Declarando algumas variaveis
     connection = None
     cursor = None
@@ -1174,7 +1104,7 @@ def getDataSO(request):
 
         return JsonResponse({"SO": results}, status=200, safe=True)
 
-    except mysql.connector.Error as e:
+    except connector.Error as e:
         logger.error(f"Database query error: {e}")
         return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
 
@@ -1190,7 +1120,7 @@ def getDataSO(request):
 # Obtem os computadores para o filtro de distribution
 @require_GET
 @never_cache
-def getDataDIS(request):
+def get_data_dis(request):
     connection = None
     cursor = None
     query = None
@@ -1204,7 +1134,7 @@ def getDataDIS(request):
 
         return JsonResponse({"DIS": results}, status=200, safe=True)
 
-    except mysql.connector.Error as e:
+    except connector.Error as e:
         logger.error(f"Database query error: {e}")
         return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
     except Exception as e:
@@ -1219,7 +1149,7 @@ def getDataDIS(request):
 # Função executada ao selecionar o SO no filtro
 @require_GET
 @never_cache
-def getDataSoFilter(request, quantity, so):
+def get_data_so_filter(request, quantity, so):
     # Declarando algumas variaveis
     query = None
     connection = None
@@ -1299,7 +1229,7 @@ def getDataSoFilter(request, quantity, so):
 
             return JsonResponse({"machines": results}, status=200, safe=True)
 
-    except mysql.connector.Error as e:
+    except connector.Error as e:
         logger.error(f"Database query error: {e}")
         return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
     except Exception as e:
@@ -1313,7 +1243,7 @@ def getDataSoFilter(request, quantity, so):
 
 @require_GET
 @never_cache
-def getDataDisFilter(request, quantity, dis):
+def get_data_dis_filter(request, quantity, dis):
     # Declarando algumas variaveis
     query = None
     connection = None
@@ -1392,7 +1322,7 @@ def getDataDisFilter(request, quantity, dis):
 
             return JsonResponse({"machines": results}, status=200, safe=True)
 
-    except mysql.connector.Error as e:
+    except connector.Error as e:
         logger.error(f"Database query error: {e}")
         return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
     except Exception as e:
@@ -1407,7 +1337,7 @@ def getDataDisFilter(request, quantity, dis):
 # Função que busca o nome de computar que equivale ao que o usuario esta escrevendo
 @require_GET
 @never_cache
-def getDataVarchar(request, quantity, name):
+def get_data_varchar(request, quantity, name):
     query = None
     connection = None
     cursor = None
@@ -1442,7 +1372,7 @@ def getDataVarchar(request, quantity, name):
 
         return JsonResponse({"machines": results}, status=200, safe=True)
 
-    except mysql.connector.Error as e:
+    except connector.Error as e:
         logger.error(f"Database query error: {e}")
         return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
     except Exception as e:
@@ -1457,7 +1387,7 @@ def getDataVarchar(request, quantity, name):
 # Função que gera relatorio DNS mostrando ip Identicos
 @require_POST
 @never_cache
-def getReportDNS(request):
+def get_report_dns(request):
     if request.method == "POST":
         try:
             data = loads(request.body)
@@ -1507,11 +1437,11 @@ def getReportDNS(request):
                     dataPD.append({"ip": ip, "hostnames": ", ".join(hostnames)})
 
             # Criar DataFrame
-            df = pd.DataFrame(dataPD)
+            df = DataFrame(dataPD)
 
             # Salvar DataFrame em um buffer de memória
             buffer = BytesIO()
-            with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+            with ExcelWriter(buffer, engine="openpyxl") as writer:
                 df.to_excel(writer, index=False)
 
             # Obter o conteúdo do buffer e codificá-lo em base64
@@ -1535,7 +1465,7 @@ def getReportDNS(request):
 def get_ip_from_dns(hostname):
     try:
         # Consulta DNS para registros A (IPv4)
-        answers = dns.resolver.resolve(hostname, "A")
+        answers = resolve(hostname, "A")
         ips = [rdata.address for rdata in answers]
         return ips
     except Exception as e:
@@ -1547,11 +1477,11 @@ def get_ip_from_dns(hostname):
 @csrf_exempt
 # @transaction.atomic
 # @never_cache
-def getReportXLS(request):
+def get_report_xls(request):
     selected_values = None
     selected_values_list = None
     try:
-        data = json.loads(request.body)
+        data = loads(request.body)
         selected_values = data.get("selectedValues")
         if selected_values:
             # Converte a string de volta para uma lista
@@ -1575,7 +1505,7 @@ def getReportXLS(request):
 
                     # Adiciona o resultado ao array de resultados
                     results.append(result)
-            except mysql.connector.Error as e:
+            except connector.Error as e:
                 logger.error(f"Database query error for system {value}: {e}")
                 return JsonResponse({"status": "fail"}, safe=True, status=312)
 
@@ -1628,10 +1558,10 @@ def getReportXLS(request):
         # Juntando os nomes separados por vírgula
         software_names_str = ", ".join(software_names)
 
-        buffer = io.BytesIO()
+        buffer = BytesIO()
 
         # Criar DataFrame com a coluna desejada
-        df = pd.DataFrame(
+        df = DataFrame(
             {
                 "HostName": hostnames,
                 "SO": so,
@@ -1683,3 +1613,28 @@ def process_results(results):
             processed_data.append(value)
 
     return processed_data
+
+
+@require_GET
+@csrf_exempt
+def get_image(request, model):
+    # Define o diretório correto para as imagens
+    resultado = model.lower().replace(" ", "")
+    base_dir = path.dirname(
+        path.dirname(path.abspath(__file__))
+    )  # Obtém o diretório base do projeto
+    images_dir = path.join(
+        base_dir, "static", "assets", "images", "models", f"{resultado}.png"
+    )
+    logger.error(images_dir)
+
+    if path.isfile(images_dir):
+        # Mudando para logger.info(), pois isso não é um erro
+        logger.error(f"Arquivo encontrado: {images_dir}")
+        return FileResponse(
+            open(images_dir, "rb"), as_attachment=True, filename=f"{model}.png"
+        )
+
+    # Se o arquivo não for encontrado, retorna um erro
+    logger.error(f"Arquivo não encontrado para o modelo: {model}")
+    return JsonResponse({"error": "Arquivo não encontrado"}, status=404)

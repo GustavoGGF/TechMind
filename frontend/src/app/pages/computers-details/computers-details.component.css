@@ -82,7 +82,8 @@
 
 .img_logo {
   margin: 1em;
-  width: 3em;
+  width: 5em;
+  border-radius: 1em;
 }
 
 .contains {

@@ -11,8 +11,9 @@ urlpatterns = [
     path("credential/", views.credential, name="central-credential"),
     path("home/", include("infoapp.urls")),
     # URL para fazer logout
-    path("logout/", views.logoutFunc, name="central-logout"),
-    path('donwload-files/', views.donwloadFiles, name='central-donwload-files')
+    path("logout/", views.logout_func, name="central-logout"),
+    path('donwload-files/', views.donwload_files, name='central-donwload-files'),
+    path("download-techmind/techmind_latest.exe", views.donwload_techMind, name='central-donwload-techmind')
 ]
 
 urlpatterns += staticfiles_urlpatterns()

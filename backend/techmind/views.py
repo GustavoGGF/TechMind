@@ -8,8 +8,12 @@ from django.views.decorators.csrf import csrf_exempt
 from dotenv import load_dotenv
 from ldap3 import ALL_ATTRIBUTES, SAFE_SYNC, Connection
 from os import getenv, path
-import json
+from json import loads
 from django.views.decorators.http import require_POST, require_GET
+from logging import basicConfig, getLogger, WARNING
+
+basicConfig(level=WARNING)
+logger = getLogger(__name__)
 
 # Exige esta view do requerimento de proteção contra falsificação de requisições cross-site (CSRF) e  Permite apenas requisições POST nesta view.
 @csrf_exempt
@@ -20,14 +24,14 @@ def credential(request):
     password = None
     data = None
     domain = None
-    server = None 
+    server = None
     conn = None
     base_ldap = None
     response = None
 
     try:
         # Carrega o corpo da requisição JSON e obtém o nome de usuário e senha fornecidos.
-        data = json.loads(request.body)
+        data = loads(request.body)
         username = data.get("username")
         password = data.get("password")
 
@@ -103,7 +107,7 @@ def credential(request):
 
             # Define o backend de autenticação para permitir o login manual.
             user.backend = "django.contrib.auth.backends.ModelBackend"
-            
+
             if created:
                 user.save()
 
@@ -119,20 +123,19 @@ def credential(request):
         return JsonResponse({"status": "invalid access"}, status=401, safe=True)
 
 
-
 # Função que realiza logout
 # Requer que o usuário esteja autenticado para acessar esta view.
 # Permite apenas requisições GET para esta view.
 @login_required
 @require_GET
-def logoutFunc(request):
+def logout_func(request):
     try:
         # Executa o logout do usuário atual.
         logout(request)
-        
+
         # Retorna uma resposta JSON vazia com status 200 (OK) indicando sucesso.
         return JsonResponse({}, status=200)
-    
+
     except Exception as e:
         # Em caso de erro, imprime a exceção para depuração.
         print(e)
@@ -140,20 +143,25 @@ def logoutFunc(request):
 
 # Permite apenas requisições GET para esta view.
 @require_GET
-def donwloadFiles(request):
+def donwload_files(request):
     try:
         # Verifica se a requisição é uma requisição AJAX (XMLHttpRequest).
-        if 'X-Requested-With' not in request.headers or request.headers['X-Requested-With'] != 'XMLHttpRequest':
+        if (
+            "X-Requested-With" not in request.headers
+            or request.headers["X-Requested-With"] != "XMLHttpRequest"
+        ):
             # Se não for uma requisição AJAX, redireciona para a página home.
-            return redirect('/home')
+            return redirect("/home")
 
         # Caminho para o arquivo que será baixado.
-        file_path = '/node/TechMind/Installers/techmind.exe'
-        
+        file_path = "/node/TechMind/Installers/techmind.exe"
+
         # Verifica se o arquivo existe no caminho especificado.
         if path.exists(file_path):
             # Se o arquivo existe, retorna o arquivo como resposta de download.
-            response = FileResponse(open(file_path, 'rb'), as_attachment=True, filename='techmind.exe')
+            response = FileResponse(
+                open(file_path, "rb"), as_attachment=True, filename="techmind.exe"
+            )
             return response
         else:
             # Se o arquivo não for encontrado, retorna um erro com status 400.
@@ -162,6 +170,9 @@ def donwloadFiles(request):
     except Exception as e:
         # Em caso de erro, imprime a exceção para depuração.
         print(e)
-        
+
         # Retorna uma resposta de erro com status 300 (não convencional, seria mais apropriado usar outro código de erro).
         return JsonResponse({}, status=300)
+
+def donwload_techMind(request):
+    return logger.error("foi")

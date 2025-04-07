@@ -14,13 +14,27 @@ PASSWORD = None
 HOST = None
 PORT = None
 
-ALLOWED_HOSTS = ["localhost", "sappp01", "10.1.1.73", "testserver"]
+ALLOWED_HOSTS = ["localhost", "techmind", "techmind.lupatech.com.br", "127.0.0.1"]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://sappp01:3000",  # Substitua pelo endereço do seu frontend
+    "https://techmind.lupatech.com.br",
+    "http://techmind:3000",
+    "https://techmind:3000",
+    "http://sappp01:3000",
+    "http://sappp01:8000",
+    "https://sappp01.lupatech.com.br/",
+    "https://sappp01:8000",
 ]
 
-CSRF_TRUSTED_ORIGINS = ["http://sappp01:3000"]
+CSRF_TRUSTED_ORIGINS = [
+    "http://techmind:3000",
+    "https://techmind:3000",
+    "https://techmind.lupatech.com.br",
+    "http://sappp01:3000",
+    "http://sappp01:8000",
+    "https://sappp01.lupatech.com.br/",
+    "https://sappp01:8000",
+]
 
 # Application definition
 
@@ -40,6 +54,7 @@ ASGI_APPLICATION = "techmind.asgi.application"
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -113,7 +128,7 @@ LOGGING = {
 }
 
 
-LANGUAGE_CODE = 'pt-br'
+LANGUAGE_CODE = "pt-br"
 
 TIME_ZONE = "Brazil/East"
 
@@ -129,3 +144,7 @@ STATICFILES_DIRS = [
     path.join(BASE_DIR, "static"),
 ]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PROTO = True
