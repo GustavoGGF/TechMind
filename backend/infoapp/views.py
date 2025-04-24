@@ -679,7 +679,7 @@ def devices_post(request):
             return JsonResponse({"error": "Invalid MYSQL"}, status=400, safe=False)
 
     except Exception as e:
-        print(e)
+        logger.error(e)
         return JsonResponse({"error": "Invalid MYSQL"}, status=400, safe=False)
 
     finally:
@@ -759,7 +759,7 @@ def info_device(request, sn):
         logger.error(f"Database query error: {e}")
         return JsonResponse({"error": "Erro ao consultar o banco de dados"}, status=500)
     except Exception as e:
-        print(e)
+        logger.error(e)
         return JsonResponse({}, status=403, safe=True)
     finally:
         if connection.is_connected():

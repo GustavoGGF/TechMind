@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\adm.gfreitas\\Desktop\\TechMindInstallerW10\\TechMindInstallerW10.csproj": {}
+    "C:\\Users\\adm.gfreitas\\Desktop\\exec\\windows\\windows10\\installer\\TechMindInstallerW10.csproj": {}
   },
   "projects": {
-    "C:\\Users\\adm.gfreitas\\Desktop\\TechMindInstallerW10\\TechMindInstallerW10.csproj": {
+    "C:\\Users\\adm.gfreitas\\Desktop\\exec\\windows\\windows10\\installer\\TechMindInstallerW10.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\adm.gfreitas\\Desktop\\TechMindInstallerW10\\TechMindInstallerW10.csproj",
+        "projectUniqueName": "C:\\Users\\adm.gfreitas\\Desktop\\exec\\windows\\windows10\\installer\\TechMindInstallerW10.csproj",
         "projectName": "TechMindInstallerW10",
-        "projectPath": "C:\\Users\\adm.gfreitas\\Desktop\\TechMindInstallerW10\\TechMindInstallerW10.csproj",
+        "projectPath": "C:\\Users\\adm.gfreitas\\Desktop\\exec\\windows\\windows10\\installer\\TechMindInstallerW10.csproj",
         "packagesPath": "C:\\Users\\adm.gfreitas\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\adm.gfreitas\\Desktop\\TechMindInstallerW10\\obj\\",
+        "outputPath": "C:\\Users\\adm.gfreitas\\Desktop\\exec\\windows\\windows10\\installer\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\adm.gfreitas\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -44,15 +44,11 @@
         "net9.0-windows7.0": {
           "targetAlias": "net9.0-windows",
           "dependencies": {
-            "Costura.Fody": {
-              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+            "Microsoft.NET.ILLink.Tasks": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[6.0.0, )"
-            },
-            "ilmerge": {
-              "target": "Package",
-              "version": "[3.0.41, )"
+              "version": "[9.0.4, )",
+              "autoReferenced": true
             }
           },
           "imports": [
@@ -66,6 +62,20 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
+              "version": "[9.0.4, 9.0.4]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Runtime.win-x64",
+              "version": "[9.0.4, 9.0.4]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
+              "version": "[9.0.4, 9.0.4]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
@@ -74,7 +84,12 @@
               "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.105/PortableRuntimeIdentifierGraph.json"
+        }
+      },
+      "runtimes": {
+        "win-x64": {
+          "#import": []
         }
       }
     }

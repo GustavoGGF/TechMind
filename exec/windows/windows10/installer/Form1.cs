@@ -75,7 +75,6 @@ public partial class Form1 : Form
 
     private void Button1_Click(object sender, EventArgs e)
     {
-        MessageBox.Show("EU Disse");
         this.button1.Enabled = checkBox1.Checked;
     }
 
@@ -158,10 +157,18 @@ public partial class Form1 : Form
         this.loader.SetProgress(60); 
         this.panelEula.Controls.Remove(textBox1);  // Remove o TextBox1 da interface.
 
-        string url = "http://sappp01:3000/donwload-files/";  // URL do servidor para download.
+        string url = "https://techmind.lupatech.com.br/donwload-files/";  // URL do servidor para download.
         string localPath = @"C:\Program Files\techmind\techmind.exe";  // Caminho local para salvar o arquivo.
 
-        using HttpClient client = new();  // Inicializa um novo cliente HTTP.
+
+    var handler = new HttpClientHandler
+    {
+        // Ignora validação do certificado
+        ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+    };
+
+        using HttpClient client = new(handler);  // Inicializa um novo cliente HTTP.
+        client.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");  // Cabeçalho necessário
         try
         {
             // Envia uma requisição GET para baixar o arquivo.

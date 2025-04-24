@@ -71,7 +71,7 @@ def credential(request):
 
     except Exception as e:
         # Em caso de erro, imprime a exceção e retorna uma resposta JSON com status 401.
-        print(e)
+        logger.error(e)
         return JsonResponse({"status": "invalid access"}, status=401, safe=True)
 
     # Inicialização de variáveis para extrair informações do resultado da busca.
@@ -119,7 +119,7 @@ def credential(request):
 
     except Exception as e:
         # Em caso de erro, imprime a exceção e retorna uma resposta JSON com status 401.
-        print(e)
+        logger.error(e)
         return JsonResponse({"status": "invalid access"}, status=401, safe=True)
 
 
@@ -138,7 +138,7 @@ def logout_func(request):
 
     except Exception as e:
         # Em caso de erro, imprime a exceção para depuração.
-        print(e)
+        logger.error(e)
 
 
 # Permite apenas requisições GET para esta view.
@@ -169,7 +169,7 @@ def donwload_files(request):
 
     except Exception as e:
         # Em caso de erro, imprime a exceção para depuração.
-        print(e)
+        logger.error(e)
 
         # Retorna uma resposta de erro com status 300 (não convencional, seria mais apropriado usar outro código de erro).
         return JsonResponse({}, status=300)

@@ -4,7 +4,9 @@
   },
   "Home": {},
   "Computer": {
-    "HotFix": {}
+    "HotFix": {
+      "31": "Relatorio, melhorar esquema de apertar enter, esc, detalhes"
+    }
   },
   "Computer Details": {
     "HotFix": {

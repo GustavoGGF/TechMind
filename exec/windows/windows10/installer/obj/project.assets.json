@@ -2,117 +2,78 @@
   "version": 3,
   "targets": {
     "net9.0-windows7.0": {
-      "Costura.Fody/6.0.0": {
+      "Microsoft.NET.ILLink.Tasks/9.0.4": {
         "type": "package",
-        "dependencies": {
-          "Fody": "6.8.2"
-        },
-        "compile": {
-          "lib/netstandard2.0/_._": {
-            "related": ".pdb;.xml"
-          }
-        },
-        "runtime": {
-          "lib/netstandard2.0/Costura.dll": {
-            "related": ".pdb;.xml"
-          }
-        },
         "build": {
-          "build/Costura.Fody.props": {},
-          "build/Costura.Fody.targets": {}
+          "build/Microsoft.NET.ILLink.Tasks.props": {}
         }
-      },
-      "Fody/6.8.2": {
+      }
+    },
+    "net9.0-windows7.0/win-x64": {
+      "Microsoft.NET.ILLink.Tasks/9.0.4": {
         "type": "package",
         "build": {
-          "build/Fody.targets": {}
-        }
-      },
-      "ILMerge/3.0.41": {
-        "type": "package",
-        "build": {
-          "build/ILMerge.props": {}
+          "build/Microsoft.NET.ILLink.Tasks.props": {}
         }
       }
     }
   },
   "libraries": {
-    "Costura.Fody/6.0.0": {
-      "sha512": "3Uriu9GJABMivG0wXMJs6NQ7FNE3pylir1gZEBAWDvpii3cnrmxXnOG44MMDuIVOIk/Xhef7WZFsaCNV+py9qA==",
+    "Microsoft.NET.ILLink.Tasks/9.0.4": {
+      "sha512": "xUdlUxiFwXhTYhB4VxKg/IA0+jlZXJPo70LYuMryWbJHdonIpZjw+7DO2B0pWwpXIOs6MlH5WVXPEtfrGEcVZA==",
       "type": "package",
-      "path": "costura.fody/6.0.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "build/Costura.Fody.props",
-        "build/Costura.Fody.targets",
-        "costura.fody.6.0.0.nupkg.sha512",
-        "costura.fody.nuspec",
-        "icon.png",
-        "lib/netstandard2.0/Costura.dll",
-        "lib/netstandard2.0/Costura.pdb",
-        "lib/netstandard2.0/Costura.xml",
-        "netclassicweaver/Costura.Fody.dll",
-        "netclassicweaver/Costura.Fody.xcf",
-        "netstandardweaver/Costura.Fody.dll",
-        "netstandardweaver/Costura.Fody.xcf"
-      ]
-    },
-    "Fody/6.8.2": {
-      "sha512": "sjGHrtGS1+kcrv99WXCvujOFBTQp4zCH3ZC9wo2LAtVaJkuLpHghQx3y4k1Q8ZKuDAbEw+HE6ZjPUJQK3ejepQ==",
-      "type": "package",
-      "path": "fody/6.8.2",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "License.txt",
-        "build/Fody.targets",
-        "fody.6.8.2.nupkg.sha512",
-        "fody.nuspec",
-        "netclassictask/Fody.dll",
-        "netclassictask/FodyCommon.dll",
-        "netclassictask/FodyHelpers.dll",
-        "netclassictask/FodyIsolated.dll",
-        "netclassictask/Mono.Cecil.Pdb.dll",
-        "netclassictask/Mono.Cecil.Pdb.pdb",
-        "netclassictask/Mono.Cecil.Rocks.dll",
-        "netclassictask/Mono.Cecil.Rocks.pdb",
-        "netclassictask/Mono.Cecil.dll",
-        "netclassictask/Mono.Cecil.pdb",
-        "netstandardtask/Fody.dll",
-        "netstandardtask/FodyCommon.dll",
-        "netstandardtask/FodyHelpers.dll",
-        "netstandardtask/FodyIsolated.dll",
-        "netstandardtask/Mono.Cecil.Pdb.dll",
-        "netstandardtask/Mono.Cecil.Pdb.pdb",
-        "netstandardtask/Mono.Cecil.Rocks.dll",
-        "netstandardtask/Mono.Cecil.Rocks.pdb",
-        "netstandardtask/Mono.Cecil.dll",
-        "netstandardtask/Mono.Cecil.pdb",
-        "readme.md"
-      ]
-    },
-    "ILMerge/3.0.41": {
-      "sha512": "u9n45xs40bSGoNFcmMYJkh3zkGYKR4BqzQaX2uHc2Ay4drdiQOTeo/1ECps3ttDXOu4Q6qbTnsIbQWb/06ShqA==",
-      "type": "package",
-      "path": "ilmerge/3.0.41",
+      "path": "microsoft.net.illink.tasks/9.0.4",
       "hasTools": true,
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
-        "build/ILMerge.props",
-        "docs/ilmerge-manual.md",
-        "ilmerge.3.0.41.nupkg.sha512",
-        "ilmerge.nuspec",
-        "tools/net452/ILMerge.exe",
-        "tools/net452/System.Compiler.dll"
+        "Icon.png",
+        "LICENSE.TXT",
+        "Sdk/Sdk.props",
+        "THIRD-PARTY-NOTICES.TXT",
+        "analyzers/dotnet/cs/ILLink.CodeFixProvider.dll",
+        "analyzers/dotnet/cs/ILLink.RoslynAnalyzer.dll",
+        "build/Microsoft.NET.ILLink.Analyzers.props",
+        "build/Microsoft.NET.ILLink.Tasks.props",
+        "build/Microsoft.NET.ILLink.targets",
+        "microsoft.net.illink.tasks.9.0.4.nupkg.sha512",
+        "microsoft.net.illink.tasks.nuspec",
+        "tools/net472/ILLink.Tasks.dll",
+        "tools/net472/ILLink.Tasks.dll.config",
+        "tools/net472/Mono.Cecil.Mdb.dll",
+        "tools/net472/Mono.Cecil.Pdb.dll",
+        "tools/net472/Mono.Cecil.Rocks.dll",
+        "tools/net472/Mono.Cecil.dll",
+        "tools/net472/Sdk/Sdk.props",
+        "tools/net472/System.Buffers.dll",
+        "tools/net472/System.Collections.Immutable.dll",
+        "tools/net472/System.Memory.dll",
+        "tools/net472/System.Numerics.Vectors.dll",
+        "tools/net472/System.Reflection.Metadata.dll",
+        "tools/net472/System.Runtime.CompilerServices.Unsafe.dll",
+        "tools/net472/build/Microsoft.NET.ILLink.Analyzers.props",
+        "tools/net472/build/Microsoft.NET.ILLink.Tasks.props",
+        "tools/net472/build/Microsoft.NET.ILLink.targets",
+        "tools/net9.0/ILLink.Tasks.deps.json",
+        "tools/net9.0/ILLink.Tasks.dll",
+        "tools/net9.0/Mono.Cecil.Mdb.dll",
+        "tools/net9.0/Mono.Cecil.Pdb.dll",
+        "tools/net9.0/Mono.Cecil.Rocks.dll",
+        "tools/net9.0/Mono.Cecil.dll",
+        "tools/net9.0/Sdk/Sdk.props",
+        "tools/net9.0/build/Microsoft.NET.ILLink.Analyzers.props",
+        "tools/net9.0/build/Microsoft.NET.ILLink.Tasks.props",
+        "tools/net9.0/build/Microsoft.NET.ILLink.targets",
+        "tools/net9.0/illink.deps.json",
+        "tools/net9.0/illink.dll",
+        "tools/net9.0/illink.runtimeconfig.json",
+        "useSharedDesignerContext.txt"
       ]
     }
   },
   "projectFileDependencyGroups": {
     "net9.0-windows7.0": [
-      "Costura.Fody >= 6.0.0",
-      "ilmerge >= 3.0.41"
+      "Microsoft.NET.ILLink.Tasks >= 9.0.4"
     ]
   },
   "packageFolders": {
@@ -121,11 +82,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\adm.gfreitas\\Desktop\\TechMindInstallerW10\\TechMindInstallerW10.csproj",
+      "projectUniqueName": "C:\\Users\\adm.gfreitas\\Desktop\\exec\\windows\\windows10\\installer\\TechMindInstallerW10.csproj",
       "projectName": "TechMindInstallerW10",
-      "projectPath": "C:\\Users\\adm.gfreitas\\Desktop\\TechMindInstallerW10\\TechMindInstallerW10.csproj",
+      "projectPath": "C:\\Users\\adm.gfreitas\\Desktop\\exec\\windows\\windows10\\installer\\TechMindInstallerW10.csproj",
       "packagesPath": "C:\\Users\\adm.gfreitas\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\adm.gfreitas\\Desktop\\TechMindInstallerW10\\obj\\",
+      "outputPath": "C:\\Users\\adm.gfreitas\\Desktop\\exec\\windows\\windows10\\installer\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\adm.gfreitas\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -158,15 +119,11 @@
       "net9.0-windows7.0": {
         "targetAlias": "net9.0-windows",
         "dependencies": {
-          "Costura.Fody": {
-            "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+          "Microsoft.NET.ILLink.Tasks": {
             "suppressParent": "All",
             "target": "Package",
-            "version": "[6.0.0, )"
-          },
-          "ilmerge": {
-            "target": "Package",
-            "version": "[3.0.41, )"
+            "version": "[9.0.4, )",
+            "autoReferenced": true
           }
         },
         "imports": [
@@ -180,6 +137,20 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
+            "version": "[9.0.4, 9.0.4]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Runtime.win-x64",
+            "version": "[9.0.4, 9.0.4]"
+          },
+          {
+            "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
+            "version": "[9.0.4, 9.0.4]"
+          }
+        ],
         "frameworkReferences": {
           "Microsoft.NETCore.App": {
             "privateAssets": "all"
@@ -188,7 +159,12 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.105/PortableRuntimeIdentifierGraph.json"
+      }
+    },
+    "runtimes": {
+      "win-x64": {
+        "#import": []
       }
     }
   }
