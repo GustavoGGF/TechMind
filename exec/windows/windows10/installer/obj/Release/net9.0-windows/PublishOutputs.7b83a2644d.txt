@@ -1,5 +1,0 @@
-C:\Users\adm.gfreitas\Desktop\TechMindInstallerW10\bin\Release\net9.0-windows\publish\TechMindInstallerW10.exe
-C:\Users\adm.gfreitas\Desktop\TechMindInstallerW10\bin\Release\net9.0-windows\publish\TechMindInstallerW10.dll
-C:\Users\adm.gfreitas\Desktop\TechMindInstallerW10\bin\Release\net9.0-windows\publish\TechMindInstallerW10.deps.json
-C:\Users\adm.gfreitas\Desktop\TechMindInstallerW10\bin\Release\net9.0-windows\publish\TechMindInstallerW10.runtimeconfig.json
-C:\Users\adm.gfreitas\Desktop\TechMindInstallerW10\bin\Release\net9.0-windows\publish\TechMindInstallerW10.pdb

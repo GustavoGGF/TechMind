@@ -1,17 +1,31 @@
 package main
 
 import (
+	"bytes"
+	"crypto/tls"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"net"
+	"net/http"
 	"os"
+	"os/exec"
 	"os/user"
+	"strings"
+	"sync"
 	"time"
-	"techmind/windows/pkg/sysinfo"
-	"techmind/windows/pkg/network"
-	"techmind/windows/pkg/memory"
-	"techmind/windows/pkg/storage"
-	"techmind/windows/pkg/cpu"
 
+	"techmind/windows/pkg/audio"
+	"techmind/windows/pkg/cpu"
+	"techmind/windows/pkg/gpu"
+	"techmind/windows/pkg/memory"
+	"techmind/windows/pkg/network"
+	"techmind/windows/pkg/software"
+	"techmind/windows/pkg/storage"
+	"techmind/windows/pkg/sysinfo"
+
+	"github.com/mitchellh/go-ps"
 	"github.com/shirou/gopsutil/host"
 )
 
@@ -59,16 +73,21 @@ type Data struct {
 	MotherboardVersion      string                                  `json:"motherboardVersion"`
 	MotherbaoardSerialName  string                                  `json:"motherboardSerialName"`
 	MotherboardAssetTag     string                                  `json:"motherboardAssetTag"`
-	SoftwareNames           []map[string]interface{}  `json:"installedPackages"`
+	SoftwareNames           []software.InstalledSoftware  `json:"installedPackages"`
 	Memories                []map[string]interface{}                `json:"memories"`
 	License                 string                                  `json:"license"`
 }
-// 	SoftwareNames           []softwareinformation.InstalledSoftware `json:"installedPackages"`
 
 var(
 	MemoryArray          []map[string]interface{}
+	CombinedSoftware     []software.InstalledSoftware
 )
 
+var (
+	startingInfoMutex sync.Mutex
+	logToFileMutex    sync.Mutex
+	sendDataMutex     sync.Mutex
+)
 
 // Função que cria um arquivo de log
 func LogToFile(msg string) {
@@ -87,7 +106,7 @@ func LogToFile(msg string) {
 	logger.Println(msg)
 }
 
-func GetGeneralInformation()(string, string, string, string, string, string, string, string, string){
+func GetGeneralInformation()(string, string, string, string, string, string, string, string, string, string, string){
 	// Obtem o SO do equipamento
 	sys := sysinfo.GetSys()
 	// Pega o nome do computador
@@ -126,7 +145,7 @@ func GetGeneralInformation()(string, string, string, string, string, string, str
 	// Obtem o dominio como nt-lupatech.com.br
 	domain, err := sysinfo.GetDomain()
 	if err != nil {
-		LogToFile(fmt.Sprintln("Erro ao obter o dominio: %v", err))
+		LogToFile(fmt.Sprintf("Erro ao obter o dominio: %v", err))
 	}
 
 	// obtem o Manufacturer e o Model
@@ -141,7 +160,17 @@ func GetGeneralInformation()(string, string, string, string, string, string, str
 		LogToFile(fmt.Sprintf("Erro ao obter o SerialNumber do equipamento: %v", err))
 	}
 
-	return sys, hostname, edition, currentUser.Username, version, domain, manufacturer, model, serialNumber
+	smbiosInfo, err := sysinfo.GetSMBIOS()
+	if err != nil {
+		LogToFile(fmt.Sprintf("Failed to get SMBIOS information: %v", err))
+	}
+
+	license, err := sysinfo.ExtractWindowsLicense(output)
+	if err != nil {
+		LogToFile(fmt.Sprintln("Erro ao extrair a licença do Windows:", err))
+	}
+
+	return sys, hostname, edition, currentUser.Username, version, domain, manufacturer, model, serialNumber, smbiosInfo, license
 }
 
 func GetNetWorkInformation()(string, string){
@@ -286,8 +315,79 @@ func GetCpuInformation()(string, string, uint32, string, string, uint32, uint32,
 	return arch, operationMode, cpuCount, vendorID, modelName, threads, cores, sockets, maxMHz, minMHz
 }
 
+func GetGPUInformation()(string, string, string, string, string, string){
+	gpuProduct, err := gpu.GetGPUProduct()
+	if err != nil {
+		LogToFile(fmt.Sprintf("Failed to get GPU product: %v", err))
+	}
+
+	gpuVendorID, err := gpu.GetGPUVendorID()
+	if err != nil {
+		LogToFile(fmt.Sprintf("Failed to get GPU Vendor ID: %v", err))
+	}
+
+	busInfo, err := gpu.GetGPUBusInfo()
+	if err != nil {
+		LogToFile(fmt.Sprintf("Failed to get GPU Bus Info: %v", err))
+	}
+
+	gpuLogicalName, err := gpu.GetGPULogicalName()
+	if err != nil {
+		LogToFile(fmt.Sprintf("Failed to get GPU Logical Name: %v", err))
+	}
+
+	clock, err := gpu.GetGPUClock()
+	if err != nil {
+		LogToFile(fmt.Sprintf("Failed to get GPU Clock: %v", err))
+	}
+
+	horizRes, vertRes, ram, err := gpu.GetGPUConfiguration()
+	if err != nil {
+		LogToFile(fmt.Sprintf("Failed to get GPU configuration: %v", err))
+	}
+
+	// Formata a string com as informações da GPU
+	configurationGPU := fmt.Sprintf("Resolution %dx%d, RAM %d MB", horizRes, vertRes, ram/1024/1024)
+
+	return gpuProduct, gpuVendorID, busInfo, gpuLogicalName, clock, configurationGPU
+}
+
+func GetAudioInformation()(string){
+	product, err := audio.GetAudioDeviceProduct()
+	if err != nil {
+		LogToFile(fmt.Sprintf("Failed to get audio device product: %v", err))
+	}
+
+	return product
+}
+
+func GetSoftwareInformation()([]software.InstalledSoftware){
+	wmiSoftware, err := software.GetInstalledSoftwareFromWMI()
+	if err != nil {
+		LogToFile(fmt.Sprintln("Error querying WMI:", err))
+	}
+
+	registrySoftware, err := software.GetInstalledSoftwareFromRegistry()
+	if err != nil {
+		LogToFile(fmt.Sprintln("Error querying Registry:", err))
+	}
+
+	// Combinar as listas de software, removendo duplicatas
+	softwareMap := make(map[string]software.InstalledSoftware)
+	for _, software := range append(wmiSoftware, registrySoftware...) {
+		key := strings.ToLower(software.Name)
+		softwareMap[key] = software
+	}
+
+	for _, software := range softwareMap {
+		CombinedSoftware = append(CombinedSoftware, software)
+	}
+
+	return CombinedSoftware
+}
+
 func StartingInformationGathering() (Data, string){
-	sys, hostname, edition, currentUser, version, domain, manuFacturer, model,serialNumber := GetGeneralInformation()
+	sys, hostname, edition, currentUser, version, domain, manuFacturer, model,serialNumber, smbiosInfo, license := GetGeneralInformation()
 	
 	// Pega a data atual e formatada
 	dateNow := time.Now()
@@ -300,6 +400,12 @@ func StartingInformationGathering() (Data, string){
 	hdModel, hdSerialNumber, hdCapacity := GetHardDiskInformatin()
 
 	arch, operationMode, cpuCount, vendorID, modelName, threads, cores, sockets, maxMHz, minMHz := GetCpuInformation()
+
+	gpuProduct, gpuVendorID, busInfo, gpuLogicalName, clock, configurationGPU := GetGPUInformation()
+
+	productAudio := GetAudioInformation()
+
+	combinedSoftware := GetSoftwareInformation()
 
 	if macAddress == ""{
 		return Data{}, fmt.Sprintln("Codigo cancelado, falta de macAddress para dar andamento")
@@ -334,27 +440,139 @@ func StartingInformationGathering() (Data, string){
 		CPUSocket:            sockets,
 		CPUMaxMHz:            maxMHz,
 		CPUMinMHz:            minMHz,
-			// GPUProduct:           GPUProduct,
-			// GPUVendorID:          VendorIDGPU,
-			// GPUBusInfo:           BusInfo,
-			// GPULogicalName:       GPULogicalName,
-			// GPUClock:             Clock,
-			// GPUConfiguration:     ConfigurationGPU,
-			// BiosVersion:          SMBiosInfo,
-			// AudioDeviceProduct:   Product,
-			// SoftwareNames:        CombinedSoftware,
-			// License:              License,
+		GPUProduct:           gpuProduct,
+		GPUVendorID:          gpuVendorID,
+		GPUBusInfo:           busInfo,
+		GPULogicalName:       gpuLogicalName,
+		GPUClock:             clock,
+		GPUConfiguration:     configurationGPU,
+		BiosVersion:          smbiosInfo,
+		AudioDeviceProduct:   productAudio,
+		SoftwareNames:        combinedSoftware,
+		License:	license,
 	}
 
 	return jsonData, ""
 }
 
-func main() {
-	dataJson, errorMac := StartingInformationGathering()
-	if errorMac != ""{
-		LogToFile(errorMac)
+func SendSystemData(jsonPost Data){
+	requestBody, err := json.Marshal(jsonPost)
+	if err != nil {
+		LogToFile(fmt.Sprintf("Erro ao montar o json: %v", err))
 		return
 	}
 
-	fmt.Sprintln(dataJson) 
+	url := "https://techmind.lupatech.com.br/home/computers/post-machines"
+
+	LogToFile(fmt.Sprintln("URL: ", url))
+
+	// Cria um transporte com verificação desabilitada
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	
+	// Cria um cliente HTTP com esse transporte customizado
+	client := &http.Client{Transport: transport}
+	
+	resp, erro := client.Post(url, "application/json", bytes.NewBuffer(requestBody))
+	if erro != nil {
+		LogToFile(fmt.Sprintf("Erro ao fazer o post: %v", erro))
+		return
+	}
+
+	defer resp.Body.Close()
+
+	// Ler o corpo da resposta
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		LogToFile(fmt.Sprintf("Erro ao ler o corpo da resposta: %v", err))
+		return
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		LogToFile(fmt.Sprintf("Resposta com status code %d: %s", resp.StatusCode, body))
+		if resp.StatusCode == http.StatusBadRequest {
+			LogToFile(fmt.Sprintln("Erro: Resposta 400 - Solicitação inválida."))
+		} else {
+			LogToFile(fmt.Sprintf("Erro: Resposta %d\n", resp.StatusCode))
+		}
+		return
+	}
+}
+
+func StartUpdateListener(port string) {
+	listener, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		LogToFile(fmt.Sprintf("Erro ao abrir porta %s: %v", port, err))
+		return
+	}
+	LogToFile(fmt.Sprintf("Porta %s aberta aguardando conexões...", port))
+	defer listener.Close()
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			LogToFile(fmt.Sprintf("Erro ao aceitar conexão: %v", err))
+			continue
+		}
+		LogToFile(fmt.Sprintf("Conexão recebida de %s", conn.RemoteAddr().String()))
+		conn.Close() // fecha logo após aceitar
+	}
+}
+
+func KillExistingTechmind() {
+	currentPid := os.Getpid()
+
+	processes, err := ps.Processes()
+	if err != nil {
+		LogToFile("Erro ao listar processos: " + err.Error())
+		return
+	}
+
+	for _, proc := range processes {
+		if strings.EqualFold(proc.Executable(), "techmind.exe") && proc.Pid() != currentPid {
+			// Finaliza o processo encontrado
+			cmd := exec.Command("taskkill", "/PID", fmt.Sprint(proc.Pid()), "/F")
+			err := cmd.Run()
+			if err != nil {
+				LogToFile(fmt.Sprintf("Erro ao finalizar processo %d: %v", proc.Pid(), err))
+			} else {
+				LogToFile(fmt.Sprintf("Finalizado processo duplicado: PID %d", proc.Pid()))
+			}
+		}
+	}
+}
+
+func main() {
+	// 1ª goroutine: coleta e envio de dados
+	go func() {
+		// Verificando se tem mais instancias da apilicação  rodando e finalizando
+		startingInfoMutex.Lock()
+		KillExistingTechmind()
+		startingInfoMutex.Unlock()
+
+		// Coleta de dados
+		startingInfoMutex.Lock()
+		dataJson, errorMac := StartingInformationGathering()
+		startingInfoMutex.Unlock()
+
+		if errorMac != "" {
+			logToFileMutex.Lock()
+			LogToFile(errorMac)
+			logToFileMutex.Unlock()
+			return
+		}
+
+		// Montando dados em formato json e mandando para a aplicação web
+		sendDataMutex.Lock()
+		SendSystemData(dataJson)
+		sendDataMutex.Unlock()
+	}()
+
+	// 2ª goroutine: abre porta e escuta permanentemente
+	go func() {
+		StartUpdateListener("9090")
+	}()
+
+	select {}
 }

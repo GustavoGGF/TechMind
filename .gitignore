@@ -21,3 +21,13 @@ __pycache__/
 
 #pasta static onde é gerado do build
 static/
+
+*.pdb
+
+.vs
+
+**/obj/
+
+**/bin/
+
+.cache
