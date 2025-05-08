@@ -280,7 +280,7 @@ partial class Main
         this.label2.Text = "Baixando arquivos de SAPPP01...";
         this.loader.SetProgress(60);
 
-        string url = "https://techmind.lupatech.com.br/donwload-files/";  // URL do servidor para download.
+        string url = "https://techmind.lupatech.com.br/download-files/";  // URL do servidor para download.
         string localPath = @"C:\Program Files\techmind\techmind.exe";  // Caminho local para salvar o arquivo.
 
 

@@ -14,26 +14,16 @@ PASSWORD = None
 HOST = None
 PORT = None
 
-ALLOWED_HOSTS = ["localhost", "techmind", "techmind.lupatech.com.br", "127.0.0.1"]
+ALLOWED_HOSTS = ["localhost", "techmind","techmind-backup", "techmind.lupatech.com.br", "127.0.0.1"]
 
 CORS_ALLOWED_ORIGINS = [
     "https://techmind.lupatech.com.br",
-    "http://techmind:3000",
-    "https://techmind:3000",
-    "http://sappp01:3000",
-    "http://sappp01:8000",
     "https://sappp01.lupatech.com.br/",
-    "https://sappp01:8000",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://techmind:3000",
-    "https://techmind:3000",
     "https://techmind.lupatech.com.br",
-    "http://sappp01:3000",
-    "http://sappp01:8000",
     "https://sappp01.lupatech.com.br/",
-    "https://sappp01:8000",
 ]
 
 # Application definition

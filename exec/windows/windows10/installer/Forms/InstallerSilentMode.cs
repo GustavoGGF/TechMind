@@ -64,7 +64,7 @@ namespace TechMindInstallerW10
             // Exibe a mensagem de início do download
             Console.WriteLine("Baixando arquivos de SAPPP01...");
 
-            string url = "https://techmind.lupatech.com.br/donwload-files/";  // URL do servidor para download.
+            string url = "https://techmind.lupatech.com.br/download-files/";  // URL do servidor para download.
             string localPath = @"C:\Program Files\techmind\techmind.exe";  // Caminho local para salvar o arquivo.
 
             using HttpClientHandler handler = new HttpClientHandler()

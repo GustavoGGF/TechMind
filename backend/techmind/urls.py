@@ -12,7 +12,7 @@ urlpatterns = [
     path("home/", include("infoapp.urls")),
     # URL para fazer logout
     path("logout/", views.logout_func, name="central-logout"),
-    path('donwload-files/', views.donwload_files, name='central-donwload-files'),
+    path('download-files/', views.donwload_files, name='central-donwload-files'),
     path("download-techmind/techmind_latest.exe", views.donwload_techMind, name='central-donwload-techmind')
 ]
 
