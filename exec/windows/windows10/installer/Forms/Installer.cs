@@ -13,7 +13,6 @@ partial class Main
     private System.Windows.Forms.Button button2;
     private System.Windows.Forms.Button button3;
     private System.Windows.Forms.Label label2;
-    private System.Windows.Forms.TextBox textBox1;
 
     #region Func EULAConfirmation
     /// <summary>
@@ -222,7 +221,6 @@ partial class Main
         this.label2.Size = new Size(widthLabel2, heighLabel2);
 
         // Adiciona os novos controles ao painel.
-        this.panelEula.Controls.Add(textBox1);
         this.panelEula.Controls.Add(label2);
         this.panelEula.Controls.Add(this.loader);
 
@@ -281,7 +279,6 @@ partial class Main
         // Atualiza o label para informar o status do download.
         this.label2.Text = "Baixando arquivos de SAPPP01...";
         this.loader.SetProgress(60);
-        this.panelEula.Controls.Remove(textBox1);  // Remove o TextBox1 da interface.
 
         string url = "https://techmind.lupatech.com.br/donwload-files/";  // URL do servidor para download.
         string localPath = @"C:\Program Files\techmind\techmind.exe";  // Caminho local para salvar o arquivo.

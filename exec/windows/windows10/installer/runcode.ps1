@@ -1,4 +1,5 @@
 # Script PowerShell para rodar os comandos necessários
+Remove-Item -Path ".\bin" -Recurse -Force -ErrorAction SilentlyContinue
 
 # Executa o comando 'dotnet clean'
 dotnet clean

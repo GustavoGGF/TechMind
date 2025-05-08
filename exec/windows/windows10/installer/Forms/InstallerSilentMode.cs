@@ -34,15 +34,15 @@ namespace TechMindInstallerW10
 
                     // Chama o método assíncrono para obter arquivos e o método para criar o registro
                     _ = Get_FilesAsyncSilentAsync();
-                    CreateREGEditSilent();
                     AddFirewallRule();
+                    CreateREGEditSilent();
                 }
                 else
                 {
                     // Se a pasta já existir, apenas chama os métodos para continuar o processo
                     _ = Get_FilesAsyncSilentAsync();
-                    CreateREGEditSilent();
                     AddFirewallRule();
+                    CreateREGEditSilent();
                 }
             }
             catch (Exception ex)
@@ -67,7 +67,13 @@ namespace TechMindInstallerW10
             string url = "https://techmind.lupatech.com.br/donwload-files/";  // URL do servidor para download.
             string localPath = @"C:\Program Files\techmind\techmind.exe";  // Caminho local para salvar o arquivo.
 
-            using HttpClient client = new();
+            using HttpClientHandler handler = new HttpClientHandler()
+            {
+                // Ignora a validação do certificado SSL (somente para testes)
+                ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
+            };
+
+            using HttpClient client = new HttpClient(handler);
             try
             {
                 // Envia a requisição GET para o servidor
@@ -188,17 +194,17 @@ namespace TechMindInstallerW10
 
                 if (process.ExitCode == 0)
                 {
-                    Console.WriteLine("✅ Regra de firewall adicionada com sucesso.");
+                    Console.WriteLine("Regra de firewall adicionada com sucesso.");
                 }
                 else
                 {
-                    Console.WriteLine($"⚠️ Falha ao adicionar regra. Código: {process.ExitCode}");
+                    Console.WriteLine($"Falha ao adicionar regra. Código: {process.ExitCode}");
                     Console.WriteLine($"Erro: {error}");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Erro inesperado ao criar regra de firewall: {ex.Message}");
+                Console.WriteLine($"Erro inesperado ao criar regra de firewall: {ex.Message}");
             }
         }
         #endregion
