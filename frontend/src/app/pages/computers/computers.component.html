@@ -56,24 +56,20 @@
       </div>
     </div>
     <div class="filter_back">
-      <div class="d-flex">
+      <div class="d-flex" *ngIf="filter_softwares">
         <button class="btn" (click)="resetSoft()">
           <img [src]="reset_filter" alt="reset filter" />
         </button>
-        <select
-          class="form-select select_width"
-          name="dis"
-          [(ngModel)]="selectedValue"
+        <ng-select
+          class="select_width"
+          [items]="soft_list"
+          bindLabel="name"
+          (change)="onSelectMachineForSoftWare($event)"
+          bindValue="id"
+          placeholder="{{ placeHolderDynamic }}"
+          [multiple]="true"
         >
-          <option value="None" disabled selected>Softwares</option>
-          <option
-            *ngFor="let soft of soft_list; let i = index"
-            [value]="i"
-            (click)="generateMachineReport(i)"
-          >
-            {{ soft.name }}
-          </option>
-        </select>
+        </ng-select>
       </div>
       <div>
         <select

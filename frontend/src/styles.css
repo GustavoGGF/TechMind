@@ -21,3 +21,15 @@ html {
 .bg-blueL {
   background-color: var(--blueLight) !important;
 }
+
+.ng-dropdown-panel {
+  background-color: white !important;
+  padding: 0.3em;
+  left: 0;
+}
+
+.ng-select {
+  background-color: white !important;
+  border-radius: 0.8em;
+  padding: 1em;
+}

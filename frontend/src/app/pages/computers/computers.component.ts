@@ -8,6 +8,7 @@ import {
 import { UtilitiesModule } from "../../utilities/utilities.module";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { NgSelectModule } from "@ng-select/ng-select";
 import {
   HttpClient,
   HttpClientModule,
@@ -32,7 +33,13 @@ export interface ReportResponse {
 @Component({
   selector: "app-computers",
   standalone: true,
-  imports: [UtilitiesModule, CommonModule, HttpClientModule, FormsModule],
+  imports: [
+    UtilitiesModule,
+    CommonModule,
+    HttpClientModule,
+    FormsModule,
+    NgSelectModule,
+  ],
   templateUrl: "./computers.component.html",
   styleUrl: "./computers.component.css",
 })
@@ -66,10 +73,10 @@ export class ComputersComponent implements OnInit {
   home_class: string = "";
   messageError: string = "";
   one_hundred_quantity: string = "";
+  placeHolderDynamic: string = "Selecione um Software";
   ten_quantity: string = "";
   reset_filter: string = "/static/assets/images/filtro.png";
   quantity_filter: string | null = "";
-  selectedValue: string = "None";
   selectedReports: string = "None";
   closeBTN: string = "/static/assets/images/fechar.png";
 
@@ -80,12 +87,18 @@ export class ComputersComponent implements OnInit {
   canViewMachines: boolean = false;
   canViewMessage: boolean = false;
   checkedAll: boolean = true;
+  filter_softwares: boolean = false;
   showMessage: boolean = false;
 
   // Declarando variaveis list
   dis_list: string[] = [];
   so_list: string[] = [];
   soft_list: Software[] = [];
+
+  soft_list_new = [
+    { name: "Office", ids: 1 },
+    { name: "Chrome", ids: 1 },
+  ];
 
   softwares_list: any;
 
@@ -122,8 +135,6 @@ export class ComputersComponent implements OnInit {
 
   // Função que obtem o token CSRF
   getToken(): void {
-    console.log("pegou token");
-
     this.http
       .get("/home/get-token", {})
       .pipe(
@@ -194,35 +205,39 @@ export class ComputersComponent implements OnInit {
   }
 
   mountSoftwares(): void {
-    const machineNames = this.dataMachines.map((machine: any[]) => machine[40]);
+    try {
+      const machineNames = this.dataMachines.map(
+        (machine: any[]) => machine[40]
+      );
 
-    const so = this.dataMachines.map((machine: any[]) => machine[3]);
-    const ids = this.dataMachines.map((machine: any[]) => machine[0]);
+      const so = this.dataMachines.map((machine: any[]) => machine[3]);
+      const ids = this.dataMachines.map((machine: any[]) => machine[0]);
 
-    // Encontrar todos os índices onde o valor de `so` é "Microsoft Windows 10 Pro"
-    const windows10ProIndexes = so
-      .map((value: string, index: number) =>
-        value === "Microsoft Windows 10 Pro" ? index : -1
-      )
-      .filter((index: number) => index !== -1);
+      // Encontrar todos os índices onde o valor de `so` é "Microsoft Windows 10 Pro"
+      const windows10ProIndexes = so
+        .map((value: string, index: number) =>
+          value === "Microsoft Windows 10 Pro" ? index : -1
+        )
+        .filter((index: number) => index !== -1);
 
-    // Usar esses índices para pegar os valores correspondentes de `machineNames` e `ids`
-    const result = windows10ProIndexes.map((index: number) => ({
-      name: machineNames[index],
-      id: ids[index],
-    }));
+      // Usar esses índices para pegar os valores correspondentes de `machineNames` e `ids`
+      const result = windows10ProIndexes.map((index: number) => ({
+        name: machineNames[index],
+        id: ids[index],
+      }));
 
-    // Processar cada resultado com a função `stringToSortedArray`
-    result.forEach(({ name, id }: { name: string; id: string }) => {
-      const names = this.stringToSortedArray(name);
-      return this.updateSoftwareList(names, id);
-    });
+      // Processar cada resultado com a função `stringToSortedArray`
+      result.forEach(({ name, id }: { name: string; id: string }) => {
+        const names = this.stringToSortedArray(name);
+        return this.updateSoftwareList(names, id);
+      });
+    } catch (err) {
+      return console.error("Erro ao Montar os softwares: ", err);
+    }
   }
 
   stringToSortedArray(array: string): string[] {
     if (!array || array.trim().length <= 1) {
-      // Se a string estiver vazia ou muito curta, retornar o erro
-      console.error("Formato de string inválido.");
       return [];
     }
     try {
@@ -257,43 +272,68 @@ export class ComputersComponent implements OnInit {
   }
 
   updateSoftwareList(names: string[], id: string): void {
-    names.forEach((name: string) => {
-      // Verifica se já existe um objeto com o mesmo nome em soft_list
-      const software = this.soft_list.find(
-        (software) => software.name === name
-      );
-
-      if (software) {
-        // Adiciona o ID ao array de IDs se ainda não estiver presente
-        if (!software.ids.includes(id)) {
-          software.ids.push(id);
-        }
-      } else {
-        // Adiciona um novo objeto com o nome e o ID
-        this.soft_list.push({ name, ids: [id] });
-        this.soft_list.sort((a, b) =>
-          a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+    try {
+      names.forEach((name: string) => {
+        // Verifica se já existe um objeto com o mesmo nome em soft_list
+        const software = this.soft_list.find(
+          (software) => software.name === name
         );
-      }
-    });
+
+        if (software) {
+          // Adiciona o ID ao array de IDs se ainda não estiver presente
+          if (!software.ids.includes(id)) {
+            software.ids.push(id);
+          }
+        } else {
+          // Adiciona um novo objeto com o nome e o ID
+          this.soft_list.push({ name, ids: [id] });
+          this.soft_list.sort((a, b) =>
+            a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+          );
+        }
+      });
+      this.filter_softwares = true;
+    } catch (err) {
+      return console.error(err);
+    }
   }
 
-  generateMachineReport(index: number): void {
-    // Obtém o software selecionado usando o índice
-    const selected_Soft = this.soft_list[index];
+  onSelectMachineForSoftWare(event: Software[]) {
+    try {
+      if (event.length === 0) {
+        this.placeHolderDynamic = "Selecione um Software";
+        return this.resetSoft();
+      }
+      this.placeHolderDynamic = "";
 
-    // Filtra o array machines para encontrar máquinas cujo ID corresponde ao ID do software selecionado
-    const filteredMachines = this.dataMachines.filter(
-      (machine: string[]) => selected_Soft.ids.includes(machine[0]) // Verifica se o ID da máquina está na lista de IDs do software
-    );
+      const allSoftwareIds = (event as unknown as Software[]).flatMap(
+        (soft) => soft.ids
+      );
 
-    // Exibe o relatório ou faz algo com as máquinas filtradas
-    this.dataMachines = filteredMachines;
+      const filteredMachines = this.dataMachines.filter((machine: string[]) =>
+        allSoftwareIds.includes(machine[0])
+      );
+
+      // Exibe o relatório ou faz algo com as máquinas filtradas
+      this.dataMachines = filteredMachines;
+    } catch (err) {
+      if (
+        err instanceof TypeError &&
+        err.message.includes("Cannot read properties of undefined") &&
+        err.message.includes("ids")
+      ) {
+        this.placeHolderDynamic = "Selecione um Software";
+        this.resetSoft();
+      } else {
+        console.error("Erro genérico:", err);
+      }
+    }
   }
 
   resetSoft(): void {
-    this.selectedValue = "None";
-
+    this.placeHolderDynamic = "Selecione um Software";
+    const elements = document.querySelectorAll(".ng-value");
+    elements.forEach((el) => el.remove());
     this.http
       .get("/home/computers/get-data/" + this.quantity_filter, {})
       .pipe(
@@ -378,11 +418,15 @@ export class ComputersComponent implements OnInit {
 
   // Função para redirecionar para a pagina de visualização da maquina
   onRowClick(index: number) {
-    const selectedMachine = this.dataMachines[index];
-    let mac = selectedMachine[0];
-    mac = mac.replace(/:/g, "-");
+    try {
+      const selectedMachine = this.dataMachines[index];
+      let mac = selectedMachine[0];
+      mac = mac.replace(/:/g, "-");
 
-    return window.open("/home/computers/view-machine/" + mac, "_blank");
+      return window.open("/home/computers/view-machine/" + mac, "_blank");
+    } catch (err) {
+      return console.error(err);
+    }
   }
 
   // Função obter o valor do SO que deseja filtrar
@@ -587,122 +631,159 @@ export class ComputersComponent implements OnInit {
 
   // Função que formata as datas que aparecem na tabela dos computadores
   formatDate(date: string): string {
-    const parsedDate = new Date(date);
-    const day = String(parsedDate.getDate()).padStart(2, "0");
-    const month = String(parsedDate.getMonth() + 1).padStart(2, "0"); // Meses são baseados em 0 (Janeiro é 0)
-    const year = parsedDate.getFullYear();
+    try {
+      const parsedDate = new Date(date);
+      const day = String(parsedDate.getDate()).padStart(2, "0");
+      const month = String(parsedDate.getMonth() + 1).padStart(2, "0"); // Meses são baseados em 0 (Janeiro é 0)
+      const year = parsedDate.getFullYear();
 
-    return `${day}/${month}/${year}`;
+      return `${day}/${month}/${year}`;
+    } catch (err) {
+      console.error(err);
+      return String(err);
+    }
   }
 
   // Reorganiza os os computadores pelo nome em ordem alfabetica
   sortByName(): void {
-    this.dataMachines.sort((a: any, b: any) => {
-      const nameA = a[1].toUpperCase(); // Ignore case
-      const nameB = b[1].toUpperCase(); // Ignore case
-      if (nameA < nameB) {
-        return -1;
-      }
-      if (nameA > nameB) {
-        return 1;
-      }
-      return 0;
-    });
+    try {
+      this.dataMachines.sort((a: any, b: any) => {
+        const nameA = a[1].toUpperCase(); // Ignore case
+        const nameB = b[1].toUpperCase(); // Ignore case
+        if (nameA < nameB) {
+          return -1;
+        }
+        if (nameA > nameB) {
+          return 1;
+        }
+        return 0;
+      });
+    } catch (err) {
+      return console.error(err);
+    }
   }
 
   // Reorganiza os os computadores pelo nome em ordem alfabetica invertido
   sortDataByNameDescending(): void {
-    this.dataMachines.sort((a: any, b: any) => {
-      const nameA = a[1].toUpperCase(); // Ignore case
-      const nameB = b[1].toUpperCase(); // Ignore case
-      if (nameA < nameB) {
-        return 1;
-      }
-      if (nameA > nameB) {
-        return -1;
-      }
-      return 0;
-    });
+    try {
+      this.dataMachines.sort((a: any, b: any) => {
+        const nameA = a[1].toUpperCase(); // Ignore case
+        const nameB = b[1].toUpperCase(); // Ignore case
+        if (nameA < nameB) {
+          return 1;
+        }
+        if (nameA > nameB) {
+          return -1;
+        }
+        return 0;
+      });
+    } catch (err) {
+      return console.error(err);
+    }
   }
 
   // Reorganiza os os computadores pelo SO em ordem alfabetica
   sortByNameSO(): void {
-    this.dataMachines.sort((a: any, b: any) => {
-      const nameA = a[2].toUpperCase(); // Ignore case
-      const nameB = b[2].toUpperCase(); // Ignore case
-      if (nameA < nameB) {
-        return -1;
-      }
-      if (nameA > nameB) {
-        return 1;
-      }
-      return 0;
-    });
+    try {
+      this.dataMachines.sort((a: any, b: any) => {
+        const nameA = a[2].toUpperCase(); // Ignore case
+        const nameB = b[2].toUpperCase(); // Ignore case
+        if (nameA < nameB) {
+          return -1;
+        }
+        if (nameA > nameB) {
+          return 1;
+        }
+        return 0;
+      });
+    } catch (err) {
+      return console.error(err);
+    }
   }
 
   // Reorganiza os os computadores pelo SO em ordem alfabetica invertido
   sortDataByNameDescendingSO(): void {
-    this.dataMachines.sort((a: any, b: any) => {
-      const nameA = a[2].toUpperCase(); // Ignore case
-      const nameB = b[2].toUpperCase(); // Ignore case
-      if (nameA < nameB) {
-        return 1;
-      }
-      if (nameA > nameB) {
-        return -1;
-      }
-      return 0;
-    });
+    try {
+      this.dataMachines.sort((a: any, b: any) => {
+        const nameA = a[2].toUpperCase(); // Ignore case
+        const nameB = b[2].toUpperCase(); // Ignore case
+        if (nameA < nameB) {
+          return 1;
+        }
+        if (nameA > nameB) {
+          return -1;
+        }
+        return 0;
+      });
+    } catch (err) {
+      return console.error(err);
+    }
   }
 
   // Reorganiza os os computadores pela Distribuição em ordem alfabetica
   sortByNameDis(): void {
-    this.dataMachines.sort((a: any, b: any) => {
-      const nameA = a[3].toUpperCase(); // Ignore case
-      const nameB = b[3].toUpperCase(); // Ignore case
-      if (nameA < nameB) {
-        return -1;
-      }
-      if (nameA > nameB) {
-        return 1;
-      }
-      return 0;
-    });
+    try {
+      this.dataMachines.sort((a: any, b: any) => {
+        const nameA = a[3].toUpperCase(); // Ignore case
+        const nameB = b[3].toUpperCase(); // Ignore case
+        if (nameA < nameB) {
+          return -1;
+        }
+        if (nameA > nameB) {
+          return 1;
+        }
+        return 0;
+      });
+    } catch (err) {
+      return console.error(err);
+    }
   }
 
   // Reorganiza os os computadores pela Distribuição em ordem alfabetica invertido
   sortDataByNameDescendingDis(): void {
-    this.dataMachines.sort((a: any, b: any) => {
-      const nameA = a[3].toUpperCase(); // Ignore case
-      const nameB = b[3].toUpperCase(); // Ignore case
-      if (nameA < nameB) {
-        return 1;
-      }
-      if (nameA > nameB) {
-        return -1;
-      }
-      return 0;
-    });
+    try {
+      this.dataMachines.sort((a: any, b: any) => {
+        const nameA = a[3].toUpperCase(); // Ignore case
+        const nameB = b[3].toUpperCase(); // Ignore case
+        if (nameA < nameB) {
+          return 1;
+        }
+        if (nameA > nameB) {
+          return -1;
+        }
+        return 0;
+      });
+    } catch (err) {
+      return console.error(err);
+    }
   }
 
   // Reorganiza os os computadores pela data em ordem decrecente
   sortByDateDesc(): void {
-    this.dataMachines.sort((a: any, b: any) => {
-      const dateA = new Date(a[4]);
-      const dateB = new Date(b[4]);
+    try {
+      this.dataMachines.sort((a: any, b: any) => {
+        const dateA = new Date(a[4]);
+        const dateB = new Date(b[4]);
 
-      return dateB.getTime() - dateA.getTime(); // Mais recente para o mais antigo
-    });
+        return dateB.getTime() - dateA.getTime(); // Mais recente para o mais antigo
+      });
+    } catch (err) {
+      return console.error(err);
+    }
   }
 
   // Reorganiza os os computadores pela data em ordem crescente
   sortByDateASC(): void {
-    this.dataMachines.sort((a: any, b: any) => {
-      const dateA = new Date(a[4]);
-      const dateB = new Date(b[4]);
+    try {
+      this.dataMachines.sort((a: any, b: any) => {
+        const dateA = new Date(a[4]);
+        const dateB = new Date(b[4]);
 
-      return dateA.getTime() - dateB.getTime(); // Mais antigo para o mais novo
-    });
+        return dateA.getTime() - dateB.getTime(); // Mais antigo para o mais novo
+      });
+    } catch (err) {
+      return console.error(err);
+    }
   }
 
   // Obtenendo o nome do dispositivo que o usuario deseja buscar
