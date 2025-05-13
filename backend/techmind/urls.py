@@ -13,7 +13,7 @@ urlpatterns = [
     # URL para fazer logout
     path("logout/", views.logout_func, name="central-logout"),
     path('download-files/', views.donwload_files, name='central-donwload-files'),
-    path("download-techmind/techmind_latest.exe", views.donwload_techMind, name='central-donwload-techmind')
+    path("download-techmind/techmind_latest.exe", views.donwload_techMind, name='central-donwload-techmind'),
 ]
 
 urlpatterns += staticfiles_urlpatterns()

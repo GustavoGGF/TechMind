@@ -1,19 +1,19 @@
-import { Component } from '@angular/core';
-import { UtilitiesModule } from '../../utilities/utilities.module';
-import { CommonModule } from '@angular/common';
+import { Component } from "@angular/core";
+import { UtilitiesModule } from "../../utilities/utilities.module";
+import { CommonModule } from "@angular/common";
 import {
   HttpClient,
   HttpClientModule,
   HttpHeaders,
-} from '@angular/common/http';
-import { catchError, throwError } from 'rxjs';
+} from "@angular/common/http";
+import { catchError, throwError } from "rxjs";
 
 @Component({
-  selector: 'app-devices',
+  selector: "app-devices",
   standalone: true,
   imports: [UtilitiesModule, CommonModule, HttpClientModule],
-  templateUrl: './devices.component.html',
-  styleUrl: './devices.component.css',
+  templateUrl: "./devices.component.html",
+  styleUrl: "./devices.component.css",
 })
 export class DevicesComponent {
   constructor(private http: HttpClient) {}
@@ -29,32 +29,30 @@ export class DevicesComponent {
   canViewNewDevices: boolean = false;
 
   // Declarando as variaveis string
-  all_quantity: string = '';
-  arrow_down: string = '/static/assets/images/seta.png';
-  arrow_up: string = '/static/assets/images/seta2.png';
-  close_button: string = '/static/assets/images/fechar.png';
-  computers_class: string = '';
-  device_class: string = 'active';
-  fifty_quantity: string = '';
-  input_brand: string = '';
-  input_imob: string = '';
-  input_model: string = '';
-  input_serial_number: string = '';
-  imageDevices: string = '/static/assets/images/devices/computador.png';
-  home_class: string = '';
-  select_value: string = '';
-  ten_quantity: string = '';
-  one_hundred_quantity: string = '';
-  quantity_devices: string | null = '';
+  all_quantity: string = "";
+  arrow_down: string = "/static/assets/images/seta.png";
+  arrow_up: string = "/static/assets/images/seta2.png";
+  close_button: string = "/static/assets/images/fechar.png";
+  device_class: string = "active";
+  fifty_quantity: string = "";
+  input_brand: string = "";
+  input_imob: string = "";
+  input_model: string = "";
+  input_serial_number: string = "";
+  imageDevices: string = "/static/assets/images/devices/computador.png";
+  select_value: string = "";
+  ten_quantity: string = "";
+  one_hundred_quantity: string = "";
+  quantity_devices: string | null = "";
 
   // Função para pegar o nome do usuario logado
   ngOnInit(): void {
-    this.name = localStorage.getItem('name');
+    this.name = localStorage.getItem("name");
 
-    this.quantity_devices = localStorage.getItem('quantity_devices');
+    this.quantity_devices = localStorage.getItem("quantity_devices");
     if (this.quantity_devices == null) {
-      localStorage.setItem('quantity_devices', '10');
-      this.quantity_devices = '10';
+      localStorage.setItem("quantity_devices", "10");
+      this.quantity_devices = "10";
     }
 
     if (this.name.length == 0 || this.name == null) {
@@ -68,7 +66,7 @@ export class DevicesComponent {
   // Função para pegar o token CSRF
   getToken(): void {
     this.http
-      .get('/home/get-token', {})
+      .get("/home/get-token", {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -90,7 +88,7 @@ export class DevicesComponent {
   // Função para pegar os dispositivos
   getDevices(): void {
     this.http
-      .get('/home/devices/get-devices/' + this.quantity_devices, {})
+      .get("/home/devices/get-devices/" + this.quantity_devices, {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -108,29 +106,29 @@ export class DevicesComponent {
           switch (this.quantity_devices) {
             default:
               break;
-            case '10':
-              this.ten_quantity = 'active_filter';
-              this.fifty_quantity = '';
-              this.one_hundred_quantity = '';
-              this.all_quantity = '';
+            case "10":
+              this.ten_quantity = "active_filter";
+              this.fifty_quantity = "";
+              this.one_hundred_quantity = "";
+              this.all_quantity = "";
               break;
-            case '50':
-              this.ten_quantity = '';
-              this.fifty_quantity = 'active_filter';
-              this.one_hundred_quantity = '';
-              this.all_quantity = '';
+            case "50":
+              this.ten_quantity = "";
+              this.fifty_quantity = "active_filter";
+              this.one_hundred_quantity = "";
+              this.all_quantity = "";
               break;
-            case '100':
-              this.ten_quantity = '';
-              this.fifty_quantity = '';
-              this.one_hundred_quantity = 'active_filter';
-              this.all_quantity = '';
+            case "100":
+              this.ten_quantity = "";
+              this.fifty_quantity = "";
+              this.one_hundred_quantity = "active_filter";
+              this.all_quantity = "";
               break;
-            case 'all':
-              this.ten_quantity = '';
-              this.fifty_quantity = '';
-              this.one_hundred_quantity = '';
-              this.all_quantity = 'active_filter';
+            case "all":
+              this.ten_quantity = "";
+              this.fifty_quantity = "";
+              this.one_hundred_quantity = "";
+              this.all_quantity = "active_filter";
           }
         }
       });
@@ -177,7 +175,7 @@ export class DevicesComponent {
 
     this.http
       .post(
-        '/home/devices/post-devices',
+        "/home/devices/post-devices",
         {
           device: this.select_value,
           model: this.input_model,
@@ -187,8 +185,8 @@ export class DevicesComponent {
         },
         {
           headers: new HttpHeaders({
-            'X-CSRFToken': this.token,
-            'Content-Type': 'application/json',
+            "X-CSRFToken": this.token,
+            "Content-Type": "application/json",
           }),
         }
       )
@@ -215,25 +213,25 @@ export class DevicesComponent {
   onRowClick(index: number) {
     const selectedDevice = this.devices[index];
     var sn = selectedDevice[2];
-    return (window.location.href = '/home/devices/view-devices/' + sn);
+    return (window.location.href = "/home/devices/view-devices/" + sn);
   }
 
   // Seta quantidade de maquinas a serem exibidas para 10
   getTen(): void {
-    localStorage.setItem('quantity_devices', '10');
+    localStorage.setItem("quantity_devices", "10");
 
-    this.quantity_devices = '10';
+    this.quantity_devices = "10";
 
-    this.ten_quantity = 'active_filter';
-    this.fifty_quantity = '';
-    this.one_hundred_quantity = '';
-    this.all_quantity = '';
+    this.ten_quantity = "active_filter";
+    this.fifty_quantity = "";
+    this.one_hundred_quantity = "";
+    this.all_quantity = "";
 
     this.canViewDevices = false;
     this.devices = null;
 
     this.http
-      .get('/home/devices/get-devices/10', {})
+      .get("/home/devices/get-devices/10", {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -252,20 +250,20 @@ export class DevicesComponent {
 
   // Seta quantidade de maquinas a serem exibidas para 10
   getFifty(): void {
-    localStorage.setItem('quantity_devices', '50');
+    localStorage.setItem("quantity_devices", "50");
 
-    this.quantity_devices = '50';
+    this.quantity_devices = "50";
 
-    this.ten_quantity = '';
-    this.fifty_quantity = 'active_filter';
-    this.one_hundred_quantity = '';
-    this.all_quantity = '';
+    this.ten_quantity = "";
+    this.fifty_quantity = "active_filter";
+    this.one_hundred_quantity = "";
+    this.all_quantity = "";
 
     this.canViewDevices = false;
     this.devices = null;
 
     this.http
-      .get('/home/devices/get-devices/50', {})
+      .get("/home/devices/get-devices/50", {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -283,20 +281,20 @@ export class DevicesComponent {
   }
 
   getOneHundred(): void {
-    localStorage.setItem('quantity_devices', '100');
+    localStorage.setItem("quantity_devices", "100");
 
-    this.quantity_devices = '100';
+    this.quantity_devices = "100";
 
-    this.ten_quantity = '';
-    this.fifty_quantity = '';
-    this.one_hundred_quantity = 'active_filter';
-    this.all_quantity = '';
+    this.ten_quantity = "";
+    this.fifty_quantity = "";
+    this.one_hundred_quantity = "active_filter";
+    this.all_quantity = "";
 
     this.canViewDevices = false;
     this.devices = null;
 
     this.http
-      .get('/home/devices/get-devices/100', {})
+      .get("/home/devices/get-devices/100", {})
       .pipe(
         catchError((error) => {
           this.status = error.status;
@@ -314,20 +312,20 @@ export class DevicesComponent {
   }
 
   getAll(): void {
-    localStorage.setItem('quantity_devices', 'all');
+    localStorage.setItem("quantity_devices", "all");
 
-    this.quantity_devices = '100';
+    this.quantity_devices = "100";
 
-    this.ten_quantity = '';
-    this.fifty_quantity = '';
-    this.one_hundred_quantity = '';
-    this.all_quantity = 'active_filter';
+    this.ten_quantity = "";
+    this.fifty_quantity = "";
+    this.one_hundred_quantity = "";
+    this.all_quantity = "active_filter";
 
     this.canViewDevices = false;
     this.devices = null;
 
     this.http
-      .get('/home/devices/get-devices/all', {})
+      .get("/home/devices/get-devices/all", {})
       .pipe(
         catchError((error) => {
           this.status = error.status;

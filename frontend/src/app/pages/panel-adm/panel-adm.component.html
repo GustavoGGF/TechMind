@@ -1,0 +1,44 @@
+<div class="main">
+  <app-navbar [name]="name" [panel_class]="panel_class" />
+  <app-message
+    [errorType]="errorType"
+    [messageError]="messageError"
+    (click)="hideMessage()"
+    *ngIf="showMessage"
+  />
+  <div class="mg-2 bg-white pd-1">
+    <table class="table-panel">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Nome</th>
+          <th>IP</th>
+          <th>Usuário atual</th>
+          <th>Último Contato</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let machine of machines[0]; let i = index">
+          <td>
+            <div class="status-container">
+              <div
+                [class]="statusDot"
+                #btnRef
+                id="status_dot"
+                (click)="activePopOver(btnRef)"
+                data-bs-toggle="popover"
+                [attr.data-bs-title]="statusDotTitle"
+                [attr.data-bs-content]="statusDotContent"
+              ></div>
+              <div [class]="statusDotPing"></div>
+            </div>
+          </td>
+          <td>{{ machine[0] }}</td>
+          <td>{{ machine[1] }}</td>
+          <td>{{ machine[2] }}</td>
+          <td>{{ adjustDate(machine[3]) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -109,4 +109,6 @@ urlpatterns = [
         views.get_image,
         name="central-get-image",
     ),
+    path("panel-adm", views.panel_administrator, name="central-panel-administrator"),
+    path("panel-adm/get-machines", views.panel_get_machines, name="central-get-machines")
 ]

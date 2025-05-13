@@ -60,7 +60,6 @@ export class ComputersDetailsComponent
   cpu_vendor_id: string = "";
   currentUser: string = "";
   computers_class: string = "active";
-  device_class: string = "";
   domain: string = "";
   gpu_bus_info: string = "";
   gpu_clock: string = "";
@@ -72,7 +71,6 @@ export class ComputersDetailsComponent
   hard_disk_sata_version: string = "";
   hard_disk_serial_number: string = "";
   hard_disk_user_capacity: string = "";
-  home_class: string = "";
   img_config: string = "/static/assets/images/devices/configuracao.png";
   imob: string = "";
   input_imob: string = "";

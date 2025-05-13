@@ -1638,3 +1638,33 @@ def get_image(request, model):
     # Se o arquivo não for encontrado, retorna um erro
     logger.error(f"Arquivo não encontrado para o modelo: {model}")
     return JsonResponse({"error": "Arquivo não encontrado"}, status=404)
+
+@csrf_exempt
+@require_GET
+def panel_administrator(request):
+    return render(request, "index.html", {})
+
+@require_GET
+def panel_get_machines(request):
+    results = []
+    try:
+        with get_database_connection() as connection:
+            cursor = connection.cursor()
+
+            # Monta a query substituindo o placeholder pelo valor
+            query = "SELECT name, ip, logged_user, insertion_date FROM machines;"
+            cursor.execute(query, )
+            result = cursor.fetchall()
+
+            # Adiciona o resultado ao array de resultados
+            results.append(result)
+            
+            return JsonResponse({"machines":results}, status=200, safe=True)
+    except connector.Error as e:
+        logger.error(f"Database query error for system: {e}")
+        return JsonResponse({"status": "fail"}, safe=True, status=312)
+
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()

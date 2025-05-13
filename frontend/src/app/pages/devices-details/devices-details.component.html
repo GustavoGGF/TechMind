@@ -1,11 +1,5 @@
 <div class="main">
-  <app-navbar
-    *ngIf="canView"
-    [name]="name"
-    [home_class]="home_class"
-    [computers_class]="computers_class"
-    [device_class]="device_class"
-  />
+  <app-navbar *ngIf="canView" [name]="name" [device_class]="device_class" />
   <div>
     <div class="w-100 d-flex">
       <img

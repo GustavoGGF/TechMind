@@ -1,11 +1,5 @@
 <div class="main">
-  <app-navbar
-    *ngIf="canView"
-    [name]="name"
-    [home_class]="home_class"
-    [computers_class]="computers_class"
-    [device_class]="device_class"
-  />
+  <app-navbar *ngIf="canView" [name]="name" [device_class]="device_class" />
   <div class="w-100">
     <div class="w-100 justify-content-start d-flex div_quantity">
       <div>

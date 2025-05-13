@@ -22,6 +22,10 @@ html {
   background-color: var(--blueLight) !important;
 }
 
+.bg-white {
+  background-color: var(--pure-white);
+}
+
 .ng-dropdown-panel {
   background-color: white !important;
   padding: 0.3em;
@@ -31,5 +35,13 @@ html {
 .ng-select {
   background-color: white !important;
   border-radius: 0.8em;
+  padding: 1em;
+}
+
+.mg-2 {
+  margin: 2em;
+}
+
+.pd-1 {
   padding: 1em;
 }

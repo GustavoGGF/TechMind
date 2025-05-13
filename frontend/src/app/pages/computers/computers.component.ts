@@ -62,7 +62,6 @@ export class ComputersComponent implements OnInit {
   arrow_up: string = "/static/assets/images/seta2.png";
   arrow_down: string = "/static/assets/images/seta.png";
   computers_class: string = "active";
-  device_class: string = "";
   errorType: string = "";
   fifty_quantity: string = "";
   input_name: string = "";
@@ -70,7 +69,6 @@ export class ComputersComponent implements OnInit {
   input_username: string = "";
   inputUsername: string = "";
   inputPass: string = "";
-  home_class: string = "";
   messageError: string = "";
   one_hundred_quantity: string = "";
   placeHolderDynamic: string = "Selecione um Software";
