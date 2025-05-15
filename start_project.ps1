@@ -1,5 +1,10 @@
-
 clear
+
+# Verifica se a pasta 'backend\static' existe e remove se existir
+if (Test-Path "backend\static") {
+    Remove-Item -Path "backend\static" -Recurse -Force
+}
+
 # Navega até a pasta frontend e constrói o projeto Angular
 cd frontend/
 ng build

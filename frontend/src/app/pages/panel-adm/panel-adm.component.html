@@ -6,10 +6,17 @@
     (click)="hideMessage()"
     *ngIf="showMessage"
   />
-  <div class="mg-2 bg-white pd-1">
+  <div class="mg-2 bg-white pd-1 brd-rg-1 border-bottom mb-5">
+    <div class="w-100 d-flex justify-content-end">
+      <div *ngFor="let i of createRange(tabsMachines)">
+        <span class="custom-spam" (click)="nextPageMachines(i)"
+          >[{{ i + 1 }}]</span
+        >
+      </div>
+    </div>
     <table class="table-panel">
-      <thead>
-        <tr>
+      <thead class="border-bottom">
+        <tr class="u-none">
           <th>Status</th>
           <th>Nome</th>
           <th>IP</th>
@@ -18,25 +25,93 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let machine of machines[0]; let i = index">
-          <td>
-            <div class="status-container">
-              <div
-                [class]="statusDot"
-                #btnRef
-                id="status_dot"
-                (click)="activePopOver(btnRef)"
-                data-bs-toggle="popover"
-                [attr.data-bs-title]="statusDotTitle"
-                [attr.data-bs-content]="statusDotContent"
-              ></div>
-              <div [class]="statusDotPing"></div>
-            </div>
-          </td>
-          <td>{{ machine[0] }}</td>
-          <td>{{ machine[1] }}</td>
-          <td>{{ machine[2] }}</td>
-          <td>{{ adjustDate(machine[3]) }}</td>
+        <ng-container class="w-100 position-relative">
+          <app-loading-search
+            class="loading-position"
+            *ngIf="canViewLoadingSearch"
+          />
+        </ng-container>
+        <ng-container *ngIf="!canViewLoadingSearch">
+          <ng-container *ngFor="let machine of listMachines; let i = index">
+            <tr
+              class="tr-adjust"
+              [id]="'status_dot_tr_' + i"
+              (contextmenu)="onRightClick($event)"
+            >
+              <td>
+                <div class="status-container dot_validate">
+                  <div
+                    [ngClass]="'statusDot dot_validate ' + statusDot"
+                    #btnRef
+                    [id]="'status_dot_div_' + i"
+                    (click)="activePopOver('status_dot_div_' + i)"
+                    data-bs-toggle="popover"
+                    [attr.data-bs-title]="statusDotTitle"
+                    [attr.data-bs-content]="statusDotContent"
+                  ></div>
+                  <div [class]="statusDotPing" class="dot_validate"></div>
+                </div>
+              </td>
+              <td [id]="'status_dot_td1_' + i">
+                {{ machine[0] }}
+              </td>
+              <td [id]="'status_dot_td2_' + i">
+                {{ machine[1] }}
+              </td>
+              <td [id]="'status_dot_td3_' + i">
+                {{ machine[2] }}
+              </td>
+              <td [id]="'status_dot_td4_' + i">
+                {{ adjustDate(machine[3]) }}
+              </td>
+            </tr>
+            <tr style="height: 1em"></tr>
+          </ng-container>
+          <ul
+            class="custom-menu"
+            *ngIf="menuVisible"
+            [style.left.px]="menuPosition.x"
+            [style.top.px]="menuPosition.y"
+          >
+            <li (click)="forceConection()" class="custom-li">Forçar Conexão</li>
+          </ul>
+        </ng-container>
+      </tbody>
+    </table>
+    <div class="w-100 d-flex justify-content-end">
+      <div *ngFor="let i of createRange(tabsMachines)">
+        <span class="custom-spam" (click)="nextPageMachines(i)"
+          >[{{ i + 1 }}]</span
+        >
+      </div>
+    </div>
+  </div>
+  <div
+    [ngClass]="'process-tab ' + processAnimation"
+    id="process-tb"
+    *ngIf="canViewProcessTab"
+  >
+    <div class="position-relative">
+      <img
+        class="img-fluid position-absolute img-adjust"
+        [src]="buttomSize"
+        alt="botão para minimizar"
+        (click)="resizeProcessTab()"
+      />
+    </div>
+    <table class="table-panel">
+      <thead>
+        <tr>
+          <th>{{ processHeader }}</th>
+          <th>{{ statusHeader }}</th>
+          <th>{{ machineHeader }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ processExec }}</td>
+          <td>{{ statusPorcentage }}</td>
+          <td>{{ machineName }}</td>
         </tr>
       </tbody>
     </table>

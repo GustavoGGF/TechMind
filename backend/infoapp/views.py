@@ -1472,11 +1472,8 @@ def get_ip_from_dns(hostname):
         pass
 
 
-# @requires_csrf_token
 @require_POST
 @csrf_exempt
-# @transaction.atomic
-# @never_cache
 def get_report_xls(request):
     selected_values = None
     selected_values_list = None
@@ -1639,19 +1636,22 @@ def get_image(request, model):
     logger.error(f"Arquivo não encontrado para o modelo: {model}")
     return JsonResponse({"error": "Arquivo não encontrado"}, status=404)
 
+@login_required(login_url="/login")
 @csrf_exempt
 @require_GET
-def panel_administrator(request):
+def panel_administrator(request): #tela do painel administrativo
     return render(request, "index.html", {})
 
+@login_required(login_url="/login")
 @require_GET
-def panel_get_machines(request):
+@never_cache
+def panel_get_machines(request): #view que disponibiliza as maquinas para a tabela
     results = []
     try:
         with get_database_connection() as connection:
             cursor = connection.cursor()
 
-            # Monta a query substituindo o placeholder pelo valor
+            # Monta a query buscando somente os dados necessarios
             query = "SELECT name, ip, logged_user, insertion_date FROM machines;"
             cursor.execute(query, )
             result = cursor.fetchall()

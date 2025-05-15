@@ -1,6 +1,7 @@
 {
   "ALL": {
-    "HotFix": { "30": "ajustar alowed hosts e demais" }
+    "HotFix": { "30": "ajustar alowed hosts e demais" },
+    "Upgrade": { "31": "Limitar uso de recurso do container" }
   },
   "Home": {},
   "Computer": {

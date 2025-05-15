@@ -12,6 +12,9 @@ html {
   --isabelline: #f2e9e4;
   --Piction-Blue: #00a6fb;
   --pure-white: #ffffff;
+  --lime: #00ff00;
+  --pastel-blue: #8de0fe;
+  --deep-magenta: #bb1266;
 }
 
 .bg-red {
@@ -42,6 +45,10 @@ html {
   margin: 2em;
 }
 
-.pd-1 {
-  padding: 1em;
+.brd-rg-1 {
+  border-radius: 1em;
+}
+
+.u-none {
+  user-select: none;
 }
