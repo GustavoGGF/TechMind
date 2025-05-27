@@ -39,8 +39,6 @@ INSTALLED_APPS = [
     "infoapp",
 ]
 
-ASGI_APPLICATION = "techmind.asgi.application"
-
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -72,6 +70,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "techmind.wsgi.application"
+ASGI_APPLICATION = "techmind.asgi.application"
 
 DATABASES = {
     "default": {
@@ -82,6 +81,16 @@ DATABASES = {
         "HOST": config("DB_HOST"),
         "PORT": config("DB_PORT", cast=int),
     }
+}
+
+# Channels
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
 }
 
 

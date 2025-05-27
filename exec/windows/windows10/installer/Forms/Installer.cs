@@ -415,7 +415,7 @@ partial class Main
         // Atualiza o texto do label para informar o status de sucesso.
         this.label2.Text = "TechMind instalado com sucesso!!";
 
-        int widthButton2 = (int)(this.ClientSize.Width * 0.2); // 20% da largura
+        int widthButton2 = (int)(this.ClientSize.Width * 0.3); // 30% da largura
         int posXButton2 = (int)(this.ClientSize.Width * 0.2); // 20% da largura
         int posYButton2 = (int)(this.ClientSize.Height * 0.5); // 50% da altura
         this.button2 = new System.Windows.Forms.Button

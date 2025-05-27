@@ -6,7 +6,8 @@
   "Home": {},
   "Computer": {
     "HotFix": {
-      "31": "Relatorio, melhorar esquema de apertar enter, esc, detalhes"
+      "31": "Relatorio Maquinas/DNS, melhorar esquema de apertar enter, esc, detalhes",
+      "33": "Lista de softwares novamente dando problema"
     }
   },
   "Computer Details": {
@@ -26,7 +27,8 @@
     "All": {
       "Upgrade": {
         "2": "PORTS sobre portas tambem, como :80 etc",
-        "3": "Portas fisicas tambem"
+        "3": "Portas fisicas tambem",
+        "32": "Techmind deve ser iniciado até no login de trocar de usuario, sair e logar e bloquear e voltar TODO LOGIN"
       },
       "HotFix": {
         "4": "Verificcar Hard Disk Sata Verion Windows",

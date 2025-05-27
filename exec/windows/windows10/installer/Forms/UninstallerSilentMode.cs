@@ -43,7 +43,7 @@ namespace TechMindInstallerW10
                 if (process.ExitCode == 0)
                 {
                     Console.WriteLine("Regra de firewall removida com sucesso.");
-                    RemoveRegEdit();
+                    StoppingServices();
                 }
                 else
                 {
@@ -83,13 +83,9 @@ namespace TechMindInstallerW10
                 // Se o valor for encontrado, ele é excluído
                 registryKey.DeleteValue(valueName);
                 // Chama a função para parar qualquer processo relacionado
-                StoppingServices();
+                
             }
-            else
-            {
-                // Se o valor não for encontrado, chama a função para parar o processo sem alterações
-                StoppingServices();
-            }
+
         }
         #endregion
 
@@ -153,6 +149,7 @@ namespace TechMindInstallerW10
                     foreach (string file in Directory.GetFiles(folderPath))
                     {
                         File.Delete(file);
+                        RemoveRegEdit();
                         // Após a remoção dos arquivos, atualiza o rótulo e exibe o botão para reiniciar
                         Console.WriteLine("Desinstalação Concluida!");
                         Console.WriteLine("Deve-se Reiniciar o computador...");
@@ -163,6 +160,7 @@ namespace TechMindInstallerW10
                     foreach (string subDir in Directory.GetDirectories(folderPath))
                     {
                         Directory.Delete(subDir, true); // 'true' para excluir recursivamente
+                        RemoveRegEdit();
                         Console.WriteLine("Desinstalação Concluida!");
                         Console.WriteLine("Deve-se Reiniciar o computador...");
                         Environment.Exit(0);
@@ -170,6 +168,7 @@ namespace TechMindInstallerW10
                 }
                 else
                 {
+                    RemoveRegEdit();
                     Console.WriteLine("Desinstalação Concluida!");
                     Console.WriteLine("Deve-se Reiniciar o computador...");
                     Environment.Exit(0);

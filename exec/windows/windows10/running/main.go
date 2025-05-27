@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
@@ -515,9 +516,31 @@ func StartUpdateListener(port string) {
 			LogToFile(fmt.Sprintf("Erro ao aceitar conexão: %v", err))
 			continue
 		}
-		LogToFile(fmt.Sprintf("Conexão recebida de %s", conn.RemoteAddr().String()))
-		conn.Close() // fecha logo após aceitar
+		go handleConnection(conn)
 	}
+}
+
+func handleConnection(conn net.Conn) {
+	defer conn.Close()
+
+	remoteAddr := conn.RemoteAddr().String()
+	LogToFile(fmt.Sprintf("Conexão recebida de %s", remoteAddr))
+
+	// Cria um leitor para ler a mensagem enviada pelo cliente
+	reader := bufio.NewReader(conn)
+
+	// Lê até encontrar um '\n' (por exemplo, "reiniciar\n")
+	message, err := reader.ReadString('\n')
+	if err != nil {
+		LogToFile(fmt.Sprintf("Erro ao ler dados de %s: %v", remoteAddr, err))
+		return
+	}
+
+	// Limpa a mensagem e registra
+	LogToFile(fmt.Sprintf("Mensagem recebida de %s: %s", remoteAddr, message))
+
+	// Envia resposta de volta (opcional)
+	conn.Write([]byte("Comando recebido com sucesso\n"))
 }
 
 func KillExistingTechmind() {

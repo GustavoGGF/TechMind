@@ -11,4 +11,5 @@ ng build
 cd ..
 
 # Volta para o backend e inicia o servidor Django
-python.exe .\backend\manage.py runserver
+cd backend/
+python.exe -m daphne -p 8000 techmind.asgi:application

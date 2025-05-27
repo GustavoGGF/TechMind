@@ -23,6 +23,10 @@ from django.test import Client
 from ast import literal_eval
 from json import loads
 from os import path
+from ping3 import ping
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from socket import socket, AF_INET, SOCK_STREAM
 
 # Configuração básica de logging
 basicConfig(level=WARNING)
@@ -1668,3 +1672,98 @@ def panel_get_machines(request): #view que disponibiliza as maquinas para a tabe
         if connection.is_connected():
             cursor.close()
             connection.close()
+
+@login_required(login_url="/login")
+@require_GET
+@never_cache
+def panel_administrator_contact_machine(request, action, machine, ip):
+    channel_layer = get_channel_layer()
+    try:
+        conn_test_ip = connectivity_test_ip(channel_layer, ip)
+        if not conn_test_ip:
+            return JsonResponse({"status":"fail"}, status=500, safe=True)
+
+        conn_test_machine = connectivity_test_machine(channel_layer, machine)
+        if not conn_test_machine:
+            return JsonResponse({"status":"fail"}, status=500, safe=True)
+        
+        conn_machine_info = server_machine_connection(ip, 9090)
+        if not conn_machine_info:
+            return JsonResponse({"status":"fail"}, status=500, safe=True) 
+
+        return JsonResponse({"status":"ok"}, status=200, safe=True)
+        
+    except Exception as e:
+        logger.error(e)
+        return JsonResponse({"status":"fail"}, status=500, safe=True)
+    
+def connectivity_test_ip(channel, ip):
+    try:
+        ping_ip = ping(ip)
+
+        if ping_ip is None:
+            async_to_sync(channel.group_send)(
+                "monitoring",
+                {
+                    "type":"send_mensagem",
+                    "message":"pingando com ip falhou",
+                    "code":"pwip",
+                    "status":400
+                }
+            )
+            return False
+        else:
+            async_to_sync(channel.group_send)(
+                "monitoring",
+                {
+                    "type":"send_mensagem",
+                    "message":"pingando com ip foi um sucesso",
+                    "code":"pwip",
+                    "status":200
+                }
+            )
+            return True
+    except Exception as e:
+        logger.error(e)
+        return False
+
+def connectivity_test_machine(channel, machine):
+    try:
+        ping_machine = ping(machine)
+        if ping_machine is None:
+            async_to_sync(channel.group_send)(
+                "monitoring",
+                {
+                    "type":"send_mensagem",
+                    "message":"pingando com hostname falhou",
+                    "code":"pwmc",
+                    "status":400
+                }
+            )
+            return False
+        else:
+            async_to_sync(channel.group_send)(
+                "monitoring",
+                {
+                    "type":"send_mensagem",
+                    "message":"pingando com hostname foi um sucesso",
+                    "code":"pwmc",
+                    "status":200
+                }
+            )
+            return True
+    except Exception as e:
+        logger.error(e)
+        return False
+
+def server_machine_connection(host, port):
+    try:
+        with socket(AF_INET, SOCK_STREAM) as s:
+            s.connect((host, port))
+            s.sendall(b'faca algo\n')
+            response = s.recv(1024)
+            logger.info(response.decode())
+            return True
+    except Exception as e:
+        logger.error(e)
+        return False

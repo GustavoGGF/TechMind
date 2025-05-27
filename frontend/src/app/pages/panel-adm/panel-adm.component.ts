@@ -7,6 +7,7 @@ import "../../../assets/bootstrap-5.3.3-dist/js/bootstrap.bundle.min.js";
 import { catchError, throwError } from "rxjs";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { WebSocketService } from "../../services/websocket.service";
 
 declare var bootstrap: any;
 @Component({
@@ -17,7 +18,7 @@ declare var bootstrap: any;
   styleUrl: "./panel-adm.component.css",
 })
 export class PanelAdmComponent implements OnInit {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private wsService: WebSocketService) {}
 
   popoverTriggerList: NodeListOf<Element> = [] as any;
   popoverList: any[] = [];
@@ -33,6 +34,7 @@ export class PanelAdmComponent implements OnInit {
   errorType: string = "";
   home_class: string = "";
   machineHeader: string = "Máquina";
+  machineIP: string = "";
   machineName: string = "";
   messageError: string = "";
   panel_class: string = "active";
@@ -45,6 +47,7 @@ export class PanelAdmComponent implements OnInit {
   statusDotTitle: string = "";
   statusPorcentage: string = "0%";
   statusHeader: string = "Status";
+  detailFailMessage: string = "";
 
   canView: boolean = false;
   canViewLoadingSearch: boolean = true;
@@ -54,6 +57,7 @@ export class PanelAdmComponent implements OnInit {
   menuSingular: boolean = false;
   menuVisible: boolean = false;
   showMessage: boolean = false;
+  failServerComunication: boolean = false;
 
   status: number = 0;
   tabsMachines: number = 0;
@@ -99,6 +103,37 @@ export class PanelAdmComponent implements OnInit {
         // Se um menu contextual estiver posicionado (visível), oculta o menu
         if (this.menuPosition) {
           this.hideMenu();
+        }
+      });
+
+      this.wsService.getMessages().subscribe((msg: any) => {
+        console.log(msg);
+
+        const codeInterface = msg.code;
+        const statusInterface = msg.status;
+
+        switch (codeInterface) {
+          default:
+            break;
+          case "pwip":
+            this.statusPorcentage = "30%";
+            this.detailFailMessage =
+              "Problema Com conexão com a maquina " +
+              this.machineName +
+              " verificar ip/comunicação do mesmo";
+            break;
+          case "pwmc":
+            this.statusPorcentage = "40%";
+            this.detailFailMessage =
+              "Problema Com conexão com a maquina " +
+              this.machineName +
+              " verificar ip/comunicação do mesmo";
+            break;
+        }
+
+        if (statusInterface !== 200) {
+          this.statusPorcentage = "Fail";
+          return;
         }
       });
     } catch (err: string | any) {
@@ -393,12 +428,6 @@ export class PanelAdmComponent implements OnInit {
       const target = event.target as HTMLElement;
       // seta qual equipamento foi selecionado para abrir o menu custom
       this.menuCustomSelect = target;
-      const parent = this.menuCustomSelect?.parentElement;
-      if (parent) {
-        const tds = parent.getElementsByTagName("td");
-        const secondTd = tds[1]; // índice 1 = segundo <td>
-        this.machineName = secondTd.innerText;
-      }
 
       // Define a posição do menu com base na posição do cursor no evento
       this.menuPosition = {
@@ -429,10 +458,19 @@ export class PanelAdmComponent implements OnInit {
   }
 
   forceConection() {
+    const parent = this.menuCustomSelect?.parentElement;
+    if (parent) {
+      const tds = parent.getElementsByTagName("td");
+      const secondTd = tds[1]; // índice 1 = segundo <td>
+      const tirdTd = tds[2];
+      this.machineName = secondTd.innerText;
+      this.machineIP = tirdTd.innerText;
+    }
     this.canViewProcessTab = true;
     this.processExec = "Forçar Conexão";
     this.processAnimation = "process-tab-animation-maximize";
     this.hideMenu();
+    this.contactMachine("force-conection");
   }
 
   resizeProcessTab() {
@@ -469,5 +507,35 @@ export class PanelAdmComponent implements OnInit {
     this.canViewLoadingSearch = true;
     this.listMachines = this.machines[index];
     this.canViewLoadingSearch = false;
+  }
+
+  contactMachine(event: string) {
+    this.statusPorcentage = "25%";
+    this.http
+      .get(
+        "/home/panel-adm/contact-machine/" +
+          event +
+          "/" +
+          this.machineName +
+          "/" +
+          this.machineIP,
+        {}
+      )
+      .pipe(
+        catchError((error) => {
+          this.status = error.status;
+
+          return throwError(error);
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          // Lógica para tratar resposta, se necessário
+          return response;
+        },
+        error: (err) => {
+          console.error("Erro na requisição", err);
+        },
+      });
   }
 }

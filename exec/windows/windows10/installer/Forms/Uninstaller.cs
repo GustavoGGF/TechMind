@@ -77,7 +77,7 @@ partial class Main
             this.button4.Height = heightButton4;
             this.button4.Width = widthButton4;
             this.button4.Text = "Prosseguir";
-            this.button4.Click += new System.EventHandler(this.RemoveRegEdit);
+            this.button4.Click += new System.EventHandler(this.RemoveFirewallRule);
 
             this.Controls.Add(label3);
             this.Controls.Add(button4);
@@ -99,7 +99,7 @@ partial class Main
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="e"></param>
-    private void RemoveRegEdit(object sender, EventArgs e)
+    private void RemoveRegEdit()
     {
         // Atualiza o rótulo indicando que o processo de remoção do registro está em andamento
         this.label3.Text = "Removendo Registro...";
@@ -107,7 +107,7 @@ partial class Main
         // Remove o botão 'button4' e adiciona o controle 'loader' para exibir o progresso
         this.Controls.Remove(button4);
         this.Controls.Add(this.loader);
-        this.loader.SetProgress(20);
+        this.loader.SetProgress(35);
 
         // Caminho da chave de registro a ser modificada
         string keyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
@@ -122,14 +122,8 @@ partial class Main
         {
             // Se o valor for encontrado, ele é excluído
             registryKey.DeleteValue(valueName);
-            RemoveFirewallRule();
             // Chama a função para parar qualquer processo relacionado
-            StoppingProcess();
-        }
-        else
-        {
-            // Se o valor não for encontrado, chama a função para parar o processo sem alterações
-            StoppingProcess();
+            
         }
     }
     #endregion
@@ -138,10 +132,10 @@ partial class Main
     /// <summary>
     /// Remove a Regra de FireWall do Windows refente ao TechMind
     /// </summary>
-    private void RemoveFirewallRule()
+    private void RemoveFirewallRule(object sender, EventArgs e)
     {
         this.label3.Text = "Removendo Regra do FireWall...";
-        this.loader.SetProgress(35);
+        this.loader.SetProgress(20);
 
         try
         {
@@ -167,6 +161,7 @@ partial class Main
             if (process.ExitCode == 0)
             {
                 this.label3.Text = "✅ Regra de firewall removida com sucesso.";
+                StoppingProcess();
             }
             else
             {
@@ -192,7 +187,7 @@ partial class Main
     {
         // Atualiza o rótulo indicando que o processo de finalização está em andamento
         this.label3.Text = "Finalizando Processos...";
-        this.loader.SetProgress(45);
+        this.loader.SetProgress(30);
 
         // Nome do processo a ser finalizado, sem a extensão .exe
         string processName = "techmind";
@@ -236,6 +231,7 @@ partial class Main
     /// </summary>
     private void RemovingFiles()
     {
+        RemoveRegEdit();
         // Atualiza o rótulo indicando que os arquivos estão sendo removidos
         this.label3.Text = "Removendo arquivos...";
         this.loader.SetProgress(70); 
@@ -245,7 +241,7 @@ partial class Main
 
         try
         {
-            int widthButton2 = (int)(this.ClientSize.Width * 0.2); // 20% da largura
+            int widthButton2 = (int)(this.ClientSize.Width * 0.3); // 20% da largura
             int posXButton2 = (int)(this.ClientSize.Width * 0.2); // 20% da largura
             int posXButton2Latter = (int)(this.ClientSize.Width * 0.6); // 60% da largura
             int posYButton2 = (int)(this.ClientSize.Height * 0.5); // 50% da altura
