@@ -1,0 +1,9 @@
+{
+  "windows10": {
+    "latest_version": "1.0.0",
+    "download_url": "https://techmind.lupatech.com.br/download-files/",
+    "release_date": "28/05/2025",
+    "changelog": "Implementada leitura criptografada do protocolo TCP",
+    "mandatory": false
+  }
+}
