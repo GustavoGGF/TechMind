@@ -1,3 +1,4 @@
+from pathlib import Path
 from django.contrib.auth import login
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -7,13 +8,12 @@ from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from dotenv import load_dotenv
 from ldap3 import ALL_ATTRIBUTES, SAFE_SYNC, Connection
-from os import getenv, path
-from json import loads
+from os import getenv, path, listdir
+from json import loads, load, JSONDecodeError
 from django.views.decorators.http import require_POST, require_GET
 from logging import basicConfig, getLogger, WARNING
 
-basicConfig(level=WARNING)
-logger = getLogger(__name__)
+logger = getLogger("techmind")
 
 # Exige esta view do requerimento de proteção contra falsificação de requisições cross-site (CSRF) e  Permite apenas requisições POST nesta view.
 @csrf_exempt
@@ -143,7 +143,7 @@ def logout_func(request):
 
 # Permite apenas requisições GET para esta view.
 @require_GET
-def donwload_files(request):
+def donwload_files(request, file, version):
     try:
         # Verifica se a requisição é uma requisição AJAX (XMLHttpRequest).
         if (
@@ -153,26 +153,52 @@ def donwload_files(request):
             # Se não for uma requisição AJAX, redireciona para a página home.
             return redirect("/home")
 
-        # Caminho para o arquivo que será baixado.
-        file_path = "/node/TechMind/Installers/techmind.exe"
+        if file == "techmind":
+            dir = "/node/TechMind/Installers/"
+            for arquivo in listdir(dir):
+                if arquivo.endswith(".exe"):
+                    partes = arquivo.split(' ')
+                    if len(partes) >= 2:
+                        versao = partes[1].replace('.exe', '')
+                        if versao == version:
+                            # Caminho para o arquivo que será baixado.
+                            dir += f"techmind {version}.exe"
+                        else:
+                            return logger.error("não existe")
 
-        # Verifica se o arquivo existe no caminho especificado.
-        if path.exists(file_path):
-            # Se o arquivo existe, retorna o arquivo como resposta de download.
-            response = FileResponse(
-                open(file_path, "rb"), as_attachment=True, filename="techmind.exe"
-            )
-            return response
-        else:
-            # Se o arquivo não for encontrado, retorna um erro com status 400.
-            return JsonResponse({}, status=400)
+            # Verifica se o arquivo existe no caminho especificado.
+            if path.exists(dir):
+                # Se o arquivo existe, retorna o arquivo como resposta de download.
+                response = FileResponse(
+                open(dir, "rb"), as_attachment=True, filename="techmind.exe"
+                )
+                return response
+            else:
+                # Se o arquivo não for encontrado, retorna um erro com status 400.
+                return JsonResponse({}, status=400)
 
     except Exception as e:
         # Em caso de erro, imprime a exceção para depuração.
         logger.error(e)
-
         # Retorna uma resposta de erro com status 300 (não convencional, seria mais apropriado usar outro código de erro).
         return JsonResponse({}, status=300)
 
-def donwload_techMind(request):
-    return logger.error("foi")
+def get_current_version(request, os):
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    version_file = BASE_DIR / 'version.json'
+
+    try:
+        with open(version_file, 'r', encoding='utf-8') as f:
+            data = load(f)
+
+        if os in data:
+            latest_version = data[os].get("latest_version")
+            return JsonResponse({"latest_version": latest_version})
+        else:
+            return JsonResponse({"error": f"OS '{os}' não encontrado."}, status=404)
+
+    except FileNotFoundError:
+        return JsonResponse({"error": "Arquivo version.json não encontrado."}, status=500)
+
+    except JSONDecodeError:
+        return JsonResponse({"error": "Erro ao decodificar o JSON."}, status=500)

@@ -1,7 +1,19 @@
 using Microsoft.Win32;
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace TechMindInstallerW10;
+
+public class VersionInfo
+{
+    public string latest_version { get; set; }
+}
+
+public class VersionCurrent
+{
+    public string current_version { get; set; }
+}
+
 
 partial class Main
 {
@@ -230,7 +242,7 @@ partial class Main
         loader.SetProgress(10);
 
         // Chama o método responsável por criar a pasta.
-        Create_Folder(this);
+        _ = Create_FolderAsync(this);
     }
     #endregion
 
@@ -239,7 +251,7 @@ partial class Main
     /// Cria o Diretorio onde ficará o TechMind
     /// </summary>
     /// <param name="formInstance"></param>
-    private void Create_Folder(Main formInstance)
+    private async Task Create_FolderAsync(Main formInstance)
     {
         this.label2.Text = "Criando Diretório...";
         // Loader = new LoaderControl();
@@ -253,12 +265,14 @@ partial class Main
                 // Cria a nova pasta no caminho especificado.
                 Directory.CreateDirectory(folderPath);
                 this.loader.SetProgress(30);
-                _ = formInstance.Get_FilesAsync();  // Chama o método assíncrono para obter arquivos.
+                var version = await GetVersionAsync();
+                await Get_FilesAsync(version);  // Chama o método assíncrono para obter arquivos.
             }
             else
             {
                 this.loader.SetProgress(30);
-                _ = formInstance.Get_FilesAsync();  // Invoca o método assíncrono mesmo que a pasta já exista.
+                var version = await GetVersionAsync();
+                await Get_FilesAsync(version);  // Invoca o método assíncrono mesmo que a pasta já exista.
             }
         }
         catch (Exception ex)
@@ -274,14 +288,14 @@ partial class Main
     /// Baixa o TechMind do servidor
     /// </summary>
     /// <returns></returns>
-    private async Task Get_FilesAsync()
+    private async Task Get_FilesAsync(string version)
     {
         // Atualiza o label para informar o status do download.
         this.label2.Text = "Baixando arquivos de SAPPP01...";
         this.loader.SetProgress(60);
 
-        string url = "https://techmind.lupatech.com.br/download-files/";  // URL do servidor para download.
-        string localPath = @"C:\Program Files\techmind\techmind.exe";  // Caminho local para salvar o arquivo.
+        string url = "https://techmind.lupatech.com.br/download-files/techmind/" + version;  // URL do servidor para download.
+        string localPath = $@"C:\Program Files\techmind\techmind.exe";  // Caminho local para salvar o arquivo.
 
 
         var handler = new HttpClientHandler
@@ -305,7 +319,7 @@ partial class Main
             await File.WriteAllBytesAsync(localPath, fileBytes);
 
             // Chama o método para criar entradas no Registro do Windows.
-            CreateREGEdit();
+            CreateREGEdit(version);
         }
         catch (Exception ex)
         {
@@ -320,7 +334,7 @@ partial class Main
     /// Método responsável por criar uma entrada no Registro do Windows para 
     /// executar o aplicativo no login do usuário.
     /// </summary>
-    private void CreateREGEdit()
+    private void CreateREGEdit(string version)
     {
         // Atualiza o label para informar que o RegEdit está sendo criado.
         this.label2.Text = "Criando RegEdit...";
@@ -330,7 +344,7 @@ partial class Main
         {
             string registryKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";  // Caminho da chave do Registro.
             string appName = "TechMind";  // Nome do valor a ser definido no Registro.
-            string appPath = @"C:\Program Files\techmind\techmind.exe";  // Caminho do aplicativo.
+            string appPath = $@"C:\Program Files\techmind\techmind.exe";  // Caminho do aplicativo.
 
             // Abre a chave do Registro no escopo de usuário atual com permissões de gravação.
             using RegistryKey registryKey = Registry.CurrentUser.OpenSubKey(registryKeyPath, true); // Permissão para escrever.
@@ -356,6 +370,74 @@ partial class Main
         }
     }
     #endregion
+
+    private async Task<string> GetVersionAsync()
+    {
+        this.label2.Text = "Verificando Versão do programa...";
+        this.loader.SetProgress(35);
+        var handler = new HttpClientHandler
+        {
+            // Ignora validação do certificado
+            ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+        };
+        string url = "https://techmind.lupatech.com.br/get-current-version/windows10";
+        using HttpClient client = new(handler);
+
+        try
+        {
+            HttpResponseMessage response = await client.GetAsync(url);
+
+            response.EnsureSuccessStatusCode(); // Lança exceção se status != 200-299
+
+            string jsonResponse = await response.Content.ReadAsStringAsync();
+
+            // Se quiser desserializar:
+            var resultado = JsonSerializer.Deserialize<VersionInfo>(jsonResponse);
+
+            string version = resultado.latest_version;
+
+            SaveVersion(version);
+            return version;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Erro ao fazer a requisição: {ex.Message}");
+            this.Close();
+            return null;
+        }
+    }
+
+    private void SaveVersion(string versao)
+    {
+        this.label2.Text = "Criando arquivo de Configuração...";
+        this.loader.SetProgress(45);
+
+        var versaoInfo = new VersionCurrent
+        {
+            current_version = versao
+        };
+
+        string json = JsonSerializer.Serialize(versaoInfo, new JsonSerializerOptions { WriteIndented = true });
+
+        // Caminho: C:\Program Files\techmind\config\version.json
+        string pastaBase = @"C:\Program Files\techmind\configs";
+        string caminho = Path.Combine(pastaBase, "version.json");
+
+        try
+        {
+            Directory.CreateDirectory(pastaBase); // Garante que a pasta existe
+            File.WriteAllText(caminho, json);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            MessageBox.Show("Erro: é necessário executar o programa como administrador para salvar em Program Files.");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Erro ao salvar versão: {ex.Message}");
+        }
+    }
+
 
     #region Func AddFirewallRule
     /// <summary>
@@ -484,7 +566,7 @@ partial class Main
         {
             // Define o atraso para a reinicialização em 15 minutos (900 segundos).
             int delayInSeconds = 900;  // Tempo de atraso para reinicialização.
-            
+
             // Inicia o processo de reinicialização agendada com o comando 'shutdown'.
             Process.Start("shutdown", $"/r /t {delayInSeconds}");
             this.Close();

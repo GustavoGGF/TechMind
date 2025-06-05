@@ -5,7 +5,10 @@ import { webSocket } from "rxjs/webSocket";
   providedIn: "root",
 })
 export class WebSocketService {
-  private socket = webSocket("ws://localhost:8000/ws/server-communication/");
+  protocol = window.location.protocol === "https:" ? "wss" : "ws";
+  socket = webSocket(
+    `${this.protocol}://${window.location.host}/ws/server-communication/`
+  );
 
   getMessages() {
     return this.socket;

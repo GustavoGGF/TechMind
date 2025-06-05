@@ -25,6 +25,7 @@ export class PanelAdmComponent implements OnInit {
 
   machines: any;
   listMachines: any;
+  totalData: any;
   menuCustomSelect: any;
   name: any;
 
@@ -115,19 +116,23 @@ export class PanelAdmComponent implements OnInit {
         switch (codeInterface) {
           default:
             break;
-          case "pwip":
+          case "cnmh":
             this.statusPorcentage = "30%";
             this.detailFailMessage =
               "Problema Com conexão com a maquina " +
               this.machineName +
-              " verificar ip/comunicação do mesmo";
+              ": verificar se TechMind está rodando";
             break;
-          case "pwmc":
-            this.statusPorcentage = "40%";
+          case "vldvr":
+            this.statusPorcentage = "60%";
             this.detailFailMessage =
-              "Problema Com conexão com a maquina " +
+              "Não foi possivel verificar a versão do TechMind da máquina: " +
               this.machineName +
-              " verificar ip/comunicação do mesmo";
+              ", atualizar manualmente.";
+            break;
+          case "crtvs":
+            this.statusPorcentage = "100%";
+            this.detailFailMessage = "";
             break;
         }
 
@@ -277,8 +282,14 @@ export class PanelAdmComponent implements OnInit {
         // Se os dados forem recebidos com sucesso
         if (data) {
           // Chama a função externa para agrupar os dados das máquinas em blocos de 100
-          this.machines = this.groupSplitter(data.machines[0], 100);
+          this.totalData = data.machines[0].sort((a: any, b: any) => {
+            const dataA = a[3] ? new Date(a[3]).getTime() : -Infinity;
+            const dataB = b[3] ? new Date(b[3]).getTime() : -Infinity;
+            return dataB - dataA;
+          });
+          this.machines = this.groupSplitter(this.totalData, 100);
           this.listMachines = this.machines[0];
+
           this.tabsMachines = Object.keys(this.machines).length;
 
           // Atualiza o estado indicando que o carregamento foi concluído
@@ -467,10 +478,10 @@ export class PanelAdmComponent implements OnInit {
       this.machineIP = tirdTd.innerText;
     }
     this.canViewProcessTab = true;
-    this.processExec = "Forçar Conexão";
+    this.processExec = "Atualizar Versão";
     this.processAnimation = "process-tab-animation-maximize";
     this.hideMenu();
-    this.contactMachine("force-conection");
+    this.contactMachine("force-update");
   }
 
   resizeProcessTab() {

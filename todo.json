@@ -1,7 +1,8 @@
 {
   "ALL": {
     "HotFix": { "30": "ajustar alowed hosts e demais" },
-    "Upgrade": { "31": "Limitar uso de recurso do container" }
+    "Upgrade": { "31": "Limitar uso de recurso do container" },
+    "35": "fazer igual json do fixdesk, por backend, front, banco de dados e criar documentação"
   },
   "Home": {},
   "Computer": {
@@ -28,7 +29,9 @@
       "Upgrade": {
         "2": "PORTS sobre portas tambem, como :80 etc",
         "3": "Portas fisicas tambem",
-        "32": "Techmind deve ser iniciado até no login de trocar de usuario, sair e logar e bloquear e voltar TODO LOGIN"
+        "32": "Techmind deve ser iniciado até no login de trocar de usuario, sair e logar e bloquear e voltar TODO LOGIN",
+        "34": "Ao desinstalar mandar para o techmind ficar com status de desintalado",
+        "37": "Forçar executar como ADM"
       },
       "HotFix": {
         "4": "Verificcar Hard Disk Sata Verion Windows",
@@ -36,7 +39,8 @@
         "6": "Audio Device Windows",
         "7": "SMBIOS Windows",
         "8": "Exec não sabe lidar com RAID",
-        "9": "Exigir Token para baixar os programas"
+        "9": "Exigir Token para baixar os programas",
+        "36": "Deixar layout mais bonito"
       },
       "Installer": {
         "10": "Modificar o running e o installer, o serviço deve ficar no installador, o mesmo deve poder criar e remover.",

@@ -2,7 +2,7 @@ from base64 import b64encode
 from io import BytesIO
 from dns.resolver import resolve
 from json import loads, JSONDecodeError
-from logging import basicConfig, WARNING, getLogger
+from logging import getLogger
 from mysql import connector
 from pandas import DataFrame, ExcelWriter
 from contextlib import contextmanager
@@ -21,16 +21,18 @@ from ldap3 import ALL, Connection, Server, SUBTREE
 from re import sub
 from django.test import Client
 from ast import literal_eval
-from json import loads
+from json import loads, dumps
 from os import path
 from ping3 import ping
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from socket import socket, AF_INET, SOCK_STREAM
+from time import time
+from hmac import new
+from hashlib import sha256
 
 # Configuração básica de logging
-basicConfig(level=WARNING)
-logger = getLogger(__name__)
+logger = getLogger("techmind")
 
 
 @contextmanager
@@ -358,7 +360,11 @@ def post_machines(request):
             return JsonResponse(
                 {"error": "Mac Address is required"}, status=400, safe=False
             )
-
+            
+        logger.info("=========================================")
+        logger.info(f"Uploading Machine: {name} IP: {ip}")
+        logger.info("=========================================")
+        
         # Conectando no banco de dados
         connection = connector.connect(
             host=config("DB_HOST"),
@@ -1679,91 +1685,85 @@ def panel_get_machines(request): #view que disponibiliza as maquinas para a tabe
 def panel_administrator_contact_machine(request, action, machine, ip):
     channel_layer = get_channel_layer()
     try:
-        conn_test_ip = connectivity_test_ip(channel_layer, ip)
-        if not conn_test_ip:
-            return JsonResponse({"status":"fail"}, status=500, safe=True)
-
-        conn_test_machine = connectivity_test_machine(channel_layer, machine)
-        if not conn_test_machine:
-            return JsonResponse({"status":"fail"}, status=500, safe=True)
+        if action == "force-update":
         
-        conn_machine_info = server_machine_connection(ip, 9090)
-        if not conn_machine_info:
-            return JsonResponse({"status":"fail"}, status=500, safe=True) 
+            conn_machine_info, error_message_conn = server_machine_connection(ip, 9090, channel_layer)
+            
+            if not conn_machine_info:
+                return JsonResponse({"status":f"{error_message_conn}"}, status=502, safe=True) 
 
         return JsonResponse({"status":"ok"}, status=200, safe=True)
         
     except Exception as e:
         logger.error(e)
-        return JsonResponse({"status":"fail"}, status=500, safe=True)
+        return JsonResponse({"status":"fail"}, status=503, safe=True)
     
-def connectivity_test_ip(channel, ip):
-    try:
-        ping_ip = ping(ip)
 
-        if ping_ip is None:
-            async_to_sync(channel.group_send)(
-                "monitoring",
-                {
-                    "type":"send_mensagem",
-                    "message":"pingando com ip falhou",
-                    "code":"pwip",
-                    "status":400
-                }
-            )
-            return False
-        else:
-            async_to_sync(channel.group_send)(
-                "monitoring",
-                {
-                    "type":"send_mensagem",
-                    "message":"pingando com ip foi um sucesso",
-                    "code":"pwip",
-                    "status":200
-                }
-            )
-            return True
-    except Exception as e:
-        logger.error(e)
-        return False
-
-def connectivity_test_machine(channel, machine):
+def server_machine_connection(host, port, channel):
     try:
-        ping_machine = ping(machine)
-        if ping_machine is None:
-            async_to_sync(channel.group_send)(
-                "monitoring",
-                {
-                    "type":"send_mensagem",
-                    "message":"pingando com hostname falhou",
-                    "code":"pwmc",
-                    "status":400
-                }
-            )
-            return False
-        else:
-            async_to_sync(channel.group_send)(
-                "monitoring",
-                {
-                    "type":"send_mensagem",
-                    "message":"pingando com hostname foi um sucesso",
-                    "code":"pwmc",
-                    "status":200
-                }
-            )
-            return True
-    except Exception as e:
-        logger.error(e)
-        return False
-
-def server_machine_connection(host, port):
-    try:
+        timestamp = str(int(time()))
+        
+        command = "update-software"
+        
+        assing = generate_hmac(command, timestamp)
+        
+        async_to_sync(channel.group_send)(
+            "monitoring",
+            {
+                "type":"send_mensagem",
+                "message":"Conectando na máquina",
+                "code":"cnmh",
+                "status":200
+            }
+        )
+        
+        payload = dumps({
+            "command":f"{command}", 
+            "timestamp":timestamp, 
+            "hmac":assing
+            })
+        
+        payload += "\n"
+        
         with socket(AF_INET, SOCK_STREAM) as s:
             s.connect((host, port))
-            s.sendall(b'faca algo\n')
+            s.sendall(payload.encode())
             response = s.recv(1024)
             logger.info(response.decode())
-            return True
+            return True, ""
+        
     except Exception as e:
-        logger.error(e)
-        return False
+        logger.error(f"Não foi possível realizar a conexão TCP: {e}")
+        return False, e
+    
+def generate_hmac(command, timestamp):
+    key = config("MACHINE_KEY").encode()
+    try:
+        message = command + timestamp
+        return new(key, message.encode(), sha256).hexdigest()
+    except Exception as e:
+        return logger.error(f"Erro ao gerar o HMAC {e}")
+    
+@require_POST
+@csrf_exempt
+def receiving_messages(request):
+    try:
+        data = loads(request.body)
+        message = data.get("message")
+        code = data.get("code")
+        status = data.get("status", 200)
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            "monitoring",
+            {
+                "type": "send_mensagem",
+                "message": message,
+                "code": code,
+                "status": status
+            }
+        )
+        return JsonResponse({"success": True})
+    except Exception as e: 
+        logger.error(f"Erro ao receber a menssagem: {e}")
+        return JsonResponse({"fail":"fail"}, status=302)
+    

@@ -12,4 +12,4 @@ cd ..
 
 # Volta para o backend e inicia o servidor Django
 cd backend/
-python.exe -m daphne -p 8000 techmind.asgi:application
+python.exe -m daphne -b 0.0.0.0 -p 8000 techmind.asgi:application
