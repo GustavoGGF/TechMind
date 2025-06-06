@@ -32,7 +32,8 @@
         "3": "Portas fisicas tambem",
         "32": "Techmind deve ser iniciado até no login de trocar de usuario, sair e logar e bloquear e voltar TODO LOGIN",
         "34": "Ao desinstalar mandar para o techmind ficar com status de desintalado",
-        "37": "Forçar executar como ADM"
+        "37": "Forçar executar como ADM",
+        "39": "Verificar desempenho"
       },
       "HotFix": {
         "4": "Verificcar Hard Disk Sata Verion Windows",

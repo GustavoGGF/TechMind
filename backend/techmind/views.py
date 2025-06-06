@@ -155,6 +155,7 @@ def donwload_files(request, file, version):
 
         if file == "techmind":
             dir = "/node/TechMind/Installers/"
+            found = False
             for arquivo in listdir(dir):
                 if arquivo.endswith(".exe"):
                     partes = arquivo.split(' ')
@@ -163,8 +164,10 @@ def donwload_files(request, file, version):
                         if versao == version:
                             # Caminho para o arquivo que será baixado.
                             dir += f"techmind {version}.exe"
-                        else:
-                            return logger.error("não existe")
+                            found = True
+            
+            if not found:
+                return logger.error("Arquivo não encontrado")
 
             # Verifica se o arquivo existe no caminho especificado.
             if path.exists(dir):
