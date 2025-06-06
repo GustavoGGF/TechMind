@@ -641,15 +641,8 @@ func handleConnection(conn net.Conn) {
 		logger.LogToFile(fmt.Sprintln("POST enviado com sucesso:", resp.Status))
 
 		if msg.Command == "update-software"{
-			// Obter o diretório atual
-			currentDir, err := os.Getwd()
-			if err != nil {
-				logger.LogToFile(fmt.Sprintln("Erro ao obter diretório atual:", err))
-				return
-			}
-
 			// Caminho até o arquivo JSON
-			configFilePath := filepath.Join(currentDir, "configs", "version.json")
+			configFilePath := filepath.Join("C:\\", "Program Files", "techmind", "configs", "version.json")
 
 			// Ler o conteúdo do arquivo
 			content, err := os.ReadFile(configFilePath)
