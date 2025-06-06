@@ -82,6 +82,7 @@ type Data struct {
 	SoftwareNames           []software.InstalledSoftware  `json:"installedPackages"`
 	Memories                []map[string]interface{}                `json:"memories"`
 	License                 string                                  `json:"license"`
+	Version					string 								    `json:"version"`
 }
 
 var(
@@ -412,6 +413,12 @@ func StartingInformationGathering() (Data, string){
 
 	combinedSoftware := GetSoftwareInformation()
 
+	versionSoftware := GetNewVersion("0", true)
+
+	if len(versionSoftware) == 0{
+		logger.LogToFile(fmt.Sprintln("Erro ao obter a versão atualizada do software"))
+	}
+
 	if macAddress == ""{
 		return Data{}, fmt.Sprintln("Codigo cancelado, falta de macAddress para dar andamento")
 	}
@@ -455,6 +462,7 @@ func StartingInformationGathering() (Data, string){
 		AudioDeviceProduct:   productAudio,
 		SoftwareNames:        combinedSoftware,
 		License:	license,
+		Version: versionSoftware,
 	}
 
 	return jsonData, ""
@@ -692,7 +700,7 @@ func handleConnection(conn net.Conn) {
 
 			version := config.CurrentVersion
 
-			GetNewVersion(version)
+			GetNewVersion(version, false)
 		}
 
 	} else {
@@ -701,7 +709,7 @@ func handleConnection(conn net.Conn) {
 	}
 }
 
-func GetNewVersion(version string) {
+func GetNewVersion(version string, onlyGet bool) (string) {
    // Cria um cliente HTTP que ignora verificação de certificado SSL
     client := &http.Client{
         Transport: &http.Transport{
@@ -713,7 +721,7 @@ func GetNewVersion(version string) {
     resp, err := client.Get("https://techmind.lupatech.com.br/get-current-version/windows10")
     if err != nil {
         logger.LogToFile(fmt.Sprintln("Erro ao fazer requisição:", err))
-        return
+        return ""
     }
     defer resp.Body.Close()
 
@@ -721,7 +729,7 @@ func GetNewVersion(version string) {
     body, err := io.ReadAll(resp.Body)
     if err != nil {
         logger.LogToFile(fmt.Sprintln("Erro ao ler resposta:", err))
-        return
+        return ""
     }
 
     // Converte o JSON para struct
@@ -729,10 +737,15 @@ func GetNewVersion(version string) {
     err = json.Unmarshal(body, &versionResp)
     if err != nil {
         logger.LogToFile(fmt.Sprintln("Erro ao decodificar JSON:", err))
-        return
+        return ""
     }
 
 	current_version := versionResp.LatestVersion
+
+	if onlyGet{
+		return current_version
+	}
+
 	logger.LogToFile(fmt.Sprintln("Versão atual: ", current_version," Versão Do servidor: ", versionResp.LatestVersion))
     if current_version != version{
 		logger.LogToFile(fmt.Sprintln("Diferente"))
@@ -758,18 +771,20 @@ func GetNewVersion(version string) {
 			bytes.NewBuffer(jsonData))
 		if err != nil {
 			logger.LogToFile(fmt.Sprintln("Erro ao criar requisição:", err))
-			return
+			return ""
 		}
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := httpClient.Do(req)
 		if err != nil {
 			logger.LogToFile(fmt.Sprintln("Erro ao enviar POST:", err))
-			return
+			return ""
 		}
 		defer resp.Body.Close()
 		logger.LogToFile(fmt.Sprintln("POST enviado com sucesso:", resp.Status))
+		return ""
 	}
+	return ""
 }
 
 func KillExistingTechmind() {
