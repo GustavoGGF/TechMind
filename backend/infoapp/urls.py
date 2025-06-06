@@ -111,6 +111,6 @@ urlpatterns = [
     ),
     path("panel-adm", views.panel_administrator, name="central-panel-administrator"),
     path("panel-adm/get-machines", views.panel_get_machines, name="central-get-machines"),
-    path("panel-adm/contact-machine/<str:action>/<str:machine>/<str:ip>", views.panel_administrator_contact_machine, name="central-panel-administrator-contat-machine"),
-    path("panel-adm/receiving-messages/", views.receiving_messages, name="central-receiving-messages")
+    path("panel-adm/contact-machine/<str:action>/<str:ip>", views.panel_administrator_contact_machine, name="central-panel-administrator-contat-machine"),
+    path("panel-adm/receiving-messages/", views.receive_webhook_message, name="central-receiving-messages")
 ]

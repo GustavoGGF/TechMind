@@ -5,9 +5,11 @@ import { HttpClient, HttpClientModule } from "@angular/common/http";
 import "../../../assets/bootstrap-5.3.3-dist/js/bootstrap.js";
 import "../../../assets/bootstrap-5.3.3-dist/js/bootstrap.bundle.min.js";
 import { catchError, throwError } from "rxjs";
+import "dayjs/locale/pt-br";
+import { WebSocketService } from "../../services/websocket.service";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { WebSocketService } from "../../services/websocket.service";
+import "dayjs/locale/pt-br";
 
 declare var bootstrap: any;
 @Component({
@@ -42,13 +44,11 @@ export class PanelAdmComponent implements OnInit {
   processAnimation: string = "";
   processExec: string = "";
   processHeader: string = "Processo";
-  statusDot: string = "";
-  statusDotContent: string = "";
-  statusDotPing: string = "";
-  statusDotTitle: string = "";
   statusPorcentage: string = "0%";
   statusHeader: string = "Status";
   detailFailMessage: string = "";
+  arrow_up: string = "/static/assets/images/seta2.png";
+  arrow_down: string = "/static/assets/images/seta.png";
 
   canView: boolean = false;
   canViewLoadingSearch: boolean = true;
@@ -108,8 +108,6 @@ export class PanelAdmComponent implements OnInit {
       });
 
       this.wsService.getMessages().subscribe((msg: any) => {
-        console.log(msg);
-
         const codeInterface = msg.code;
         const statusInterface = msg.status;
 
@@ -281,16 +279,10 @@ export class PanelAdmComponent implements OnInit {
       .subscribe((data: any) => {
         // Se os dados forem recebidos com sucesso
         if (data) {
-          // Chama a função externa para agrupar os dados das máquinas em blocos de 100
-          this.totalData = data.machines[0].sort((a: any, b: any) => {
-            const dataA = a[3] ? new Date(a[3]).getTime() : -Infinity;
-            const dataB = b[3] ? new Date(b[3]).getTime() : -Infinity;
-            return dataB - dataA;
-          });
-          this.machines = this.groupSplitter(this.totalData, 100);
+          this.machines = this.groupSplitter(data.machines, 100);
           this.listMachines = this.machines[0];
 
-          this.tabsMachines = Object.keys(this.machines).length;
+          this.ordemList("increasing", "insertion_date");
 
           // Atualiza o estado indicando que o carregamento foi concluído
           return (this.canViewLoadingSearch = false);
@@ -322,26 +314,32 @@ export class PanelAdmComponent implements OnInit {
   }
 
   /**
-   * Função que ajusta a exibição do status de conexão de uma máquina com base na data da última atividade.
+   * Atualiza o status visual de uma máquina com base na data da última atividade.
    *
-   * Recebe uma string representando a data/hora da última conexão da máquina e calcula a diferença em relação ao momento atual.
-   * Dependendo se a máquina esteve ativa nas últimas 48 horas, configura os estilos e títulos para o indicador visual (dot) correspondente.
+   * A função verifica se a data fornecida (`curentDate`) está dentro do intervalo das últimas 48 horas.
+   * Com base nisso, aplica estilos visuais (CSS) nos elementos informados para indicar se o equipamento
+   * está "Online" (ativo recentemente) ou "Offline" (inativo há mais de 48 horas).
    *
-   * - Se a última conexão ocorreu dentro das últimas 48 horas, indica que a máquina está "Online",
-   *   atualiza classes CSS para dot ativo e retorna o horário formatado (HH:mm).
+   * - Se estiver dentro de 48 horas, retorna o horário formatado da última atividade (HH:mm).
+   * - Caso contrário, retorna uma string relativa com o tempo de inatividade (ex: "há 3 dias").
    *
-   * - Se a última conexão for superior a 48 horas, indica que a máquina está "Offline",
-   *   atualiza classes CSS para dot inativo e retorna uma string relativa ao tempo de inatividade (ex: "há 3 dias").
+   * Os elementos DOM são identificados pelos seus respectivos IDs (`elementId` e `secondElementId`) e têm
+   * suas classes CSS e atributos de tooltip atualizados dinamicamente.
    *
-   * @param curentDate - String com a data/hora da última conexão da máquina.
-   * @returns string - Retorna o horário formatado ou a data relativa da última conexão.
+   * @param curentDate - String representando a data/hora da última conexão da máquina.
+   * @param elementId - ID do elemento principal onde será aplicado o status visual (dot).
+   * @param secondElementId - ID do segundo elemento relacionado (por exemplo, indicador de ping).
+   * @returns string | void - O horário formatado ou a data relativa da última atividade.
    */
-  adjustDate(curentDate: string) {
+  adjustDate(
+    curentDate: string,
+    elementId: string,
+    secondElementId: string
+  ): string | void {
     try {
       // Converte a string para um objeto Date
       const date = new Date(curentDate);
       const now = new Date();
-      var daysInactive: string = "";
 
       // Calcula a diferença de tempo em milissegundos entre agora e a última conexão
       const diffMs = now.getTime() - date.getTime();
@@ -349,30 +347,35 @@ export class PanelAdmComponent implements OnInit {
       // Define se a diferença está dentro de 48 horas (em ms)
       const isWithin48Hours = diffMs <= 48 * 60 * 60 * 1000;
 
+      var element = document.getElementById(elementId);
+      var secondElement = document.getElementById(secondElementId);
+
       if (isWithin48Hours) {
         // Formata a hora e minutos para exibição (formato HH:mm)
-        const hours = String(date.getHours()).padStart(2, "0");
-        const minutes = String(date.getMinutes()).padStart(2, "0");
-        const time = `${hours}:${minutes}`;
+        const formattedTime = this.getRelativeDateString(curentDate);
 
-        // Configura as classes CSS e textos para status online (ativo)
-        this.statusDot = "status-dot-active";
-        this.statusDotTitle = "Online";
-        this.statusDotPing = "status-ping-active";
-        this.statusDotContent =
-          "Esse Status representa que o equipamento está ou ficou online nas últimas 48 Horas";
+        this.setStatus(
+          element,
+          secondElement,
+          "status-dot-active",
+          "status-ping-active",
+          "Online",
+          "Esse Status representa que o equipamento está ou ficou online nas últimas 48 Horas."
+        );
 
-        return time;
+        return formattedTime;
       } else {
         // Obtém uma string com o tempo relativo da última conexão (ex: "há 3 dias")
-        daysInactive = this.getRelativeDateString(curentDate);
+        const daysInactive = this.getRelativeDateString(curentDate);
 
-        // Configura as classes CSS e textos para status offline (inativo)
-        this.statusDot = "status-dot-inactive";
-        this.statusDotPing = "status-ping-inactive";
-        this.statusDotTitle = "Offline";
-        this.statusDotContent =
-          "Esse Status representa que o equipamento não ficou online nas ultimas 48 horas.";
+        this.setStatus(
+          element,
+          secondElement,
+          "status-dot-inactive",
+          "status-ping-inactive",
+          "Offline",
+          "Esse Status representa que o equipamento não ficou online nas últimas 48 horas."
+        );
 
         return daysInactive;
       }
@@ -381,6 +384,51 @@ export class PanelAdmComponent implements OnInit {
       this.messageError = "Erro ao converter data/dot: " + err;
       this.showMessage = true;
       return console.error(err);
+    }
+  }
+
+  /**
+   * Função auxiliar que aplica classes CSS e atributos de dados (data attributes) em elementos HTML,
+   * com o objetivo de indicar visualmente um determinado status e exibir informações adicionais por tooltip (ou popover).
+   *
+   * Essa função é utilizada para alterar dinamicamente o estado visual de elementos na interface,
+   * como por exemplo, sinalizar que um usuário está online, offline, inativo, etc.
+   *
+   * Aplica a classe CSS de status no primeiro elemento, junto com os atributos "data-bs-title" e "data-bs-content",
+   * utilizados por bibliotecas como Bootstrap para exibição de tooltips ou popovers.
+   * Também aplica uma classe CSS de animação (como "ping" ou similar) em um segundo elemento, se fornecido.
+   *
+   * O uso do modificador `private` indica que essa função é interna à classe e não deve ser acessada externamente.
+   *
+   * @param element - O elemento HTML principal que receberá a classe de status e os atributos de dados.
+   * @param secondElement - Um segundo elemento HTML opcional que receberá a classe de animação (ping).
+   * @param statusClass - Classe CSS a ser aplicada no primeiro elemento para representar o status visual.
+   * @param pingClass - Classe CSS a ser aplicada no segundo elemento para animações visuais (ex: efeito de "ping").
+   * @param title - Texto que será definido no atributo `data-bs-title`, utilizado para exibição de tooltip.
+   * @param content - Texto que será definido no atributo `data-bs-content`, utilizado para exibição de tooltip.
+   */
+  private setStatus(
+    element: HTMLElement | null,
+    secondElement: HTMLElement | null,
+    statusClass: string,
+    pingClass: string,
+    title: string,
+    content: string
+  ): void {
+    // Verifica se o primeiro elemento foi fornecido
+    if (element) {
+      // Aplica a classe de status (ex: 'text-success') ao elemento
+      element.classList.add(statusClass);
+
+      // Define os atributos de dados utilizados por tooltips/popovers do Bootstrap
+      element.setAttribute("data-bs-title", title);
+      element.setAttribute("data-bs-content", content);
+    }
+
+    // Verifica se o segundo elemento foi fornecido
+    if (secondElement) {
+      // Aplica a classe de animação (ex: 'ping') ao segundo elemento
+      secondElement.classList.add(pingClass);
     }
   }
 
@@ -398,14 +446,11 @@ export class PanelAdmComponent implements OnInit {
    */
   getRelativeDateString(dateString: string): string {
     try {
-      // Extende o dayjs com o plugin de tempo relativo
       dayjs.extend(relativeTime);
-      // Define a localidade para português brasileiro
       dayjs.locale("pt-br");
-      // Retorna a diferença relativa da data para o presente (ex: "há um mês")
+
       return dayjs(dateString).fromNow();
-    } catch (err: string | any) {
-      // Em caso de erro, define o tipo e mensagem de erro, e registra no console
+    } catch (err: any) {
       this.errorType = "Erro de Conversão";
       this.messageError = "Erro ao converter a data: " + err;
       console.error(err);
@@ -468,12 +513,29 @@ export class PanelAdmComponent implements OnInit {
     this.menuSingular = false;
   }
 
-  forceConection() {
+  /**
+   * Força a atualização de uma máquina.
+   *
+   * A função extrai o nome e o IP da máquina a partir dos elementos `<td>` dentro do componente
+   * customizado de menu (`menuCustomSelect`). Em seguida:
+   *
+   * - Atualiza os estados da interface para exibir a aba de processo.
+   * - Define o nome do processo e a animação correspondente.
+   * - Oculta o menu de contexto.
+   * - Inicia o processo de conexão com o comando `"force-update"`.
+   *
+   * @remarks
+   * Essa função depende da estrutura do DOM conter ao menos três células `<td>` na linha associada ao menu.
+   *
+   * @returns void
+   */
+  forceUpdate() {
     const parent = this.menuCustomSelect?.parentElement;
     if (parent) {
       const tds = parent.getElementsByTagName("td");
-      const secondTd = tds[1]; // índice 1 = segundo <td>
+      const secondTd = tds[1];
       const tirdTd = tds[2];
+
       this.machineName = secondTd.innerText;
       this.machineIP = tirdTd.innerText;
     }
@@ -484,52 +546,107 @@ export class PanelAdmComponent implements OnInit {
     this.contactMachine("force-update");
   }
 
-  resizeProcessTab() {
-    if (this.expenseProcessTab) {
-      this.buttomSize = "/static/assets/images/maximize.png";
-      this.processAnimation = "process-tab-animation-minimize";
-      this.processHeader = "Processo: " + this.processExec;
-      this.statusHeader = "Status: " + this.statusPorcentage;
-      this.machineHeader = "Máquina: " + this.machineName;
-      const process = document.getElementById("process-tb");
-      if (process) {
-        process.style.height = "2em";
-        this.expenseProcessTab = false;
-      }
-    } else {
-      this.buttomSize = "/static/assets/images/minimize.png";
-      this.processAnimation = "process-tab-animation-maximize";
-      this.processHeader = "Processo";
-      this.statusHeader = "Status";
-      this.machineHeader = "Máquina";
-      const process = document.getElementById("process-tb");
-      if (process) {
-        process.style.height = "4em";
-        this.expenseProcessTab = true;
-      }
-    }
+  /**
+   * Alterna entre os modos expandido e minimizado da aba de processo.
+   *
+   * Quando expandida, a aba exibe informações completas sobre o processo em execução,
+   * como nome, status e máquina. Quando minimizada, reduz a altura do componente visual
+   * e exibe um resumo mais compacto das informações.
+   *
+   * Também atualiza dinamicamente:
+   * - Ícone de botão (maximizar/minimizar),
+   * - Classe de animação (para transição suave),
+   * - Títulos exibidos na interface.
+   *
+   * A manipulação é feita diretamente no elemento DOM com ID `process-tb`.
+   *
+   * @returns void
+   */
+
+  resizeProcessTab(): void {
+    const processElement = document.getElementById("process-tb");
+
+    if (!processElement) return;
+
+    const isExpanded = this.expenseProcessTab;
+
+    // Atualiza propriedades visuais
+    this.buttomSize = isExpanded
+      ? "/static/assets/images/maximize.png"
+      : "/static/assets/images/minimize.png";
+
+    this.processAnimation = isExpanded
+      ? "process-tab-animation-minimize"
+      : "process-tab-animation-maximize";
+
+    this.processHeader = isExpanded
+      ? "Processo: " + this.processExec
+      : "Processo";
+
+    this.statusHeader = isExpanded
+      ? "Status: " + this.statusPorcentage
+      : "Status";
+
+    this.machineHeader = isExpanded
+      ? "Máquina: " + this.machineName
+      : "Máquina";
+
+    // Ajusta altura visual da aba
+    processElement.style.height = isExpanded ? "2em" : "4em";
+
+    // Alterna estado de expansão
+    this.expenseProcessTab = !isExpanded;
   }
 
+  /**
+   * Gera um array numérico de comprimento `n`, contendo valores inteiros sequenciais a partir de 0.
+   *
+   * Exemplo:
+   * ```ts
+   * createRange(5); // [0, 1, 2, 3, 4]
+   * ```
+   *
+   * Pode ser utilizado, por exemplo, para criar iterações em templates ou gerar índices de forma dinâmica.
+   *
+   * @param n - Número de elementos no array gerado.
+   * @returns number[] - Array contendo números de 0 até n-1.
+   */
   createRange(n: number): number[] {
     return Array.from({ length: n }, (_, i) => i);
   }
 
+  /**
+   * Atualiza a lista visível de máquinas com base na página selecionada.
+   *
+   * Essa função é geralmente utilizada junto à função `createRange`, onde `index`
+   * representa o índice da página atual dentro de uma estrutura paginada (`machines`).
+   *
+   * a lista de máquinas (`listMachines`) com os dados correspondentes à página selecionada.
+   *
+   * @param index - Índice da página de máquinas a ser exibida.
+   */
   nextPageMachines(index: number) {
     this.canViewLoadingSearch = true;
     this.listMachines = this.machines[index];
     this.canViewLoadingSearch = false;
   }
 
+  /**
+   * Envia uma requisição GET para a API a fim de executar uma ação específica em uma máquina remota.
+   *
+   * A ação a ser realizada é definida pelo parâmetro `event` (ex: "force-update"),
+   * e a requisição é direcionada para o IP da máquina armazenado em `this.machineIP`.
+   *
+   * Durante a execução, o progresso é inicialmente setado para "25%" e, em caso de erro,
+   * o status HTTP é armazenado e o erro é logado no console.
+   *
+   * @param event - Identificador da ação a ser solicitada na máquina (ex: "force-update").
+   */
   contactMachine(event: string) {
     this.statusPorcentage = "25%";
     this.http
       .get(
-        "/home/panel-adm/contact-machine/" +
-          event +
-          "/" +
-          this.machineName +
-          "/" +
-          this.machineIP,
+        "/home/panel-adm/contact-machine/" + event + "/" + this.machineIP,
         {}
       )
       .pipe(
@@ -548,5 +665,171 @@ export class PanelAdmComponent implements OnInit {
           console.error("Erro na requisição", err);
         },
       });
+  }
+
+  /**
+   * Ordena a lista de máquinas com base na coluna e direção especificadas.
+   *
+   * A direção da ordenação é determinada pelo parâmetro `order`, que pode ser "increasing"
+   * (ordem crescente) ou "decreasing" (ordem decrescente). A função mapeia as colunas para
+   * funções específicas de ordenação correspondentes e executa a ordenação apropriada
+   * na lista `listMachines`.
+   *
+   * - Para colunas de data, nome, IP, usuário logado ou versão, chama a função de ordenação
+   *   correspondente, passando o sinal de direção (`+` para crescente e `-` para decrescente).
+   * - Caso a coluna não seja reconhecida, exibe um aviso no console.
+   *
+   * @param order - Direção da ordenação: "increasing" para crescente, "decreasing" para decrescente.
+   * @param column - Nome da coluna pela qual a lista deve ser ordenada (ex: "name", "ip").
+   */
+  ordemList(order: "increasing" | "decreasing", column: string) {
+    // Define o sinal de direção da ordenação baseado no parâmetro order
+    // "+" indica crescente, "-" indica decrescente
+    const direction = order === "increasing" ? "+" : "-";
+
+    // Mapeamento das colunas para as funções de ordenação correspondentes
+    // Cada função chama o método correto passando a lista e o sentido da ordenação
+    const sortActions: { [key: string]: () => void } = {
+      insertion_date: () =>
+        this.sortMachinesByDate(this.listMachines, direction),
+      name: () => this.sortMachinesByName(this.listMachines, direction, "name"),
+      ip: () => this.sortMachinesByIp(this.listMachines, direction),
+      logged_user: () =>
+        this.sortMachinesByName(this.listMachines, direction, "logged_user"),
+      version: () => this.sortMachinesByVersion(this.listMachines, direction),
+    };
+
+    // Recupera a função de ordenação correspondente à coluna solicitada
+    const sortFn = sortActions[column];
+
+    if (sortFn) {
+      // Se a coluna for válida, executa a função de ordenação
+      sortFn();
+    } else {
+      // Caso a coluna seja desconhecida, exibe um aviso no console para facilitar debug
+      console.warn(`Coluna desconhecida: ${column}`);
+    }
+  }
+
+  /**
+   * Ordena uma lista de máquinas pela data de inserção.
+   *
+   * A ordenação pode ser crescente ou decrescente com base no parâmetro `signal`.
+   * Caso alguma máquina não tenha a data (`insertion_date`) definida, ela não afeta a ordenação.
+   *
+   * @param machines - Array de objetos representando as máquinas, cada um com a propriedade `insertion_date`.
+   * @param signal - Direção da ordenação: "+" para decrescente (mais recentes primeiro), "-" para crescente (mais antigos primeiro).
+   * @returns Array ordenado de máquinas conforme a data.
+   */
+  sortMachinesByDate(machines: any[], signal: "+" | "-"): any[] {
+    return machines.sort((a, b) => {
+      // Se algum dos objetos não possuir data de inserção, não altera a ordem entre eles
+      if (!a.insertion_date || !b.insertion_date) return 0;
+
+      // Converte as datas de inserção para timestamps (milissegundos desde 1970)
+      const dateA = new Date(a.insertion_date).getTime();
+      const dateB = new Date(b.insertion_date).getTime();
+
+      // Ordena conforme o sinal:
+      // "+" (decrescente): máquinas com datas mais recentes vêm primeiro (dateB - dateA)
+      // "-" (crescente): máquinas com datas mais antigas vêm primeiro (dateA - dateB)
+      return signal === "+" ? dateB - dateA : dateA - dateB;
+    });
+  }
+
+  /**
+   * Ordena uma lista de máquinas alfabeticamente com base em uma coluna especificada.
+   *
+   * A ordenação pode ser crescente ou decrescente, definida pelo parâmetro `order`.
+   * A comparação é feita de forma case-insensitive para garantir consistência.
+   * Caso algum item não possua valor para a coluna especificada, a ordenação mantém a ordem original desses itens.
+   *
+   * @param machines - Array de objetos representando as máquinas.
+   * @param order - Direção da ordenação: "+" para crescente (A-Z), "-" para decrescente (Z-A).
+   * @param column - Nome da propriedade do objeto pelo qual será feita a ordenação.
+   * @returns Array ordenado de máquinas conforme a coluna e ordem especificadas.
+   */
+  sortMachinesByName(machines: any[], order: "+" | "-", column: string): any[] {
+    return machines.sort((a, b) => {
+      // Se algum dos objetos não possuir valor para a coluna, mantém a ordem entre eles
+      if (!a[column] || !b[column]) return 0;
+
+      // Normaliza para string em minúsculo para comparação case-insensitive
+      const nameA = a[column]?.toString().toLowerCase();
+      const nameB = b[column]?.toString().toLowerCase();
+
+      // Compara os valores para ordenar
+      if (nameA < nameB) return order === "+" ? -1 : 1; // Crescente ou decrescente
+      if (nameA > nameB) return order === "+" ? 1 : -1;
+      return 0; // valores iguais
+    });
+  }
+
+  /**
+   * Ordena uma lista de máquinas com base no endereço IP.
+   *
+   * A ordenação considera cada octeto do IP como um número para garantir a ordem correta
+   * (ex: "192.168.1.10" vem depois de "192.168.1.2").
+   * A direção da ordenação pode ser crescente ("+") ou decrescente ("-").
+   * Caso algum IP seja nulo ou indefinido, esses itens mantêm a posição relativa (retorna 0).
+   *
+   * @param machines - Array de objetos representando as máquinas.
+   * @param order - Direção da ordenação: "+" para crescente, "-" para decrescente.
+   * @returns Array ordenado de máquinas conforme o endereço IP e direção especificada.
+   */
+  sortMachinesByIp(machines: any[], order: "+" | "-"): any[] {
+    return machines.sort((a, b) => {
+      // Ignora itens sem IP válido para manter a ordem relativa deles
+      if (!a.ip || !b.ip) return 0;
+
+      // Converte IP para array de números (octetos)
+      const ipA = a.ip.split(".").map(Number);
+      const ipB = b.ip.split(".").map(Number);
+
+      // Compara cada octeto na ordem, até encontrar diferença
+      for (let i = 0; i < 4; i++) {
+        if (ipA[i] !== ipB[i]) {
+          // Retorna a diferença baseada na direção da ordenação
+          return order === "+" ? ipA[i] - ipB[i] : ipB[i] - ipA[i];
+        }
+      }
+
+      // IPs iguais mantêm a ordem
+      return 0;
+    });
+  }
+
+  /**
+   * Ordena uma lista de máquinas com base na versão do software.
+   *
+   * A versão é esperada no formato "x.y.z" (ex: "1.2.10").
+   * A função compara cada parte numérica da versão (major, minor, patch) para definir a ordem correta.
+   * Se a versão estiver ausente, assume "0.0.0" para garantir a comparação.
+   * A ordenação pode ser crescente ("+") ou decrescente ("-").
+   *
+   * @param machines - Array de objetos representando as máquinas.
+   * @param order - Direção da ordenação: "+" para crescente, "-" para decrescente.
+   * @returns Array ordenado de máquinas conforme a versão e direção especificada.
+   */
+  sortMachinesByVersion(machines: any[], order: "+" | "-"): any[] {
+    return machines.sort((a, b) => {
+      // Se uma das versões for indefinida, mantém a ordem relativa
+      if (!a.version || !b.version) return 0;
+
+      // Divide as versões em arrays numéricos [major, minor, patch]
+      const v1 = (a.version || "0.0.0").split(".").map(Number);
+      const v2 = (b.version || "0.0.0").split(".").map(Number);
+
+      // Compara cada parte da versão sequencialmente
+      for (let i = 0; i < 3; i++) {
+        if (v1[i] !== v2[i]) {
+          // Retorna a diferença com base na ordem desejada
+          return order === "+" ? v1[i] - v2[i] : v2[i] - v1[i];
+        }
+      }
+
+      // Versões iguais mantêm a ordem
+      return 0;
+    });
   }
 }

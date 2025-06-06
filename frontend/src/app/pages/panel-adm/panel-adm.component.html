@@ -17,11 +17,120 @@
     <table class="table-panel">
       <thead class="border-bottom">
         <tr class="u-none">
-          <th>Status</th>
-          <th>Nome</th>
-          <th>IP</th>
-          <th>Usuário atual</th>
-          <th>Último Contato</th>
+          <th>
+            <div class="d-flex">
+              <span>Status</span>
+              <div>
+                <img
+                  class="img_arrows"
+                  [src]="arrow_up"
+                  alt="seta para cima"
+                  (click)="ordemList('increasing', 'insertion_date')"
+                />
+                <img
+                  class="img_arrows"
+                  [src]="arrow_down"
+                  alt="seta para baixo"
+                  (click)="ordemList('decreasing', 'insertion_date')"
+                />
+              </div>
+            </div>
+          </th>
+          <th>
+            <div class="d-flex">
+              <span>Nome</span>
+              <div>
+                <img
+                  class="img_arrows"
+                  [src]="arrow_up"
+                  alt="seta para cima"
+                  (click)="ordemList('increasing', 'name')"
+                />
+                <img
+                  class="img_arrows"
+                  [src]="arrow_down"
+                  alt="seta para baixo"
+                  (click)="ordemList('decreasing', 'name')"
+                />
+              </div>
+            </div>
+          </th>
+          <th>
+            <div class="d-flex">
+              <span>IP</span>
+              <div>
+                <img
+                  class="img_arrows"
+                  [src]="arrow_up"
+                  alt="seta para cima"
+                  (click)="ordemList('increasing', 'ip')"
+                />
+                <img
+                  class="img_arrows"
+                  [src]="arrow_down"
+                  alt="seta para baixo"
+                  (click)="ordemList('decreasing', 'ip')"
+                />
+              </div>
+            </div>
+          </th>
+          <th>
+            <div class="d-flex">
+              <span>Usuário atual</span>
+              <div>
+                <img
+                  class="img_arrows"
+                  [src]="arrow_up"
+                  alt="seta para cima"
+                  (click)="ordemList('increasing', 'logged_user')"
+                />
+                <img
+                  class="img_arrows"
+                  [src]="arrow_down"
+                  alt="seta para baixo"
+                  (click)="ordemList('decreasing', 'logged_user')"
+                />
+              </div>
+            </div>
+          </th>
+          <th>
+            <div class="d-flex">
+              <span>Último Contato</span>
+              <div>
+                <img
+                  class="img_arrows"
+                  [src]="arrow_up"
+                  alt="seta para cima"
+                  (click)="ordemList('increasing', 'insertion_date')"
+                />
+                <img
+                  class="img_arrows"
+                  [src]="arrow_down"
+                  alt="seta para baixo"
+                  (click)="ordemList('decreasing', 'insertion_date')"
+                />
+              </div>
+            </div>
+          </th>
+          <th>
+            <div class="d-flex">
+              <span>Versão</span>
+              <div>
+                <img
+                  class="img_arrows"
+                  [src]="arrow_up"
+                  alt="seta para cima"
+                  (click)="ordemList('increasing', 'version')"
+                />
+                <img
+                  class="img_arrows"
+                  [src]="arrow_down"
+                  alt="seta para baixo"
+                  (click)="ordemList('decreasing', 'version')"
+                />
+              </div>
+            </div>
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -41,29 +150,37 @@
               <td>
                 <div class="status-container dot_validate">
                   <div
-                    [ngClass]="'statusDot dot_validate ' + statusDot"
+                    class="dot_validate"
                     #btnRef
                     [id]="'status_dot_div_' + i"
                     (click)="activePopOver('status_dot_div_' + i)"
                     data-bs-toggle="popover"
-                    [attr.data-bs-title]="statusDotTitle"
-                    [attr.data-bs-content]="statusDotContent"
                   ></div>
-                  <div [class]="statusDotPing" class="dot_validate"></div>
+                  <div
+                    [id]="'status_dot_div_ping' + i"
+                    class="dot_validate"
+                  ></div>
                 </div>
               </td>
-              <td [id]="'status_dot_td1_' + i">
-                {{ machine[0] }}
+              <td>
+                {{ machine.name }}
               </td>
-              <td [id]="'status_dot_td2_' + i">
-                {{ machine[1] }}
+              <td>
+                {{ machine.ip }}
               </td>
-              <td [id]="'status_dot_td3_' + i">
-                {{ machine[2] }}
+              <td>
+                {{ machine.logged_user }}
               </td>
-              <td [id]="'status_dot_td4_' + i">
-                {{ adjustDate(machine[3]) }}
+              <td>
+                {{
+                  adjustDate(
+                    machine.insertion_date,
+                    "status_dot_div_" + i,
+                    "status_dot_div_ping" + i
+                  )
+                }}
               </td>
+              <td></td>
             </tr>
             <tr style="height: 1em"></tr>
           </ng-container>
@@ -73,7 +190,7 @@
             [style.left.px]="menuPosition.x"
             [style.top.px]="menuPosition.y"
           >
-            <li (click)="forceConection()" class="custom-li">Atualizar</li>
+            <li (click)="forceUpdate()" class="custom-li">Atualizar</li>
           </ul>
         </ng-container>
       </tbody>

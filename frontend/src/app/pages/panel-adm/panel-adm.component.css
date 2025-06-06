@@ -179,3 +179,8 @@
 .custom-spam:hover {
   color: var(--Piction-Blue);
 }
+
+.img_arrows {
+  width: 1.5em;
+  cursor: pointer;
+}

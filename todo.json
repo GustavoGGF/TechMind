@@ -14,7 +14,8 @@
   "Computer Details": {
     "HotFix": {
       "28": "Lista de softwares, dar opção de escrever, quando clicar em um deixar marcado qual esta marcado, seleção multipla",
-      "29": "6C-3B-E5-34-C4-02 verificar o problema"
+      "29": "6C-3B-E5-34-C4-02 verificar o problema",
+      "38": "a localização da maquina quando mudada não está atualizando"
     },
     "Upgrade": {}
   },

@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from decouple import config
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.http import JsonResponse, FileResponse
+from django.http import HttpRequest, JsonResponse, FileResponse
 from django.middleware.csrf import get_token
 from django_ratelimit.decorators import ratelimit
 from django.shortcuts import render
@@ -25,6 +25,7 @@ from json import loads, dumps
 from os import path
 from ping3 import ping
 from channels.layers import get_channel_layer
+from channels_redis.core import RedisChannelLayer
 from asgiref.sync import async_to_sync
 from socket import socket, AF_INET, SOCK_STREAM
 from time import time
@@ -1646,31 +1647,77 @@ def get_image(request, model):
     logger.error(f"Arquivo não encontrado para o modelo: {model}")
     return JsonResponse({"error": "Arquivo não encontrado"}, status=404)
 
-@login_required(login_url="/login")
-@csrf_exempt
-@require_GET
-def panel_administrator(request): #tela do painel administrativo
+@login_required(login_url="/login")  # Garante que o usuário esteja autenticado; redireciona para /login se não estiver
+@requires_csrf_token                 # Garante que o token CSRF esteja presente na requisição
+@require_GET                         # Permite apenas requisições HTTP GET a esta view
+def panel_administrator(request):
+    """
+    View responsável por renderizar a interface principal do painel administrativo.
+
+    Requisitos:
+    - O usuário deve estar autenticado. Caso contrário, será redirecionado para a página de login.
+    - A requisição deve ser do tipo GET.
+    - Um token CSRF válido deve estar presente na requisição.
+
+    Esta view retorna a renderização do template "index.html", que representa a tela principal do painel administrativo.
+
+    Parâmetros:
+        request (HttpRequest): Objeto da requisição HTTP recebida pelo servidor.
+
+    Retorna:
+        HttpResponse: A resposta HTTP contendo o conteúdo renderizado do template "index.html".
+    """
     return render(request, "index.html", {})
 
-@login_required(login_url="/login")
-@require_GET
-@never_cache
-def panel_get_machines(request): #view que disponibiliza as maquinas para a tabela
+@login_required(login_url="/login")  # Requer autenticação do usuário
+@require_GET                         # Permite apenas requisições HTTP GET
+@never_cache                         # Impede cache da resposta no navegador ou servidor intermediário
+def panel_get_machines(request):
+    """
+    View responsável por obter a lista de máquinas cadastradas no banco de dados
+    e retornar os dados já tratados em formato JSON para consumo pelo frontend.
+
+    A consulta retorna apenas os campos essenciais (nome, IP, usuário logado e data de inserção),
+    que são formatados apropriadamente para exibição em uma tabela ou painel administrativo.
+
+    A data de inserção (`insertion_date`) é convertida para o formato de string padrão "%Y-%m-%d %H:%M:%S".
+
+    Requisitos:
+    - O usuário deve estar autenticado.
+    - A requisição deve ser do tipo GET.
+    - A resposta nunca será armazenada em cache (para garantir dados sempre atualizados).
+
+    Em caso de falha na consulta ao banco de dados, a função retorna um JSON com status de erro
+    e registra o erro no log da aplicação.
+
+    Parâmetros:
+        request (HttpRequest): Objeto de requisição HTTP.
+
+    Retorna:
+        JsonResponse: Resposta JSON contendo a lista de máquinas ou uma mensagem de erro.
+    """
     results = []
     try:
         with get_database_connection() as connection:
             cursor = connection.cursor()
 
-            # Monta a query buscando somente os dados necessarios
+            # Executa a query buscando apenas os campos necessários para o frontend
             query = "SELECT name, ip, logged_user, insertion_date FROM machines;"
-            cursor.execute(query, )
+            cursor.execute(query)
             result = cursor.fetchall()
 
-            # Adiciona o resultado ao array de resultados
-            results.append(result)
-            
-            return JsonResponse({"machines":results}, status=200, safe=True)
+            # Processa os resultados e formata para JSON amigável ao frontend
+            for row in result:
+                results.append({
+                    "name": row[0],
+                    "ip": row[1],
+                    "logged_user": row[2],
+                    "insertion_date": row[3].strftime("%Y-%m-%d %H:%M:%S")
+                })
+
+            return JsonResponse({"machines": results}, status=200, safe=True)
     except connector.Error as e:
+        # Em caso de erro na consulta, registra no log e retorna resposta com status customizado
         logger.error(f"Database query error for system: {e}")
         return JsonResponse({"status": "fail"}, safe=True, status=312)
 
@@ -1679,91 +1726,189 @@ def panel_get_machines(request): #view que disponibiliza as maquinas para a tabe
             cursor.close()
             connection.close()
 
-@login_required(login_url="/login")
-@require_GET
-@never_cache
-def panel_administrator_contact_machine(request, action, machine, ip):
-    channel_layer = get_channel_layer()
+@login_required(login_url="/login")  # Exige autenticação para acessar a view
+@require_GET                         # Aceita apenas requisições GET
+def panel_administrator_contact_machine(request, action: str, ip: str):
+    """
+    View responsável por executar ações administrativas sobre uma máquina específica,
+    com base no IP informado e na ação solicitada via rota.
+
+    Atualmente, a ação `"force-update"` é suportada e aciona uma conexão com a máquina
+    para forçar a atualização dos dados por meio de WebSocket ou protocolo definido.
+
+    Requisitos:
+    - O usuário deve estar autenticado.
+    - A requisição deve ser feita por GET.
+    - A resposta não pode ser armazenada em cache.
+
+    Parâmetros:
+        request (HttpRequest): Objeto da requisição HTTP.
+        action (str): A ação administrativa a ser executada (ex: "force-update").
+        ip (str): Endereço IP da máquina sobre a qual a ação será executada.
+
+    Retorna:
+        JsonResponse: Objeto JSON indicando o status da operação:
+            - "ok" em caso de sucesso;
+            - mensagem de erro específica se a conexão com a máquina falhar;
+            - "fail" em caso de erro interno.
+    """
+    channel_layer = get_channel_layer()  # Camada de comunicação assíncrona via Django Channels
+    
     try:
         if action == "force-update":
-        
+            # Tenta se conectar à máquina para forçar atualização
             conn_machine_info, error_message_conn = server_machine_connection(ip, 9090, channel_layer)
-            
+
+            # Retorna erro específico se a conexão falhar
             if not conn_machine_info:
-                return JsonResponse({"status":f"{error_message_conn}"}, status=502, safe=True) 
+                return JsonResponse({"status": f"{error_message_conn}"}, status=502, safe=True)
 
-        return JsonResponse({"status":"ok"}, status=200, safe=True)
-        
+        # Retorna sucesso padrão (caso outras ações sejam implementadas futuramente)
+        return JsonResponse({"status": "ok"}, status=200, safe=True)
+
     except Exception as e:
+        # Captura exceções não tratadas, registra log e retorna erro genérico
         logger.error(e)
-        return JsonResponse({"status":"fail"}, status=503, safe=True)
+        return JsonResponse({"status": "fail"}, status=503, safe=True)
     
+def server_machine_connection(host: str, port: int, channel: RedisChannelLayer):
+    """
+    Estabelece uma conexão TCP com uma máquina remota e envia um comando autenticado via HMAC.
 
-def server_machine_connection(host, port, channel):
+    Esta função é utilizada para instruir uma máquina cliente a realizar uma ação,
+    como atualizar seu software, através de um protocolo simples baseado em sockets TCP.
+    Também envia mensagens de status para o frontend via WebSocket (Redis + Django Channels).
+
+    Parâmetros:
+        host (str): Endereço IP ou hostname da máquina de destino.
+        port (int): Porta TCP utilizada para conexão.
+        channel (RedisChannelLayer): Canal de comunicação com o frontend para envio de mensagens em tempo real.
+
+    Retorna:
+        tuple:
+            - (bool): `True` se a conexão e envio ocorreram com sucesso, `False` em caso de falha.
+            - (str or Exception): Mensagem de erro em caso de falha, string vazia em caso de sucesso.
+    """
     try:
+        # Gera o timestamp atual como string (em segundos desde epoch)
         timestamp = str(int(time()))
         
+        # Define o comando que será enviado
         command = "update-software"
         
+        # Gera assinatura HMAC para garantir integridade/autenticidade do comando
         assing = generate_hmac(command, timestamp)
         
-        async_to_sync(channel.group_send)(
-            "monitoring",
-            {
-                "type":"send_mensagem",
-                "message":"Conectando na máquina",
-                "code":"cnmh",
-                "status":200
-            }
-        )
+        # Notifica via WebSocket que a conexão está sendo iniciada
+        send_message_with_redis(channel, "Conectando na máquina", "cnmh")
         
+        # Monta o payload em formato JSON
         payload = dumps({
-            "command":f"{command}", 
-            "timestamp":timestamp, 
-            "hmac":assing
-            })
+            "command": command, 
+            "timestamp": timestamp, 
+            "hmac": assing
+        }) + "\n"  # Finaliza com quebra de linha para delimitar o fim do pacote
         
-        payload += "\n"
-        
+        # Estabelece conexão TCP com a máquina
         with socket(AF_INET, SOCK_STREAM) as s:
-            s.connect((host, port))
-            s.sendall(payload.encode())
-            response = s.recv(1024)
-            logger.info(response.decode())
-            return True, ""
-        
+            s.settimeout(10)  # Timeout de 10 segundos para a conexão
+            s.connect((host, port))  # Conecta ao IP e porta definidos
+            s.sendall(payload.encode())  # Envia o payload já convertido em bytes
+            
+            return True, ""  # Retorna sucesso
     except Exception as e:
+        # Loga o erro e retorna falha com a exceção
         logger.error(f"Não foi possível realizar a conexão TCP: {e}")
         return False, e
-    
+
 def generate_hmac(command, timestamp):
-    key = config("MACHINE_KEY").encode()
+    """
+    Gera um código HMAC-SHA256 baseado em um comando e um timestamp.
+
+    A chave secreta usada para gerar o HMAC é lida da variável de ambiente `MACHINE_KEY`,
+    garantindo que apenas partes autorizadas (com a mesma chave) possam validar ou gerar os comandos.
+
+    Parâmetros:
+        command (str): Comando a ser autenticado (ex: "update-software").
+        timestamp (str): Timestamp atual em formato string, usado para prevenir ataques de repetição.
+
+    Retorna:
+        str: Valor HMAC em hexadecimal, que representa a assinatura criptográfica da mensagem.
+    """
     try:
+        # Obtém a chave secreta da variável de ambiente e codifica como bytes
+        key = config("MACHINE_KEY").encode()
+        
+        # Concatena o comando com o timestamp
         message = command + timestamp
+
+        # Gera o HMAC usando SHA-256
         return new(key, message.encode(), sha256).hexdigest()
-    except Exception as e:
-        return logger.error(f"Erro ao gerar o HMAC {e}")
     
-@require_POST
+    except Exception as e:
+        # Em caso de falha, registra o erro no log e retorna None
+        logger.error(f"Erro ao gerar o HMAC: {e}")
+        return None
+    
 @csrf_exempt
-def receiving_messages(request):
+@require_POST
+def receive_webhook_message(request: HttpRequest) -> JsonResponse:
+    """
+    View pública que recebe mensagens externas via POST e envia para o WebSocket interno do grupo 'monitoring'.
+    
+    Espera um JSON com as chaves:
+        - message (str): conteúdo da mensagem
+        - code (str): código identificador
+        - status (int, opcional): código de status HTTP, padrão 200
+
+    Retorna:
+        JsonResponse indicando sucesso ou falha.
+    """
     try:
         data = loads(request.body)
+
         message = data.get("message")
         code = data.get("code")
-        status = data.get("status", 200)
+
+        if not message or not code:
+            return JsonResponse({"error": "Campos 'message' e 'code' são obrigatórios."}, status=400)
+
         channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            "monitoring",
+        send_message_with_redis(channel_layer, message, code)
+
+        return JsonResponse({"success": True})
+
+    except Exception as e:
+        logger.error(f"Erro ao processar mensagem recebida: {e} | Corpo: {request.body}")
+        return JsonResponse({"error": "Erro interno ao processar a mensagem."}, status=500)
+
+def send_message_with_redis(channel: RedisChannelLayer, message: str, code: str):
+    """
+    Envia uma mensagem WebSocket para o grupo 'monitoring' via Redis Channel Layer.
+
+    Essa função encapsula o envio síncrono de mensagens para o frontend usando Django Channels.
+    É utilizada para comunicação em tempo real, como logs, status de conexões, ou feedbacks visuais
+    no painel administrativo.
+
+    Parâmetros:
+        channel (RedisChannelLayer): Instância da camada de canal Redis usada para comunicação.
+        message (str): Texto da mensagem a ser exibida no frontend.
+        code (str): Código identificador da mensagem, usado para controle ou agrupamento de mensagens.
+
+    Exceções:
+        Em caso de falha no envio, o erro é capturado e registrado no log com nível de aviso.
+    """
+    try:
+        # Envia a mensagem para o grupo 'monitoring' usando um wrapper síncrono
+        async_to_sync(channel.group_send)(
+            "monitoring",  # Nome do grupo que receberá a mensagem
             {
-                "type": "send_mensagem",
-                "message": message,
-                "code": code,
-                "status": status
+                "type": "send_mensagem",  # Tipo do evento que será tratado no consumidor
+                "message": message,       # Conteúdo textual da mensagem
+                "code": code,             # Código auxiliar que pode ser interpretado no frontend
+                "status": 200             # Status genérico de sucesso
             }
         )
-        return JsonResponse({"success": True})
-    except Exception as e: 
-        logger.error(f"Erro ao receber a menssagem: {e}")
-        return JsonResponse({"fail":"fail"}, status=302)
-    
+    except Exception as e:
+        # Loga qualquer falha de envio como aviso, sem interromper o fluxo da aplicação
+        logger.warning(f"Falha ao enviar mensagem via WebSocket: {e}")
